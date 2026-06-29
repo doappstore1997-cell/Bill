@@ -992,17 +992,29 @@ function clearQueue(){ QUEUE=[]; saveQueue(); renderQueue(); }
 
 function buildBulk(){
   const rows=QUEUE.slice().concat(parseBulk(document.getElementById('bulk-input').value));
-  if(!rows.length){ toast('ຍັງບໍ່ມີຂໍ້ມູນ — ເພີ່ມລາຍການກ່ອນ ຫຼື ວາງຕາຕະລາງ'); return; }  // ຈັດກຸ່ມຕາມຮ້ານ (ຮັກສາລຳດັບ)
+  if(!rows.length){ toast('ຍັງບໍ່ມີຂໍ້ມູນ — ເພີ່ມລາຍການກ່ອນ ຫຼື ວາງຕາຕະລາງ'); return; }
+  // ກຸ່ມຮ້ານທີ່ໃຫ້ລວມເປັນໃບດຽວ
+  const MERGE_GROUPS=[{
+    shops:['ໂຕໝູ ແຄມຂອງ','ໂຕໝູ ຈອມມະນີ','ໂຕໝູ ໜອງໄຮ'],
+    name:'ໂຕໝູ 3 ສາຂາ', code:'D5,D6,D7'
+  }];
+  // ຈັດກຸ່ມຕາມຮ້ານ (ຮັກສາລຳດັບ)
   const map=new Map();
   rows.forEach(r=>{
-    if(!map.has(r.shop)) map.set(r.shop,[]);
-    map.get(r.shop).push({name:r.item, qty:r.qty, price:priceOf(r.item), unit:r.unit||'ຫິ້ວ'});
+    let shopName=r.shop, itemName=r.item;
+    const g=MERGE_GROUPS.find(gr=>gr.shops.includes(r.shop));
+    if(g){ shopName=g.name; itemName=r.shop+' '+r.item; }  // ຕິດຊື່ສາຂາໄວ້ໜ້າລາຍການ
+    if(!map.has(shopName)) map.set(shopName,[]);
+    map.get(shopName).push({name:itemName, qty:r.qty, price:priceOf(r.item), unit:r.unit||'ຫິ້ວ'});
   });
   BULK=[...map.entries()].map(([shop,items])=>({shop,items}));
-  // ເພີ່ມຮ້ານທີ່ບໍ່ມີໃນລະບົບ ໃຫ້ເລືອກໄດ້
+  // ເພີ່ມຮ້ານທີ່ບໍ່ມີໃນລະບົບ ໃຫ້ເລືອກໄດ້ (ຮ້ານລວມໃຊ້ລະຫັດທີ່ກຳນົດ)
   let added=false;
   BULK.forEach(b=>{
-    if(!SHOPS.some(s=>s.name===b.shop)){ SHOPS.push({name:b.shop,code:''}); added=true; }
+    if(!SHOPS.some(s=>s.name===b.shop)){
+      const g=MERGE_GROUPS.find(gr=>gr.name===b.shop);
+      SHOPS.push({name:b.shop, code:g?g.code:''}); added=true;
+    }
   });
   if(added){ saveShops(); populateShops(); }
   BULK_IDX=0;
