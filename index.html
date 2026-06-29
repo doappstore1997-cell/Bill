@@ -1003,7 +1003,7 @@ function buildBulk(){
   rows.forEach(r=>{
     let shopName=r.shop, itemName=r.item;
     const g=MERGE_GROUPS.find(gr=>gr.shops.includes(r.shop));
-    if(g){ shopName=g.name; itemName=r.shop+' '+r.item; }  // ຕິດຊື່ສາຂາໄວ້ໜ້າລາຍການ
+    if(g){ shopName=g.name; itemName=r.shop.replace(/^ໂຕໝູ\s*/,''); }  // ໃສ່ແຕ່ຊື່ສາຂາ
     if(!map.has(shopName)) map.set(shopName,[]);
     map.get(shopName).push({name:itemName, qty:r.qty, price:priceOf(r.item), unit:r.unit||'ຫິ້ວ'});
   });
