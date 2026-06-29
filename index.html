@@ -76,6 +76,58 @@
   }
   .panel h2::before{content:"";width:14px;height:14px;border-radius:4px;background:var(--brand)}
   .auto-box{background:#fff;border:1.5px solid var(--brand);border-radius:12px;padding:13px;margin-bottom:16px}
+  /* ປຸ່ມເປີດໜ້າ Auto */
+  .auto-launch{
+    display:flex;flex-direction:column;align-items:center;gap:3px;width:100%;
+    background:var(--brand);color:#fff;border:none;border-radius:12px;padding:15px;margin-bottom:16px;
+    font-family:inherit;font-size:17px;font-weight:700;cursor:pointer;box-shadow:0 3px 10px rgba(200,16,46,.25);
+  }
+  .auto-launch:hover{background:var(--brand-dark)}
+  .al-sub{font-size:12.5px;font-weight:400;opacity:.92}
+  /* ໜ້າ Auto ເຕັມຈໍ */
+  .auto-page{
+    position:fixed;inset:0;z-index:300;background:#f4f5f7;overflow-y:auto;
+    -webkit-overflow-scrolling:touch;
+  }
+  .ap-bar{
+    position:sticky;top:0;z-index:5;display:flex;align-items:center;gap:10px;
+    background:var(--brand);color:#fff;padding:12px 14px;box-shadow:0 2px 10px rgba(0,0,0,.15);
+  }
+  .ap-back{font-family:inherit;font-size:22px;font-weight:700;border:none;background:rgba(255,255,255,.2);color:#fff;border-radius:9px;width:44px;height:44px;cursor:pointer;line-height:1}
+  .ap-back:hover{background:rgba(255,255,255,.32)}
+  .ap-title{flex:1;font-size:18px;font-weight:700}
+  .ap-done{font-family:inherit;font-size:15px;font-weight:700;border:none;background:#fff;color:var(--brand);border-radius:9px;padding:10px 16px;cursor:pointer}
+  .ap-body{max-width:560px;margin:0 auto;padding:16px 14px 40px}
+  .ap-card{background:#fff;border:1px solid var(--panel-line);border-radius:14px;padding:16px;box-shadow:0 2px 8px rgba(0,0,0,.05)}
+  .ap-label{display:block;font-size:14.5px;font-weight:700;color:var(--ink);margin:10px 0 6px}
+  .ap-card .ap-label:first-child{margin-top:0}
+  .ap-in{
+    width:100%;box-sizing:border-box;font-family:inherit;font-size:19px;
+    background:var(--field);border:1.5px solid var(--field-line);border-radius:10px;padding:14px 13px;color:var(--ink);
+  }
+  #qa-item{font-size:22px;font-weight:600;padding:17px 14px;border:2px solid var(--brand);background:#fffafb}
+  #qa-item::placeholder{font-size:17px;font-weight:400}
+  .ap-two{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+  .ap-add{
+    width:100%;margin-top:14px;font-family:inherit;font-size:18px;font-weight:700;
+    border:none;border-radius:11px;padding:15px;cursor:pointer;background:var(--accent);color:#fff;
+  }
+  .ap-add:hover{filter:brightness(.93)}
+  .ap-queue{margin-top:16px}
+  .ap-queue .queue-head{font-size:15px}
+  .ap-queue .queue-item{font-size:15.5px;padding:11px 13px;border-radius:10px}
+  .ap-queue .queue-item button{font-size:22px}
+  .ap-queue .qnum{font-size:13px;min-width:24px;padding:2px 7px}
+  .ap-paste{margin-top:16px;background:#fff;border:1px solid var(--panel-line);border-radius:12px;padding:6px 12px}
+  .ap-paste summary{font-size:13.5px;color:var(--muted);padding:8px 0}
+  .ap-up{display:block;text-align:center;background:#fff;border:1px solid var(--field-line);border-radius:9px;padding:11px;margin:8px 0;font-size:14px;cursor:pointer}
+  .ap-up:hover{border-color:var(--brand);color:var(--brand)}
+  .ap-gen-big{
+    width:100%;margin-top:18px;font-family:inherit;font-size:19px;font-weight:800;
+    border:none;border-radius:13px;padding:17px;cursor:pointer;background:var(--brand);color:#fff;
+    box-shadow:0 4px 12px rgba(200,16,46,.3);
+  }
+  .ap-gen-big:hover{background:var(--brand-dark)}
   .auto-title{font-weight:700;color:var(--brand-dark);font-size:15px;margin-bottom:6px}
   .auto-hint{font-size:12px;color:var(--muted);margin:0 0 9px;line-height:1.5}
   .qa-row{display:grid;grid-template-columns:1fr 1fr;gap:7px;margin-bottom:8px}
@@ -205,13 +257,16 @@
   .r-pick{border-bottom:1px dashed var(--topbar);cursor:pointer;padding-bottom:1px}
   .r-cust b{font-weight:700}
 
-  table.r-tab{width:100%;border-collapse:collapse;margin-top:6px;font-size:18px}
+  table.r-tab{width:100%;border-collapse:collapse;margin-top:6px;font-size:18px;table-layout:fixed}
+  table.r-tab td, table.r-tab th{overflow-wrap:anywhere;word-break:break-word}
   table.r-tab th, table.r-tab td{border:1.5px solid var(--line);padding:8px 9px;text-align:center;color:#000}
   table.r-tab th{font-weight:700;background:#fafafa;font-size:17px}
   table.r-tab td{font-weight:600;font-size:19px}
   table.r-tab td.it{text-align:left}
   table.r-tab td.ce{cursor:text}
   table.r-tab td.ce:focus{outline:2px solid var(--topbar);outline-offset:-2px;background:#fff8f0}
+  table.r-tab td.note-cell{text-align:left;font-size:14px;font-weight:400;cursor:text;vertical-align:top}
+  table.r-tab td.note-cell:focus{outline:2px solid var(--topbar);outline-offset:-2px;background:#fff8f0}
   .cell-in{width:100%;box-sizing:border-box;border:none;background:transparent;color:#000;font-family:inherit;font-size:19px;font-weight:600;padding:0;margin:0;text-align:left}
   .cell-in:focus{outline:2px solid var(--topbar);outline-offset:1px;border-radius:3px;background:#fff8f0}
   .qtywrap{display:inline-flex;align-items:baseline;justify-content:center;gap:4px}
@@ -271,38 +326,50 @@
   </div>
 </div>
 
+<div id="auto-page" class="auto-page" style="display:none">
+  <div class="ap-bar">
+    <button class="ap-back" onclick="closeAuto()">←</button>
+    <div class="ap-title">⚡ ອອກໃບບິນຫຼາຍຮ້ານ</div>
+    <button class="ap-done" onclick="buildBulk()">ສ້າງ →</button>
+  </div>
+  <div class="ap-body">
+    <div class="ap-card">
+      <label class="ap-label">1. ເລືອກຮ້ານ</label>
+      <select id="qa-shop" class="ap-in"></select>
+      <label class="ap-label">2. ເລືອກ ຫຼື ພິມ ລາຍການ</label>
+      <input id="qa-item" class="ap-in" list="product-list" placeholder="ເລືອກ ຫຼື ພິມ ລາຍການ">
+      <div class="ap-two">
+        <div>
+          <label class="ap-label">3. ຈຳນວນ</label>
+          <input id="qa-qty" class="ap-in" type="number" inputmode="numeric" placeholder="ຈຳນວນ">
+        </div>
+        <div>
+          <label class="ap-label">4. ໜ່ວຍ</label>
+          <select id="qa-unit" class="ap-in"><option>ຫິ້ວ</option><option>Kg</option></select>
+        </div>
+      </div>
+      <button class="ap-add" onclick="addQueue()">+ ເພີ່ມລາຍການ</button>
+    </div>
+
+    <div id="queue-list" class="queue-list ap-queue"></div>
+
+    <details class="paste-wrap ap-paste">
+      <summary>ຫຼື ວາງຕາຕະລາງຈາກ Excel/Sheet (ຊື່ຮ້ານ , ລາຍການ , ຈຳນວນ)</summary>
+      <textarea id="bulk-input" rows="5" placeholder="ໂຕໝູ ແຄມຂອງ, ສະໃບນາງເຕັມ, 40&#10;ໝູນ້ອຍ, ໄສ້ຕັນ, 2"></textarea>
+      <label class="ap-up">🖼️ ອັບໂຫລດຮູບຕາຕະລາງ
+        <input type="file" accept="image/*" onchange="ocrImage(event)" style="display:none">
+      </label>
+      <div id="ocr-status" class="ocr-status"></div>
+    </details>
+
+    <button class="ap-gen-big" onclick="buildBulk()">⚡ ສ້າງໃບບິນທັງໝົດ</button>
+  </div>
+</div>
+
 <div class="wrap">
   <!-- ============ FORM ============ -->
   <div class="panel">
-    <div class="auto-box">
-      <div class="auto-title">⚡ ອອກໃບບິນຫຼາຍຮ້ານ (Auto)</div>
-      <p class="auto-hint">ເລືອກຮ້ານ → ເລືອກ/ພິມ ລາຍການ → ໃສ່ຈຳນວນ → ກົດ <b>+ ເພີ່ມ</b> ສະສົມໄວ້ຫຼາຍໆຮ້ານ ແລ້ວກົດ <b>ສ້າງໃບບິນ</b> ເທື່ອດຽວ</p>
-      <div class="qa-row">
-        <select id="qa-shop" class="qa-in"></select>
-        <input id="qa-item" class="qa-in" list="product-list" placeholder="ເລືອກ/ພິມ ລາຍການ">
-        <input id="qa-qty" class="qa-in qa-qty" type="number" inputmode="numeric" placeholder="ຈຳນວນ">
-        <select id="qa-unit" class="qa-in"><option>ຫິ້ວ</option><option>Kg</option></select>
-        <button class="qa-add" onclick="addQueue()">+ ເພີ່ມ</button>
-      </div>
-      <div id="queue-list" class="queue-list"></div>
-
-      <details class="paste-wrap">
-        <summary>ຫຼື ວາງຕາຕະລາງຈາກ Excel/Sheet (ຊື່ຮ້ານ , ລາຍການ , ຈຳນວນ)</summary>
-        <textarea id="bulk-input" rows="5" placeholder="ຮ້ານ ໂຕໝູ ສາຂາແຄມຂອງ, ສະໃບນາງເຕັມ, 40&#10;ຮ້ານ ໝູນ້ອຍ, ໄສ້ຕັນ, 2"></textarea>
-      </details>
-      <div class="auto-actions">
-        <label class="auto-up">🖼️ ອັບໂຫລດຮູບຕາຕະລາງ
-          <input type="file" accept="image/*" onchange="ocrImage(event)" style="display:none">
-        </label>
-        <button class="auto-gen" onclick="buildBulk()">⚡ ສ້າງໃບບິນ</button>
-      </div>
-      <div id="ocr-status" class="ocr-status"></div>
-      <div id="bulk-nav" class="bulk-nav" style="display:none">
-        <button onclick="bulkGo(-1)">◀ ກ່ອນ</button>
-        <span id="bulk-pos"></span>
-        <button onclick="bulkGo(1)">ຕໍ່ໄປ ▶</button>
-      </div>
-    </div>
+    <button class="auto-launch" onclick="openAuto()">⚡ ອອກໃບບິນຫຼາຍຮ້ານ (Auto)<span class="al-sub">ເລືອກຮ້ານ · ລາຍການ · ຈຳນວນ ແລ້ວສ້າງທີດຽວ</span></button>
 
     <h2>ຂໍ້ມູນຮ້ານ</h2>
     <div class="field">
@@ -412,12 +479,12 @@
           <table class="r-tab">
             <thead>
               <tr>
-                <th style="width:9%">ລຳດັບ</th>
-                <th style="width:26%">ລາຍການ</th>
-                <th style="width:17%">ຈຳນວນ<br>Kg&ຫິ້ວ</th>
-                <th style="width:18%">ລາຄາ<br>Kg&ຫິ້ວ</th>
-                <th style="width:20%">ຈຳນວນເງິນ</th>
-                <th style="width:10%">ໝາຍເຫດ</th>
+                <th style="width:8%">ລຳ<br>ດັບ</th>
+                <th style="width:24%">ລາຍການ</th>
+                <th style="width:16%">ຈຳນວນ<br>Kg&ຫິ້ວ</th>
+                <th style="width:16%">ລາຄາ<br>Kg&ຫິ້ວ</th>
+                <th style="width:19%">ຈຳນວນເງິນ</th>
+                <th style="width:17%">ໝາຍເຫດ</th>
               </tr>
             </thead>
             <tbody id="p-rows"></tbody>
@@ -654,7 +721,7 @@ function cellBlur(el){
   // ຕັດແຖວວ່າງທ້າຍຖິ້ມ ໃຫ້ຂໍ້ມູນສະອາດ ແລ້ວ sync ຟອມລຸ່ມ
   while(items.length>1){
     const last=items[items.length-1];
-    if(!last.name && !last.qty && !last.price) items.pop(); else break;
+    if(!last.name && !last.qty && !last.price && !last.note) items.pop(); else break;
   }
   renderItemsEditor();
 }
@@ -665,7 +732,7 @@ function ensureItem(i){ while(items.length<=i) items.push({name:'',qty:0,price:0
 function trimItems(){
   while(items.length>1){
     const last=items[items.length-1];
-    if(!last.name && !last.qty && !last.price) items.pop(); else break;
+    if(!last.name && !last.qty && !last.price && !last.note) items.pop(); else break;
   }
 }
 function recalcRow(i, tr){
@@ -698,6 +765,11 @@ function unitChange(el){
   items[i].unit=el.value;
   renderItemsEditor();
 }
+function noteInput(el){
+  const i=+el.dataset.i; ensureItem(i);
+  items[i].note=el.textContent;
+}
+function noteBlur(){ trimItems(); }
 /* ຊ່ອງລາຍການໃນຕາຕະລາງ: ເລືອກ ຫຼື ພິມ + ລາຄາຂຶ້ນເອງ */
 function rowNameInput(el){
   const i=+el.dataset.i;
@@ -720,7 +792,7 @@ function rowNameInput(el){
 function rowNameBlur(){
   while(items.length>1){
     const last=items[items.length-1];
-    if(!last.name && !last.qty && !last.price) items.pop(); else break;
+    if(!last.name && !last.qty && !last.price && !last.note) items.pop(); else break;
   }
   renderItemsEditor();
 }
@@ -868,8 +940,7 @@ function clearQueue(){ QUEUE=[]; saveQueue(); renderQueue(); }
 
 function buildBulk(){
   const rows=QUEUE.slice().concat(parseBulk(document.getElementById('bulk-input').value));
-  if(!rows.length){ toast('ຍັງບໍ່ມີຂໍ້ມູນ — ເພີ່ມລາຍການກ່ອນ ຫຼື ວາງຕາຕະລາງ'); return; }
-  // ຈັດກຸ່ມຕາມຮ້ານ (ຮັກສາລຳດັບ)
+  if(!rows.length){ toast('ຍັງບໍ່ມີຂໍ້ມູນ — ເພີ່ມລາຍການກ່ອນ ຫຼື ວາງຕາຕະລາງ'); return; }  // ຈັດກຸ່ມຕາມຮ້ານ (ຮັກສາລຳດັບ)
   const map=new Map();
   rows.forEach(r=>{
     if(!map.has(r.shop)) map.set(r.shop,[]);
@@ -883,21 +954,23 @@ function buildBulk(){
   });
   if(added){ saveShops(); populateShops(); }
   BULK_IDX=0;
-  document.getElementById('bulk-nav').style.display='flex';
   const bn=document.getElementById('bill-nav'); if(bn) bn.style.display='flex';
   loadBulkBill(0);
-  toast('ສ້າງ '+BULK.length+' ໃບບິນແລ້ວ — ກົດ ◀ ▶ ເພື່ອເບິ່ງແຕ່ລະຮ້ານ');
+  closeAuto();
+  setTimeout(()=>{ const n=document.getElementById('bill-nav'); if(n) n.scrollIntoView({behavior:'smooth',block:'start'}); },60);
+  toast('ສ້າງ '+BULK.length+' ໃບບິນແລ້ວ — ກົດ ◀ ▶ ຫຼື ປັດ ເພື່ອເບິ່ງແຕ່ລະຮ້ານ');
 }
+function openAuto(){ document.getElementById('auto-page').style.display='block'; document.body.style.overflow='hidden'; }
+function closeAuto(){ document.getElementById('auto-page').style.display='none'; document.body.style.overflow=''; }
 function loadBulkBill(idx){
   const b=BULK[idx]; if(!b) return;
   populateShops(b.shop);          // ເລືອກຮ້ານ + ລະຫັດຂຶ້ນເອງ
   items=b.items.map(x=>({name:x.name,qty:x.qty,price:x.price,unit:x.unit||'ຫິ້ວ'}));
   renderItemsEditor(); render();
   const pos='ໃບທີ '+(idx+1)+'/'+BULK.length+' · '+b.shop;
-  document.getElementById('bulk-pos').textContent=pos;
   const bp=document.getElementById('bill-pos'); if(bp) bp.textContent=pos;
-  document.querySelectorAll('#bulk-nav button, #bill-nav button').forEach(btn=>{
-    const isPrev = btn.textContent.indexOf('◀')>=0 || btn.textContent.indexOf('ກ່ອນ')>=0;
+  document.querySelectorAll('#bill-nav button').forEach(btn=>{
+    const isPrev = btn.textContent.indexOf('◀')>=0;
     btn.disabled = isPrev ? idx<=0 : idx>=BULK.length-1;
   });
 }
@@ -961,7 +1034,7 @@ function render(){
       <td class="num"><span class="qtywrap"><input class="qty-in" type="text" inputmode="decimal" value="${it.qty?fmt(it.qty):''}" data-i="${i}" oninput="qtyInput(this)" onfocus="qtyFocus(this)" onblur="qtyBlur(this)"><span class="unit-txt">${it.qty?escapeHtml(it.unit||'ຫິ້ວ'):''}</span></span></td>
       <td class="num ce" contenteditable="true" data-i="${i}" data-k="price" oninput="cellEdit(this)" onfocus="cellFocus(this)" onblur="cellBlur(this)" onkeydown="cellKey(event,this)">${it.price?fmt(it.price):''}</td>
       <td class="num" data-amt="${i}">${amt?fmt(amt):''}</td>
-      <td></td></tr>`;
+      <td class="note-cell" contenteditable="true" data-i="${i}" oninput="noteInput(this)" onblur="noteBlur(this)">${escapeHtml(it.note||'')}</td></tr>`;
   }
   document.getElementById('p-rows').innerHTML=html;
   document.getElementById('p-total').textContent=fmt(total);
