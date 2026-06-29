@@ -48,9 +48,9 @@
   .topbar .sub{font-size:12.5px;opacity:.9;font-weight:400}
   .actions{display:flex;gap:8px;flex-wrap:wrap;justify-content:center;width:100%}
   button.act{
-    font-family:inherit;font-size:13.5px;font-weight:700;
-    border:none;border-radius:8px;padding:10px 16px;cursor:pointer;
-    background:var(--army);color:#fff;transition:.15s;box-shadow:0 2px 6px rgba(0,0,0,.18);
+    font-family:inherit;font-size:16px;font-weight:700;
+    border:none;border-radius:10px;padding:14px 24px;cursor:pointer;
+    background:var(--army);color:#fff;transition:.15s;box-shadow:0 2px 8px rgba(0,0,0,.2);
   }
   button.act:hover{background:var(--army-dark)}
   button.act.primary{background:var(--army);color:#fff}
@@ -142,6 +142,8 @@
   .queue-clear:hover{background:var(--brand);color:#fff}
   .queue-item{display:flex;align-items:center;justify-content:space-between;gap:8px;background:#f4f6f8;border:1px solid var(--panel-line);border-radius:7px;padding:6px 9px;margin-bottom:5px;font-size:13px}
   .queue-item button{border:none;background:transparent;color:var(--brand);font-size:17px;line-height:1;cursor:pointer;padding:0 2px}
+  .queue-copy{width:100%;margin-top:8px;font-family:inherit;font-size:15px;font-weight:700;border:none;border-radius:10px;padding:13px;cursor:pointer;background:var(--army);color:#fff}
+  .queue-copy:hover{background:var(--army-dark)}
   .qnum{display:inline-block;min-width:20px;text-align:center;background:var(--topbar);color:#fff;border-radius:5px;font-size:11.5px;font-weight:700;padding:1px 5px;margin-right:5px}
   .paste-wrap{margin:4px 0 9px}
   .paste-wrap summary{font-size:12px;color:var(--muted);cursor:pointer;padding:4px 0}
@@ -212,12 +214,14 @@
     background:var(--topbar);color:#fff;border-radius:10px;padding:8px 10px;box-shadow:0 3px 10px rgba(0,0,0,.18);
   }
   .bill-nav button{
-    font-family:inherit;font-size:16px;font-weight:700;border:none;border-radius:8px;
-    padding:8px 16px;cursor:pointer;background:rgba(255,255,255,.22);color:#fff;
+    font-family:inherit;font-size:22px;font-weight:800;border:none;border-radius:10px;
+    padding:13px 26px;cursor:pointer;background:rgba(255,255,255,.24);color:#fff;
   }
   .bill-nav button:hover{background:rgba(255,255,255,.34)}
   .bill-nav button:disabled{opacity:.4;cursor:default}
   #bill-pos{flex:1;text-align:center;font-size:13.5px;font-weight:700}
+  .bill-close{background:rgba(0,0,0,.18) !important;padding:8px 12px !important;font-size:14px !important}
+  .bill-close:hover{background:rgba(0,0,0,.3) !important}
   #receipt{
     background:var(--paper);width:680px;margin:0 auto;
     border:2px solid var(--line);box-shadow:var(--shadow);
@@ -346,7 +350,7 @@
           <input id="qa-qty" class="ap-in" type="number" inputmode="numeric" placeholder="ຈຳນວນ">
         </div>
         <div>
-          <label class="ap-label">4. ໜ່ວຍ</label>
+          <label class="ap-label">4. ຫົວໜ່ວຍ</label>
           <select id="qa-unit" class="ap-in"><option>ຫິ້ວ</option><option>Kg</option></select>
         </div>
       </div>
@@ -464,6 +468,7 @@
       <button onclick="bulkGo(-1)" aria-label="ໃບກ່ອນ">◀</button>
       <span id="bill-pos"></span>
       <button onclick="bulkGo(1)" aria-label="ໃບຕໍ່ໄປ">▶</button>
+      <button class="bill-close" onclick="clearBulk()" aria-label="ປິດໂໝດຫຼາຍຮ້ານ" title="ປິດ">✕</button>
     </div>
     <div class="scaler">
       <div id="receipt">
@@ -691,10 +696,10 @@ function renderItemsEditor(){
 }
 function escapeAttr(s){return String(s).replace(/"/g,'&quot;');}
 function escapeHtml(s){return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');}
-function upd(i,k,v){ items[i][k]= (k==='name')? v : (parseFloat(v)||0); render(); }
-function updUnit(i,v){ items[i].unit=v; render(); }
-function addItem(){ items.push({name:'',qty:0,price:0,unit:'ຫິ້ວ'}); renderItemsEditor(); render(); }
-function rmItem(i){ items.splice(i,1); if(items.length===0) items.push({name:'',qty:0,price:0,unit:'ຫິ້ວ'}); renderItemsEditor(); render(); }
+function upd(i,k,v){ items[i][k]= (k==='name')? v : (parseFloat(v)||0); render(); bulkSync(); }
+function updUnit(i,v){ items[i].unit=v; render(); bulkSync(); }
+function addItem(){ items.push({name:'',qty:0,price:0,unit:'ຫິ້ວ'}); renderItemsEditor(); render(); bulkSync(); }
+function rmItem(i){ items.splice(i,1); if(items.length===0) items.push({name:'',qty:0,price:0,unit:'ຫິ້ວ'}); renderItemsEditor(); render(); bulkSync(); }
 
 /* ---------- ພິມໃນຕາຕະລາງໄດ້ໂດຍກົງ (inline edit) ---------- */
 function cellEdit(el){
@@ -725,7 +730,7 @@ function cellBlur(el){
     const last=items[items.length-1];
     if(!last.name && !last.qty && !last.price && !last.note) items.pop(); else break;
   }
-  renderItemsEditor();
+  renderItemsEditor(); bulkSync();
 }
 function cellKey(e,el){
   if(e.key==='Enter'){ e.preventDefault(); el.blur(); }
@@ -760,18 +765,18 @@ function qtyFocus(el){
 function qtyBlur(el){
   const i=+el.dataset.i; const v=items[i]?items[i].qty:0;
   el.value = v ? fmt(v) : '';
-  trimItems(); renderItemsEditor();
+  trimItems(); renderItemsEditor(); bulkSync();
 }
 function unitChange(el){
   const i=+el.dataset.i; ensureItem(i);
   items[i].unit=el.value;
-  renderItemsEditor();
+  renderItemsEditor(); bulkSync();
 }
 function noteInput(el){
   const i=+el.dataset.i; ensureItem(i);
   items[i].note=el.textContent;
 }
-function noteBlur(){ trimItems(); }
+function noteBlur(){ trimItems(); bulkSync(); }
 /* ຊ່ອງລາຍການໃນຕາຕະລາງ: ເລືອກ ຫຼື ພິມ + ລາຄາຂຶ້ນເອງ */
 function rowNameInput(el){
   const i=+el.dataset.i;
@@ -796,13 +801,13 @@ function rowNameBlur(){
     const last=items[items.length-1];
     if(!last.name && !last.qty && !last.price && !last.note) items.pop(); else break;
   }
-  renderItemsEditor();
+  renderItemsEditor(); bulkSync();
 }
 
 /* ---------- ບັນຊີລາຍການສິນຄ້າ (ເລືອກ/ພິມ + ລາຄາອັດຕະໂນມັດ) ---------- */
 const DEFAULT_PRODUCTS=[
   {name:'ສະໃບນາງເຕັມ',price:0},
-  {name:'ສະໃບນາງຫັ່ນ',price:0},
+  {name:'ສະໃບນາງຊອຍ',price:0},
   {name:'ໄສ້ຕັນ',price:0},
   {name:'ມຶກກອບ',price:0}
 ];
@@ -818,6 +823,13 @@ function loadProducts(){
       localStorage.setItem('dl_rm_sbn','1');
     }
   }catch(e){ list=list.filter(p=>p.name!=='ສະໃບນາງ'); }
+  // ປ່ຽນຊື່ "ສະໃບນາງຫັ່ນ" → "ສະໃບນາງຊອຍ" ເທື່ອດຽວ (ຮັກສາລາຄາ)
+  try{
+    if(!localStorage.getItem('dl_rn_soi')){
+      list.forEach(p=>{ if(p.name==='ສະໃບນາງຫັ່ນ') p.name='ສະໃບນາງຊອຍ'; });
+      localStorage.setItem('dl_rn_soi','1');
+    }
+  }catch(e){ list.forEach(p=>{ if(p.name==='ສະໃບນາງຫັ່ນ') p.name='ສະໃບນາງຊອຍ'; }); }
   // ເພີ່ມລາຍການພື້ນຖານທີ່ຍັງບໍ່ມີ ໃຫ້ປະກົດສະເໝີ
   DEFAULT_PRODUCTS.forEach(d=>{ if(!list.some(p=>p.name===d.name)) list.push({name:d.name,price:d.price}); });
   return list;
@@ -851,7 +863,7 @@ function updName(i,val,el){
     const pi=el.parentElement.querySelector('.p-price');
     if(pi) pi.value=prod.price;
   }
-  render();
+  render(); bulkSync();
 }
 function addProduct(){
   const n=document.getElementById('new-item-name').value.trim();
@@ -875,6 +887,29 @@ function delProduct(){
 
 /* ---------- ອອກໃບບິນຫຼາຍຮ້ານ (Auto) ---------- */
 let BULK=[], BULK_IDX=0;
+const BULK_KEY='dl_bulk_v1';
+function saveBulk(){ try{ localStorage.setItem(BULK_KEY, JSON.stringify({bills:BULK, idx:BULK_IDX})); }catch(e){} }
+function bulkSync(){ if(BULK.length && BULK[BULK_IDX]){ BULK[BULK_IDX].items = items.map(x=>({...x})); saveBulk(); } }
+function clearBulk(){
+  BULK=[]; BULK_IDX=0;
+  try{ localStorage.removeItem(BULK_KEY); }catch(e){}
+  const bn=document.getElementById('bill-nav'); if(bn) bn.style.display='none';
+  toast('ປິດໂໝດຫຼາຍຮ້ານແລ້ວ');
+}
+function restoreBulk(){
+  try{
+    const raw=localStorage.getItem(BULK_KEY);
+    if(raw){
+      const d=JSON.parse(raw);
+      if(d && Array.isArray(d.bills) && d.bills.length){
+        BULK=d.bills;
+        BULK_IDX=Math.min(Math.max(0, d.idx||0), BULK.length-1);
+        const bn=document.getElementById('bill-nav'); if(bn) bn.style.display='flex';
+        loadBulkBill(BULK_IDX);
+      }
+    }
+  }catch(e){}
+}
 
 function parseBulk(text){
   const rows=[];
@@ -935,7 +970,22 @@ function renderQueue(){
   QUEUE.forEach((r,i)=>{
     h+='<div class="queue-item"><span><b class="qnum">'+(i+1)+'</b> '+escapeHtml(r.shop)+' · '+escapeHtml(r.item)+' · '+fmt(r.qty)+' '+escapeHtml(r.unit||'ຫິ້ວ')+'</span><button title="ລົບ" onclick="rmQueue('+i+')">×</button></div>';
   });
+  h+='<button class="queue-copy" onclick="copyQueueText()">📋 ກັອບປີ້ຂໍ້ຄວາມລາຍການທັງໝົດ</button>';
   box.innerHTML=h;
+}
+function copyQueueText(){
+  if(!QUEUE.length){ toast('ບໍ່ມີລາຍການ'); return; }
+  const text=QUEUE.map((r,i)=>(i+1)+'\t'+r.shop+'\t'+r.item+'\t'+r.qty+'\t'+(r.unit||'ຫິ້ວ')).join('\n');
+  if(navigator.clipboard && navigator.clipboard.writeText){
+    navigator.clipboard.writeText(text).then(()=>toast('ກັອບປີ້ຂໍ້ຄວາມແລ້ວ — Paste ໃສ່ໄດ້ເລີຍ')).catch(()=>fallbackCopyText(text));
+  }else{ fallbackCopyText(text); }
+}
+function fallbackCopyText(text){
+  const ta=document.createElement('textarea');
+  ta.value=text; ta.style.position='fixed'; ta.style.left='-9999px'; ta.style.opacity='0';
+  document.body.appendChild(ta); ta.focus(); ta.select();
+  try{ document.execCommand('copy'); toast('ກັອບປີ້ຂໍ້ຄວາມແລ້ວ'); }catch(e){ toast('ກັອບປີ້ບໍ່ສຳເລັດ'); }
+  document.body.removeChild(ta);
 }
 function rmQueue(i){ QUEUE.splice(i,1); saveQueue(); renderQueue(); }
 function clearQueue(){ QUEUE=[]; saveQueue(); renderQueue(); }
@@ -956,6 +1006,7 @@ function buildBulk(){
   });
   if(added){ saveShops(); populateShops(); }
   BULK_IDX=0;
+  saveBulk();
   const bn=document.getElementById('bill-nav'); if(bn) bn.style.display='flex';
   loadBulkBill(0);
   closeAuto();
@@ -972,13 +1023,15 @@ function loadBulkBill(idx){
   const pos='ໃບທີ '+(idx+1)+'/'+BULK.length+' · '+b.shop;
   const bp=document.getElementById('bill-pos'); if(bp) bp.textContent=pos;
   document.querySelectorAll('#bill-nav button').forEach(btn=>{
-    const isPrev = btn.textContent.indexOf('◀')>=0;
-    btn.disabled = isPrev ? idx<=0 : idx>=BULK.length-1;
+    const t=btn.textContent;
+    if(t.indexOf('◀')>=0) btn.disabled = idx<=0;
+    else if(t.indexOf('▶')>=0) btn.disabled = idx>=BULK.length-1;
   });
 }
 function bulkGo(dir){
   const n=BULK_IDX+dir;
   if(n<0||n>=BULK.length) return;
+  bulkSync();            // ບັນທຶກລາຄາ/ການແກ້ໄຂຂອງໃບປັດຈຸບັນກ່ອນ
   BULK_IDX=n; loadBulkBill(n);
 }
 
@@ -1203,8 +1256,9 @@ function loadData(e){
 
 /* ---------- ເລີ່ມຕົ້ນ ---------- */
 function init(){
-  // ຕັ້ງວັນທີເລີ່ມຕົ້ນ = 28/6/2026 ຕາມຕົ້ນສະບັບ (ປ່ຽນໄດ້)
-  document.getElementById('f-date').value='2026-06-28';
+  // ຕັ້ງວັນທີເລີ່ມຕົ້ນ = ມື້ນີ້ (ປ່ຽນໄດ້)
+  const _t=new Date();
+  document.getElementById('f-date').value=_t.getFullYear()+'-'+String(_t.getMonth()+1).padStart(2,'0')+'-'+String(_t.getDate()).padStart(2,'0');
   ['f-shop','f-doc','f-phone','f-phonenote','f-date','f-qrhead','f-acct']
     .forEach(i=>document.getElementById(i).addEventListener('input',render));
   document.getElementById('f-pad5').addEventListener('change',render);
@@ -1213,7 +1267,7 @@ function init(){
   renderItemsEditor();
   renderQueue();
   render();
-  setupSwipe();
+  restoreBulk();
 }
 function setupSwipe(){
   const node=document.getElementById('receipt');
