@@ -14,6 +14,7 @@
     --ink:#1a1a1a;
     --line:#222;
     --brand:#c8102e;        /* LAPNet/LAO QR red */
+    --topbar:#f57c00;       /* ສີສົ້ມ ແຖບເທິງ */
     --brand-dark:#9a0c23;
     --panel:#f4f5f7;
     --panel-line:#dfe3e8;
@@ -33,7 +34,7 @@
   }
   /* ---------- Layout ---------- */
   .topbar{
-    background:var(--brand);
+    background:var(--topbar);
     color:#fff;
     padding:14px 18px;
     display:flex;align-items:center;justify-content:space-between;gap:12px;
@@ -50,8 +51,8 @@
     background:rgba(255,255,255,.16);color:#fff;transition:.15s;
   }
   button.act:hover{background:rgba(255,255,255,.28)}
-  button.act.primary{background:#fff;color:var(--brand)}
-  button.act.primary:hover{background:#ffe7eb}
+  button.act.primary{background:#fff;color:var(--topbar)}
+  button.act.primary:hover{background:#fff1e0}
   button.act:focus-visible,button:focus-visible,input:focus-visible{outline:3px solid #ffd166;outline-offset:2px}
 
   .wrap{
@@ -164,6 +165,15 @@
   .r-line .lbl{font-weight:600}
   .r-line .note{color:#333}
   .r-cust{display:flex;justify-content:space-between;gap:14px;font-size:16px;margin:8px 0 4px;flex-wrap:wrap}
+  .r-cust-sel{
+    font-family:inherit;font-size:16px;font-weight:600;color:#111;
+    border:none;background:transparent;margin:0;padding:1px 20px 1px 3px;cursor:pointer;
+    -webkit-appearance:none;appearance:none;max-width:340px;
+    border-bottom:1px dashed var(--topbar);
+    background-image:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%23f57c00' stroke-width='3' stroke-linecap='round' stroke-linejoin='round'><polyline points='6 9 12 15 18 9'/></svg>");
+    background-repeat:no-repeat;background-position:right 3px center;
+  }
+  .r-cust-sel:focus{outline:2px solid var(--topbar);outline-offset:2px;border-radius:4px}
   .r-cust b{font-weight:700}
 
   table.r-tab{width:100%;border-collapse:collapse;margin-top:6px;font-size:18px}
@@ -171,6 +181,9 @@
   table.r-tab th{font-weight:700;background:#fafafa;font-size:17px}
   table.r-tab td{font-weight:600;font-size:19px}
   table.r-tab td.it{text-align:left}
+  table.r-tab td.ce{cursor:text}
+  table.r-tab td.ce:empty::after{content:"";color:#bbb}
+  table.r-tab td.ce:focus{outline:2px solid var(--topbar);outline-offset:-2px;background:#fff8f0}
   table.r-tab td.num{text-align:right}
   table.r-tab .total-row td{font-weight:800;font-size:20px}
   table.r-tab .total-lbl{text-align:left;font-weight:800}
@@ -203,6 +216,7 @@
     .wrap{display:block;padding:0;max-width:none}
     .preview-col{gap:0}
     #receipt{box-shadow:none;border:2px solid #000;width:100%;max-width:100%}
+    .r-cust-sel{border-bottom:none !important;background-image:none !important;padding-right:3px !important}
     @page{margin:10mm}
   }
 </style>
@@ -210,18 +224,9 @@
 <body>
 
 <div class="topbar">
-  <div>
-    <h1 id="bar-title">ໂປແກມອອກໃບບິນ — ຮ້ານ D&L</h1>
-    <div class="sub">ກອກຂໍ້ມູນເບື້ອງຊ້າຍ ໃບບິນຈະອັບເດດທັນທີ · ໃຊ້ໄດ້ມືຖື & ຄອມ</div>
-  </div>
   <div class="actions">
     <button class="act primary" onclick="copyImage()">📋 ກັອບປີ້ໃບບິນ</button>
     <button class="act" onclick="downloadImage()">📷 ດາວໂຫລດຮູບ</button>
-    <button class="act" onclick="saveData()">💾 ບັນທຶກຂໍ້ມູນ</button>
-    <label class="act" style="display:inline-flex;align-items:center">📂 ໂຫລດ
-      <input type="file" accept="application/json" onchange="loadData(event)" style="display:none">
-    </label>
-    <button class="act" onclick="window.print()">🖨️ ພິມ / PDF</button>
   </div>
 </div>
 
@@ -341,7 +346,7 @@
           <div class="r-line"><span class="lbl">ເບີໂທ:</span> <span id="p-phone"></span> <span class="note" id="p-phonenote"></span></div>
           <div class="r-line"><span class="lbl">ວັນເດືອນປີ:</span> <span id="p-date"></span></div>
           <div class="r-cust">
-            <span><b>ຊື່ຮ້ານ:</b> <span id="p-cust"></span></span>
+            <span><b>ຊື່ຮ້ານ:</b> <select id="r-cust" class="r-cust-sel" onchange="onShopChangeReceipt()"></select></span>
             <span><b>ລະຫັດ</b> <span id="p-code"></span></span>
           </div>
           <div class="tab-wrap">
@@ -484,9 +489,8 @@ function loadShops(){
 }
 function saveShops(){ try{ localStorage.setItem(SHOP_KEY, JSON.stringify(SHOPS)); }catch(e){} }
 
-function populateShops(selectName){
-  const sel=document.getElementById('f-cust');
-  const keep = (selectName!=null) ? selectName : sel.value;
+function fillShopSelect(sel, keep){
+  if(!sel) return;
   sel.innerHTML='';
   SHOPS.forEach(s=>{
     const o=document.createElement('option');
@@ -495,14 +499,26 @@ function populateShops(selectName){
     sel.appendChild(o);
   });
   if(keep && SHOPS.some(s=>s.name===keep)) sel.value=keep;
+}
+function populateShops(selectName){
+  const f=document.getElementById('f-cust');
+  const keep = (selectName!=null) ? selectName : f.value;
+  fillShopSelect(f, keep);
+  fillShopSelect(document.getElementById('r-cust'), keep);
   syncCode();
 }
 function syncCode(){
   const sel=document.getElementById('f-cust');
   const opt=sel.options[sel.selectedIndex];
   document.getElementById('f-code').value = opt ? opt.dataset.code : '';
+  const r=document.getElementById('r-cust');
+  if(r) r.value = sel.value;   // ໃຫ້ໃບບິນ sync ກັບຟອມ
 }
 function onShopChange(){ syncCode(); render(); }
+function onShopChangeReceipt(){
+  document.getElementById('f-cust').value = document.getElementById('r-cust').value;
+  syncCode(); render();
+}
 function addShop(){
   const n=document.getElementById('new-shop-name').value.trim();
   const c=document.getElementById('new-shop-code').value.trim();
@@ -543,6 +559,41 @@ function escapeHtml(s){return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;
 function upd(i,k,v){ items[i][k]= (k==='name')? v : (parseFloat(v)||0); render(); }
 function addItem(){ items.push({name:'',qty:0,price:0}); renderItemsEditor(); render(); }
 function rmItem(i){ items.splice(i,1); if(items.length===0) items.push({name:'',qty:0,price:0}); renderItemsEditor(); render(); }
+
+/* ---------- ພິມໃນຕາຕະລາງໄດ້ໂດຍກົງ (inline edit) ---------- */
+function cellEdit(el){
+  const i=+el.dataset.i, k=el.dataset.k;
+  while(items.length<=i) items.push({name:'',qty:0,price:0});
+  const raw=el.textContent;
+  items[i][k] = (k==='name') ? raw : (parseFloat(raw.replace(/[^\d.]/g,''))||0);
+  const it=items[i], amt=(it.qty||0)*(it.price||0);
+  const tr=el.closest('tr'), amtCell=tr && tr.querySelector('[data-amt]');
+  if(amtCell) amtCell.textContent = amt ? fmt(amt) : '';
+  let total=0; items.forEach(x=>total+=(x.qty||0)*(x.price||0));
+  document.getElementById('p-total').textContent=fmt(total);
+  document.getElementById('p-words').textContent=laoWords(total)+' ກີບ';
+}
+function cellFocus(el){
+  if(el.dataset.k!=='name'){
+    const i=+el.dataset.i; const v=items[i]?items[i][el.dataset.k]:0;
+    el.textContent = v ? String(v) : '';   // ສະແດງເລກດິບ ໃຫ້ແກ້ງ່າຍ
+  }
+  const r=document.createRange(); r.selectNodeContents(el); r.collapse(false);
+  const s=getSelection(); s.removeAllRanges(); s.addRange(r);
+}
+function cellBlur(el){
+  const i=+el.dataset.i, k=el.dataset.k;
+  if(k!=='name'){ const v=items[i]?items[i][k]:0; el.textContent = v ? fmt(v) : ''; }
+  // ຕັດແຖວວ່າງທ້າຍຖິ້ມ ໃຫ້ຂໍ້ມູນສະອາດ ແລ້ວ sync ຟອມລຸ່ມ
+  while(items.length>1){
+    const last=items[items.length-1];
+    if(!last.name && !last.qty && !last.price) items.pop(); else break;
+  }
+  renderItemsEditor();
+}
+function cellKey(e,el){
+  if(e.key==='Enter'){ e.preventDefault(); el.blur(); }
+}
 
 /* ---------- ບັນຊີລາຍການສິນຄ້າ (ເລືອກ/ພິມ + ລາຄາອັດຕະໂນມັດ) ---------- */
 const DEFAULT_PRODUCTS=[{name:'ສະໃບນາງ',price:85000}];
@@ -703,33 +754,29 @@ async function ocrImage(e){
 function render(){
   const g=id=>document.getElementById(id).value;
   document.getElementById('p-shop').textContent=g('f-shop');
-  document.getElementById('bar-title').textContent='ໂປແກມອອກໃບບິນ — '+g('f-shop');
   document.getElementById('p-doc').textContent=g('f-doc');
   document.getElementById('p-phone').textContent=g('f-phone');
   const pn=g('f-phonenote').trim();
   document.getElementById('p-phonenote').textContent= pn? '( '+pn+' )':'';
   document.getElementById('p-date').textContent=laoDate(g('f-date'));
-  document.getElementById('p-cust').textContent=g('f-cust');
+  const rc=document.getElementById('r-cust'); if(rc) rc.value=g('f-cust');
   document.getElementById('p-code').textContent=g('f-code');
   document.getElementById('p-acct').textContent=g('f-acct');
 
-  // ແຖວສິນຄ້າ
+  // ແຖວສິນຄ້າ (ພິມໃນຕາຕະລາງໄດ້ໂດຍກົງ)
   let total=0, html='';
-  items.forEach((it,i)=>{
+  const padOn=document.getElementById('f-pad5').checked;
+  const rowCount = padOn ? Math.max(5, items.length) : items.length;
+  for(let i=0;i<rowCount;i++){
+    const it = items[i] || {name:'',qty:0,price:0};
     const amt=(it.qty||0)*(it.price||0); total+=amt;
     html+=`<tr>
       <td>${i+1}</td>
-      <td class="it">${escapeHtml(it.name)}</td>
-      <td class="num">${it.qty?fmt(it.qty):''}</td>
-      <td class="num">${it.price?fmt(it.price):''}</td>
-      <td class="num">${amt?fmt(amt):''}</td>
+      <td class="it ce" contenteditable="true" data-i="${i}" data-k="name" oninput="cellEdit(this)" onfocus="cellFocus(this)" onblur="cellBlur(this)" onkeydown="cellKey(event,this)">${escapeHtml(it.name)}</td>
+      <td class="num ce" contenteditable="true" data-i="${i}" data-k="qty" oninput="cellEdit(this)" onfocus="cellFocus(this)" onblur="cellBlur(this)" onkeydown="cellKey(event,this)">${it.qty?fmt(it.qty):''}</td>
+      <td class="num ce" contenteditable="true" data-i="${i}" data-k="price" oninput="cellEdit(this)" onfocus="cellFocus(this)" onblur="cellBlur(this)" onkeydown="cellKey(event,this)">${it.price?fmt(it.price):''}</td>
+      <td class="num" data-amt="${i}">${amt?fmt(amt):''}</td>
       <td></td></tr>`;
-  });
-  // ເຕີມແຖວວ່າງໃຫ້ຄົບ 5
-  if(document.getElementById('f-pad5').checked){
-    for(let i=items.length;i<5;i++){
-      html+=`<tr><td>${i+1}</td><td></td><td></td><td></td><td></td><td></td></tr>`;
-    }
   }
   document.getElementById('p-rows').innerHTML=html;
   document.getElementById('p-total').textContent=fmt(total);
@@ -775,6 +822,16 @@ function toast(msg){
 }
 
 /* ---------- ກັອບປີ້ໃບບິນເປັນຮູບໃສ່ clipboard ---------- */
+/* ---------- ແທນ select ດ້ວຍຕົວໜັງສືສະອາດ ຕອນຖ່າຍຮູບ ---------- */
+function cloneFix(doc){
+  const sel=doc.getElementById('r-cust');
+  if(sel && sel.parentNode){
+    const span=doc.createElement('span');
+    span.textContent=sel.value;
+    span.style.fontWeight='600';
+    sel.parentNode.replaceChild(span, sel);
+  }
+}
 async function copyImage(){
   const node=document.getElementById('receipt');
   if(typeof html2canvas==='undefined'){
@@ -785,7 +842,7 @@ async function copyImage(){
   try{
     if(supportsClipImg){
       // ໃຊ້ Promise ໃນ ClipboardItem ເພື່ອຮັກສາ user-gesture (ໃຊ້ໄດ້ Chrome/Safari)
-      const blobPromise = html2canvas(node,{scale:2,backgroundColor:'#ffffff',useCORS:true})
+      const blobPromise = html2canvas(node,{scale:2,backgroundColor:'#ffffff',useCORS:true,onclone:cloneFix})
         .then(canvas=>new Promise(res=>canvas.toBlob(res,'image/png')));
       await navigator.clipboard.write([new ClipboardItem({'image/png':blobPromise})]);
       toast('ກັອບປີ້ໃບບິນແລ້ວ — ກົດ Paste ໃສ່ແອັບໄດ້ເລີຍ');
@@ -795,7 +852,7 @@ async function copyImage(){
   }catch(err){
     // ສຳຮອງ: ລອງວິທີກົງ ຫຼື ດາວໂຫລດແທນ
     try{
-      const canvas=await html2canvas(node,{scale:2,backgroundColor:'#ffffff',useCORS:true});
+      const canvas=await html2canvas(node,{scale:2,backgroundColor:'#ffffff',useCORS:true,onclone:cloneFix});
       const blob=await new Promise(res=>canvas.toBlob(res,'image/png'));
       if(supportsClipImg){
         await navigator.clipboard.write([new ClipboardItem({'image/png':blob})]);
@@ -819,7 +876,7 @@ function downloadImage(){
     alert('ດາວໂຫລດຮູບຕ້ອງຕໍ່ອິນເຕີເນັດ. ລອງໃຊ້ປຸ່ມ “ພິມ / PDF” ແທນກໍໄດ້.');
     return;
   }
-  html2canvas(node,{scale:2,backgroundColor:'#ffffff',useCORS:true}).then(canvas=>{
+  html2canvas(node,{scale:2,backgroundColor:'#ffffff',useCORS:true,onclone:cloneFix}).then(canvas=>{
     const a=document.createElement('a');
     a.download='ໃບບິນ-'+(document.getElementById('f-cust').value||'D&L')+'.png';
     a.href=canvas.toDataURL('image/png');
