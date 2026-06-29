@@ -86,6 +86,20 @@
   }
   .auto-launch:hover{background:var(--brand-dark)}
   .al-sub{font-size:12.5px;font-weight:400;opacity:.92}
+  /* ປ໋ອບອັບໃສ່ລາຄາ */
+  .price-modal{position:fixed;inset:0;z-index:400;background:rgba(0,0,0,.45);display:flex;align-items:center;justify-content:center;padding:20px}
+  .pm-card{position:relative;background:#fff;border-radius:16px;padding:22px 20px 18px;width:100%;max-width:360px;box-shadow:0 12px 40px rgba(0,0,0,.3);text-align:center}
+  .pm-x{position:absolute;top:10px;right:10px;border:none;background:#f0f0f0;color:#555;width:34px;height:34px;border-radius:8px;font-size:16px;cursor:pointer}
+  .pm-x:hover{background:#e2e2e2}
+  .pm-title{font-size:19px;font-weight:800;color:var(--brand);margin-bottom:6px}
+  .pm-name{font-size:17px;font-weight:600;color:var(--ink);margin-bottom:3px;word-break:break-word}
+  .pm-shop{font-size:14px;color:var(--brand);font-weight:700;margin-bottom:14px}
+  .pm-input{width:100%;box-sizing:border-box;font-family:inherit;font-size:20px;text-align:center;background:var(--field);border:2px solid var(--field-line);border-radius:10px;padding:13px;margin-bottom:12px}
+  .pm-input:focus{outline:none;border-color:var(--brand)}
+  .pm-save{width:100%;font-family:inherit;font-size:17px;font-weight:700;border:none;border-radius:11px;padding:14px;cursor:pointer;background:var(--army);color:#fff}
+  .pm-save:hover{background:var(--army-dark)}
+  .pm-hint{font-size:12px;color:var(--muted);margin-top:10px;line-height:1.5}
+  #nm-note{text-align:left;font-size:16px;resize:vertical;line-height:1.5}
   /* ໜ້າ Auto ເຕັມຈໍ */
   .auto-page{
     position:fixed;inset:0;z-index:300;background:#f4f5f7;overflow-y:auto;
@@ -142,6 +156,12 @@
   .queue-clear:hover{background:var(--brand);color:#fff}
   .queue-item{display:flex;align-items:center;justify-content:space-between;gap:8px;background:#f4f6f8;border:1px solid var(--panel-line);border-radius:7px;padding:6px 9px;margin-bottom:5px;font-size:13px}
   .queue-item button{border:none;background:transparent;color:var(--brand);font-size:17px;line-height:1;cursor:pointer;padding:0 2px}
+  .q-pricebtn{font-size:13px !important;padding:2px 8px !important;border-radius:6px !important;background:#eef3e6 !important;font-family:inherit}
+  .q-notebtn{font-size:13px !important;padding:2px 8px !important;border-radius:6px !important;background:#eef0f5 !important;font-family:inherit}
+  .q-price{color:#4b5320;font-weight:700}
+  .q-noprice{color:var(--brand);font-weight:700}
+  .q-note{color:#3a4a6b;font-weight:600}
+  .q-nonote{color:#7a8aa5;font-weight:600}
   .queue-copy{width:100%;margin-top:8px;font-family:inherit;font-size:15px;font-weight:700;border:none;border-radius:10px;padding:13px;cursor:pointer;background:var(--army);color:#fff}
   .queue-copy:hover{background:var(--army-dark)}
   .qnum{display:inline-block;min-width:20px;text-align:center;background:var(--topbar);color:#fff;border-radius:5px;font-size:11.5px;font-weight:700;padding:1px 5px;margin-right:5px}
@@ -268,7 +288,8 @@
   table.r-tab th, table.r-tab td{border:1.5px solid var(--line);padding:8px 9px;text-align:center;color:#000}
   table.r-tab th{font-weight:700;background:#fafafa;font-size:17px}
   table.r-tab td{font-weight:600;font-size:19px}
-  table.r-tab td.it{text-align:left}
+  table.r-tab td.it{text-align:left;font-size:17px;cursor:text;vertical-align:top}
+  table.r-tab td.it:focus{outline:2px solid var(--topbar);outline-offset:-2px;background:#fff8f0}
   table.r-tab td.ce{cursor:text}
   table.r-tab td.ce:focus{outline:2px solid var(--topbar);outline-offset:-2px;background:#fff8f0}
   table.r-tab td.note-cell{text-align:left;font-size:14px;font-weight:400;cursor:text;vertical-align:top}
@@ -277,12 +298,14 @@
   .cell-in:focus{outline:2px solid var(--topbar);outline-offset:1px;border-radius:3px;background:#fff8f0}
   .qtywrap{display:inline-flex;align-items:baseline;justify-content:center;gap:4px}
   .unit-txt{font-size:16px;font-weight:600;color:#000}
-  .qty-in{width:46px;border:none;background:transparent;color:#000;font-family:inherit;font-size:19px;font-weight:600;text-align:right;padding:0;margin:0}
+  .qty-in{width:50px;border:none;background:transparent;color:#000;font-family:inherit;font-size:18px;font-weight:600;text-align:right;padding:0;margin:0}
   .qty-in:focus{outline:2px solid var(--topbar);outline-offset:1px;border-radius:3px;background:#fff8f0}
   .unit-sel{border:none;background:transparent;color:#000;font-family:inherit;font-size:15px;font-weight:600;-webkit-appearance:none;appearance:none;padding:0 1px;cursor:pointer;border-bottom:1px dashed var(--topbar)}
   .unit-sel:focus{outline:2px solid var(--topbar);border-radius:3px}
   .unit-ed{font-family:inherit;font-size:13px;background:var(--field);border:1px solid var(--field-line);border-radius:7px;padding:7px 4px}
   table.r-tab td.num{text-align:right}
+  table.r-tab td.num{white-space:nowrap;padding-left:4px;padding-right:5px;font-size:17px}
+  table.r-tab .ord{padding-left:2px;padding-right:2px}
   table.r-tab .total-row td{font-weight:800;font-size:20px}
   table.r-tab .total-lbl{text-align:left;font-weight:800}
 
@@ -369,6 +392,30 @@
     </details>
 
     <button class="ap-gen-big" onclick="buildBulk()">⚡ ສ້າງໃບບິນທັງໝົດ</button>
+  </div>
+</div>
+
+<div id="price-modal" class="price-modal" style="display:none">
+  <div class="pm-card">
+    <button class="pm-x" onclick="closePriceModal()" aria-label="ປິດ">✕</button>
+    <div class="pm-title">💰 ໃສ່ລາຄາ</div>
+    <div class="pm-name" id="pm-name"></div>
+    <div class="pm-shop" id="pm-shop"></div>
+    <input id="pm-price" class="pm-input" type="number" inputmode="numeric" placeholder="ລາຄາ (ກີບ)" onkeydown="if(event.key==='Enter')savePriceModal()">
+    <button class="pm-save" onclick="savePriceModal()">ບັນທຶກລາຄາ</button>
+    <div class="pm-hint">ບໍ່ໃສ່ກໍໄດ້ — ກົດ ✕ ແລ້ວໄປພິມລາຄາໃນໃບບິນກໍໄດ້</div>
+  </div>
+</div>
+
+<div id="note-modal" class="price-modal" style="display:none">
+  <div class="pm-card">
+    <button class="pm-x" onclick="closeNoteModal()" aria-label="ປິດ">✕</button>
+    <div class="pm-title">📝 ໝາຍເຫດ</div>
+    <div class="pm-name" id="nm-name"></div>
+    <div class="pm-shop" id="nm-shop"></div>
+    <textarea id="nm-note" class="pm-input" rows="3" placeholder="ພິມໝາຍເຫດ (ສະແດງສະເພາະໃນຮູບລາຍການ ບໍ່ໃນໃບບິນ)"></textarea>
+    <button class="pm-save" onclick="saveNoteModal()">ບັນທຶກໝາຍເຫດ</button>
+    <div class="pm-hint">ໝາຍເຫດນີ້ຈະບໍ່ສະແດງໃນໃບຮັບເງິນ — ສະແດງສະເພາະຕອນ “ກັອບປີ້ລາຍການເປັນຮູບ”</div>
   </div>
 </div>
 
@@ -486,12 +533,12 @@
           <table class="r-tab">
             <thead>
               <tr>
-                <th style="width:8%">ລຳ<br>ດັບ</th>
-                <th style="width:24%">ລາຍການ</th>
-                <th style="width:16%">ຈຳນວນ<br>Kg&ຫິ້ວ</th>
-                <th style="width:16%">ລາຄາ<br>Kg&ຫິ້ວ</th>
-                <th style="width:19%">ຈຳນວນເງິນ</th>
-                <th style="width:17%">ໝາຍເຫດ</th>
+                <th style="width:6%" class="ord">ລຳ<br>ດັບ</th>
+                <th style="width:30%">ລາຍການ</th>
+                <th style="width:15%">ຈຳນວນ</th>
+                <th style="width:15%">ລາຄາ</th>
+                <th style="width:20%">ຈຳນວນເງິນ</th>
+                <th style="width:14%">ໝາຍເຫດ</th>
               </tr>
             </thead>
             <tbody id="p-rows"></tbody>
@@ -781,9 +828,9 @@ function noteBlur(){ trimItems(); bulkSync(); }
 function rowNameInput(el){
   const i=+el.dataset.i;
   while(items.length<=i) items.push({name:'',qty:0,price:0});
-  items[i].name=el.value;
+  items[i].name=el.textContent;
   const tr=el.closest('tr');
-  const prod=PRODUCTS.find(p=>p.name===el.value.trim());
+  const prod=PRODUCTS.find(p=>p.name===el.textContent.trim());
   if(prod){
     items[i].price=prod.price;
     const pc=tr && tr.querySelector('[data-k="price"]');
@@ -947,6 +994,42 @@ function loadQueue(){
   return [];
 }
 function saveQueue(){ try{ localStorage.setItem(QUEUE_KEY, JSON.stringify(QUEUE)); }catch(e){} }
+let _pmIdx=-1;
+function showPricePopup(idx){
+  const r=QUEUE[idx]; if(!r) return;
+  _pmIdx=idx;
+  document.getElementById('pm-name').textContent=r.item;
+  document.getElementById('pm-shop').textContent='ຮ້ານ: '+r.shop;
+  const cur = (r.price && r.price>0) ? r.price : (priceOf(r.item)>0 ? priceOf(r.item) : '');
+  document.getElementById('pm-price').value = cur;
+  document.getElementById('price-modal').style.display='flex';
+  setTimeout(()=>{ const p=document.getElementById('pm-price'); p.focus(); p.select && p.select(); },60);
+}
+function closePriceModal(){ document.getElementById('price-modal').style.display='none'; _pmIdx=-1; }
+let _nmIdx=-1;
+function showNotePopup(idx){
+  const r=QUEUE[idx]; if(!r) return;
+  _nmIdx=idx;
+  document.getElementById('nm-name').textContent=r.item;
+  document.getElementById('nm-shop').textContent='ຮ້ານ: '+r.shop;
+  document.getElementById('nm-note').value=r.note||'';
+  document.getElementById('note-modal').style.display='flex';
+  setTimeout(()=>document.getElementById('nm-note').focus(),60);
+}
+function closeNoteModal(){ document.getElementById('note-modal').style.display='none'; _nmIdx=-1; }
+function saveNoteModal(){
+  if(_nmIdx>=0 && QUEUE[_nmIdx]){ QUEUE[_nmIdx].note=document.getElementById('nm-note').value.trim(); saveQueue(); renderQueue(); }
+  closeNoteModal();
+}
+function savePriceModal(){
+  const pr=parseFloat((document.getElementById('pm-price').value||'').replace(/[^\d.]/g,''))||0;
+  if(_pmIdx>=0 && QUEUE[_pmIdx]){
+    QUEUE[_pmIdx].price = pr>0 ? pr : 0;
+    saveQueue(); renderQueue();
+    if(pr>0) toast('ໃສ່ລາຄາ '+fmt(pr)+' ກີບ ສຳລັບ '+QUEUE[_pmIdx].shop);
+  }
+  closePriceModal();
+}
 function addQueue(){
   const shop=document.getElementById('qa-shop').value;
   const item=document.getElementById('qa-item').value.trim();
@@ -955,20 +1038,23 @@ function addQueue(){
   if(!item){ toast('ເລືອກ ຫຼື ພິມ ລາຍການ'); return; }
   if(!qty){ toast('ໃສ່ຈຳນວນ'); return; }
   const unit=document.getElementById('qa-unit').value||'ຫິ້ວ';
-  QUEUE.push({shop,item,qty,unit});
+  QUEUE.push({shop,item,qty,unit,price:0});
   saveQueue();
   document.getElementById('qa-item').value='';
   document.getElementById('qa-qty').value='';
   document.getElementById('qa-item').focus();
   renderQueue();
   toast('ເພີ່ມແລ້ວ ('+QUEUE.length+' ລາຍການລໍຖ້າ)');
+  showPricePopup(QUEUE.length-1);
 }
 function renderQueue(){
   const box=document.getElementById('queue-list');
   if(!QUEUE.length){ box.innerHTML=''; return; }
   let h='<div class="queue-head">ລໍຖ້າສ້າງ: '+QUEUE.length+' ລາຍການ <button class="queue-clear" onclick="clearQueue()">ລ້າງທັງໝົດ</button></div>';
   QUEUE.forEach((r,i)=>{
-    h+='<div class="queue-item"><span><b class="qnum">'+(i+1)+'</b> '+escapeHtml(r.shop)+' · '+escapeHtml(r.item)+' · '+fmt(r.qty)+' '+escapeHtml(r.unit||'ຫິ້ວ')+'</span><button title="ລົບ" onclick="rmQueue('+i+')">×</button></div>';
+    const priceTxt = (r.price&&r.price>0) ? '<span class="q-price">'+fmt(r.price)+' ກີບ</span>' : '<span class="q-noprice">ໃສ່ລາຄາ</span>';
+    const noteTxt = (r.note&&r.note.trim()) ? '<span class="q-note">📝 '+escapeHtml(r.note)+'</span>' : '<span class="q-nonote">ໃສ່ໝາຍເຫດ</span>';
+    h+='<div class="queue-item"><span><b class="qnum">'+(i+1)+'</b> '+escapeHtml(r.shop)+' · '+escapeHtml(r.item)+' · '+fmt(r.qty)+' '+escapeHtml(r.unit||'ຫິ້ວ')+' · <button class="q-pricebtn" onclick="showPricePopup('+i+')">'+priceTxt+'</button> <button class="q-notebtn" onclick="showNotePopup('+i+')">'+noteTxt+'</button></span><button title="ລົບ" onclick="rmQueue('+i+')">×</button></div>';
   });
   h+='<button class="queue-copy" onclick="copyQueueImage()">🖼️ ກັອບປີ້ລາຍການເປັນຮູບ</button>';
   box.innerHTML=h;
@@ -977,15 +1063,15 @@ async function copyQueueImage(){
   if(!QUEUE.length){ toast('ບໍ່ມີລາຍການ'); return; }
   if(typeof html2canvas==='undefined'){ toast('ການສ້າງຮູບຕ້ອງຕໍ່ເນັດ'); return; }
   const wrap=document.createElement('div');
-  wrap.style.cssText="position:fixed;left:-9999px;top:0;width:600px;background:#fff;padding:22px;font-family:'Noto Sans Lao',sans-serif;color:#111";
+  wrap.style.cssText="position:fixed;left:-9999px;top:0;width:760px;background:#fff;padding:22px;font-family:'Noto Sans Lao',sans-serif;color:#111";
   const dstr=(document.getElementById('p-date')||{}).textContent||'';
   let html='<div style="font-size:22px;font-weight:800;color:#c8102e;text-align:center">ລາຍການອໍເດີ</div>';
   if(dstr) html+='<div style="text-align:center;font-size:15px;color:#444;margin:2px 0 12px">'+escapeHtml(dstr)+'</div>';
-  html+='<table style="width:100%;border-collapse:collapse;font-size:17px">';
-  html+='<tr style="background:#f57c00;color:#fff;font-weight:700"><td style="padding:9px;border:1px solid #e0a060;text-align:center;width:42px">ລຳ</td><td style="padding:9px;border:1px solid #e0a060">ຮ້ານ</td><td style="padding:9px;border:1px solid #e0a060">ລາຍການ</td><td style="padding:9px;border:1px solid #e0a060;text-align:center;width:110px">ຈຳນວນ</td></tr>';
+  html+='<table style="width:100%;border-collapse:collapse;font-size:16px">';
+  html+='<tr style="background:#f57c00;color:#fff;font-weight:700"><td style="padding:9px;border:1px solid #e0a060;text-align:center;width:38px">ລຳ</td><td style="padding:9px;border:1px solid #e0a060">ຮ້ານ</td><td style="padding:9px;border:1px solid #e0a060">ລາຍການ</td><td style="padding:9px;border:1px solid #e0a060;text-align:center;width:100px">ຈຳນວນ</td><td style="padding:9px;border:1px solid #e0a060">ໝາຍເຫດ</td></tr>';
   QUEUE.forEach((r,i)=>{
     const bg=i%2? '#fff6ef':'#ffffff';
-    html+='<tr style="background:'+bg+'"><td style="padding:9px;border:1px solid #eedcc8;text-align:center;font-weight:700">'+(i+1)+'</td><td style="padding:9px;border:1px solid #eedcc8">'+escapeHtml(r.shop)+'</td><td style="padding:9px;border:1px solid #eedcc8">'+escapeHtml(r.item)+'</td><td style="padding:9px;border:1px solid #eedcc8;text-align:center;white-space:nowrap">'+fmt(r.qty)+' '+escapeHtml(r.unit||'ຫິ້ວ')+'</td></tr>';
+    html+='<tr style="background:'+bg+'"><td style="padding:9px;border:1px solid #eedcc8;text-align:center;font-weight:700">'+(i+1)+'</td><td style="padding:9px;border:1px solid #eedcc8">'+escapeHtml(r.shop)+'</td><td style="padding:9px;border:1px solid #eedcc8">'+escapeHtml(r.item)+'</td><td style="padding:9px;border:1px solid #eedcc8;text-align:center;white-space:nowrap">'+fmt(r.qty)+' '+escapeHtml(r.unit||'ຫິ້ວ')+'</td><td style="padding:9px;border:1px solid #eedcc8">'+escapeHtml(r.note||'')+'</td></tr>';
   });
   html+='</table>';
   wrap.innerHTML=html;
@@ -1026,7 +1112,7 @@ function buildBulk(){
     const g=MERGE_GROUPS.find(gr=>gr.shops.includes(r.shop));
     if(g){ shopName=g.name; itemName=r.shop.replace(/^ໂຕໝູ\s*/,''); }  // ໃສ່ແຕ່ຊື່ສາຂາ
     if(!map.has(shopName)) map.set(shopName,[]);
-    map.get(shopName).push({name:itemName, qty:r.qty, price:priceOf(r.item), unit:r.unit||'ຫິ້ວ'});
+    map.get(shopName).push({name:itemName, qty:r.qty, price:(r.price&&r.price>0)?r.price:priceOf(r.item), unit:r.unit||'ຫິ້ວ'});
   });
   BULK=[...map.entries()].map(([shop,items])=>({shop,items}));
   // ເພີ່ມຮ້ານທີ່ບໍ່ມີໃນລະບົບ ໃຫ້ເລືອກໄດ້ (ຮ້ານລວມໃຊ້ລະຫັດທີ່ກຳນົດ)
@@ -1117,8 +1203,8 @@ function render(){
     const it = items[i] || {name:'',qty:0,price:0};
     const amt=(it.qty||0)*(it.price||0); total+=amt;
     html+=`<tr>
-      <td>${i+1}</td>
-      <td class="it"><input class="cell-in" list="product-list" value="${escapeAttr(it.name)}" data-i="${i}" oninput="rowNameInput(this)" onblur="rowNameBlur(this)"></td>
+      <td class="ord">${i+1}</td>
+      <td class="it" contenteditable="true" data-i="${i}" oninput="rowNameInput(this)" onblur="rowNameBlur(this)" onkeydown="cellKey(event,this)">${escapeHtml(it.name)}</td>
       <td class="num"><span class="qtywrap"><input class="qty-in" type="text" inputmode="decimal" value="${it.qty?fmt(it.qty):''}" data-i="${i}" oninput="qtyInput(this)" onfocus="qtyFocus(this)" onblur="qtyBlur(this)"><span class="unit-txt">${it.qty?escapeHtml(it.unit||'ຫິ້ວ'):''}</span></span></td>
       <td class="num ce" contenteditable="true" data-i="${i}" data-k="price" oninput="cellEdit(this)" onfocus="cellFocus(this)" onblur="cellBlur(this)" onkeydown="cellKey(event,this)">${it.price?fmt(it.price):''}</td>
       <td class="num" data-amt="${i}">${amt?fmt(amt):''}</td>
