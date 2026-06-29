@@ -205,7 +205,7 @@
 
   /* ---------- Receipt preview ---------- */
   .preview-col{display:flex;flex-direction:column;align-items:center;gap:10px}
-  .scaler{width:100%;display:flex;justify-content:center}
+  .scaler{width:100%;overflow-x:auto;-webkit-overflow-scrolling:touch}
   .bill-nav{
     position:sticky;top:64px;z-index:40;
     width:100%;max-width:680px;display:flex;align-items:center;justify-content:space-between;gap:10px;
@@ -219,14 +219,14 @@
   .bill-nav button:disabled{opacity:.4;cursor:default}
   #bill-pos{flex:1;text-align:center;font-size:13.5px;font-weight:700}
   #receipt{
-    background:var(--paper);width:680px;max-width:100%;
+    background:var(--paper);width:680px;margin:0 auto;
     border:2px solid var(--line);box-shadow:var(--shadow);
     padding:0;color:#111;
   }
   #receipt .pad{padding:18px 20px}
   .r-title{font-size:21px;font-weight:700;margin:0}
   .r-sub{font-size:22px;font-weight:700;text-decoration:underline;margin:2px 0 10px;text-align:center}
-  .tab-wrap{position:relative}
+  .tab-wrap{position:relative;overflow:hidden}
   .watermark{
     position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;
     pointer-events:none;z-index:3;user-select:none;font-weight:800;line-height:1.05;
