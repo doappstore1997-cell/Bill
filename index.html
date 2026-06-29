@@ -988,6 +988,14 @@ function codeOf(shop){
   return s?s.code:'';
 }
 const QUEUE_KEY='dl_queue_v1';
+/* ຈື່ລາຄາລ່າສຸດ ຕໍ່ ຮ້ານ+ລາຍການ */
+const PRICEMEM_KEY='dl_pricemem_v1';
+let PRICE_MEM=loadPriceMem();
+function loadPriceMem(){ try{ const raw=localStorage.getItem(PRICEMEM_KEY); if(raw){ const o=JSON.parse(raw); if(o&&typeof o==='object') return o; } }catch(e){} return {}; }
+function savePriceMem(){ try{ localStorage.setItem(PRICEMEM_KEY, JSON.stringify(PRICE_MEM)); }catch(e){} }
+function pmKey(shop,item){ return (shop||'').trim()+'\u241F'+(item||'').trim(); }
+function rememberPrice(shop,item,price){ if(price>0){ PRICE_MEM[pmKey(shop,item)]=price; savePriceMem(); } }
+function recallPrice(shop,item){ const v=PRICE_MEM[pmKey(shop,item)]; return (v&&v>0)?v:0; }
 let QUEUE=loadQueue();
 function loadQueue(){
   try{ const raw=localStorage.getItem(QUEUE_KEY); if(raw){ const a=JSON.parse(raw); if(Array.isArray(a)) return a; } }catch(e){}
@@ -1000,7 +1008,7 @@ function showPricePopup(idx){
   _pmIdx=idx;
   document.getElementById('pm-name').textContent=r.item;
   document.getElementById('pm-shop').textContent='ຮ້ານ: '+r.shop;
-  const cur = (r.price && r.price>0) ? r.price : (priceOf(r.item)>0 ? priceOf(r.item) : '');
+  const cur = (r.price && r.price>0) ? r.price : (recallPrice(r.shop,r.item) || (priceOf(r.item)>0 ? priceOf(r.item) : ''));
   document.getElementById('pm-price').value = cur;
   document.getElementById('price-modal').style.display='flex';
   setTimeout(()=>{ const p=document.getElementById('pm-price'); p.focus(); p.select && p.select(); },60);
@@ -1025,6 +1033,7 @@ function savePriceModal(){
   const pr=parseFloat((document.getElementById('pm-price').value||'').replace(/[^\d.]/g,''))||0;
   if(_pmIdx>=0 && QUEUE[_pmIdx]){
     QUEUE[_pmIdx].price = pr>0 ? pr : 0;
+    if(pr>0) rememberPrice(QUEUE[_pmIdx].shop, QUEUE[_pmIdx].item, pr);
     saveQueue(); renderQueue();
     if(pr>0) toast('ໃສ່ລາຄາ '+fmt(pr)+' ກີບ ສຳລັບ '+QUEUE[_pmIdx].shop);
   }
@@ -1038,7 +1047,7 @@ function addQueue(){
   if(!item){ toast('ເລືອກ ຫຼື ພິມ ລາຍການ'); return; }
   if(!qty){ toast('ໃສ່ຈຳນວນ'); return; }
   const unit=document.getElementById('qa-unit').value||'ຫິ້ວ';
-  QUEUE.push({shop,item,qty,unit,price:0});
+  QUEUE.push({shop,item,qty,unit,price:recallPrice(shop,item),note:''});
   saveQueue();
   document.getElementById('qa-item').value='';
   document.getElementById('qa-qty').value='';
@@ -1112,7 +1121,7 @@ function buildBulk(){
     const g=MERGE_GROUPS.find(gr=>gr.shops.includes(r.shop));
     if(g){ shopName=g.name; itemName=r.shop.replace(/^ໂຕໝູ\s*/,''); }  // ໃສ່ແຕ່ຊື່ສາຂາ
     if(!map.has(shopName)) map.set(shopName,[]);
-    map.get(shopName).push({name:itemName, qty:r.qty, price:(r.price&&r.price>0)?r.price:priceOf(r.item), unit:r.unit||'ຫິ້ວ'});
+    map.get(shopName).push({name:itemName, qty:r.qty, price:(r.price&&r.price>0)?r.price:(recallPrice(r.shop,r.item)||priceOf(r.item)), unit:r.unit||'ຫິ້ວ'});
   });
   BULK=[...map.entries()].map(([shop,items])=>({shop,items}));
   // ເພີ່ມຮ້ານທີ່ບໍ່ມີໃນລະບົບ ໃຫ້ເລືອກໄດ້ (ຮ້ານລວມໃຊ້ລະຫັດທີ່ກຳນົດ)
