@@ -970,22 +970,43 @@ function renderQueue(){
   QUEUE.forEach((r,i)=>{
     h+='<div class="queue-item"><span><b class="qnum">'+(i+1)+'</b> '+escapeHtml(r.shop)+' · '+escapeHtml(r.item)+' · '+fmt(r.qty)+' '+escapeHtml(r.unit||'ຫິ້ວ')+'</span><button title="ລົບ" onclick="rmQueue('+i+')">×</button></div>';
   });
-  h+='<button class="queue-copy" onclick="copyQueueText()">📋 ກັອບປີ້ຂໍ້ຄວາມລາຍການທັງໝົດ</button>';
+  h+='<button class="queue-copy" onclick="copyQueueImage()">🖼️ ກັອບປີ້ລາຍການເປັນຮູບ</button>';
   box.innerHTML=h;
 }
-function copyQueueText(){
+async function copyQueueImage(){
   if(!QUEUE.length){ toast('ບໍ່ມີລາຍການ'); return; }
-  const text=QUEUE.map((r,i)=>(i+1)+'\t'+r.shop+'\t'+r.item+'\t'+r.qty+'\t'+(r.unit||'ຫິ້ວ')).join('\n');
-  if(navigator.clipboard && navigator.clipboard.writeText){
-    navigator.clipboard.writeText(text).then(()=>toast('ກັອບປີ້ຂໍ້ຄວາມແລ້ວ — Paste ໃສ່ໄດ້ເລີຍ')).catch(()=>fallbackCopyText(text));
-  }else{ fallbackCopyText(text); }
-}
-function fallbackCopyText(text){
-  const ta=document.createElement('textarea');
-  ta.value=text; ta.style.position='fixed'; ta.style.left='-9999px'; ta.style.opacity='0';
-  document.body.appendChild(ta); ta.focus(); ta.select();
-  try{ document.execCommand('copy'); toast('ກັອບປີ້ຂໍ້ຄວາມແລ້ວ'); }catch(e){ toast('ກັອບປີ້ບໍ່ສຳເລັດ'); }
-  document.body.removeChild(ta);
+  if(typeof html2canvas==='undefined'){ toast('ການສ້າງຮູບຕ້ອງຕໍ່ເນັດ'); return; }
+  const wrap=document.createElement('div');
+  wrap.style.cssText="position:fixed;left:-9999px;top:0;width:600px;background:#fff;padding:22px;font-family:'Noto Sans Lao',sans-serif;color:#111";
+  const dstr=(document.getElementById('p-date')||{}).textContent||'';
+  let html='<div style="font-size:22px;font-weight:800;color:#c8102e;text-align:center">ລາຍການອໍເດີ</div>';
+  if(dstr) html+='<div style="text-align:center;font-size:15px;color:#444;margin:2px 0 12px">'+escapeHtml(dstr)+'</div>';
+  html+='<table style="width:100%;border-collapse:collapse;font-size:17px">';
+  html+='<tr style="background:#f57c00;color:#fff;font-weight:700"><td style="padding:9px;border:1px solid #e0a060;text-align:center;width:42px">ລຳ</td><td style="padding:9px;border:1px solid #e0a060">ຮ້ານ</td><td style="padding:9px;border:1px solid #e0a060">ລາຍການ</td><td style="padding:9px;border:1px solid #e0a060;text-align:center;width:110px">ຈຳນວນ</td></tr>';
+  QUEUE.forEach((r,i)=>{
+    const bg=i%2? '#fff6ef':'#ffffff';
+    html+='<tr style="background:'+bg+'"><td style="padding:9px;border:1px solid #eedcc8;text-align:center;font-weight:700">'+(i+1)+'</td><td style="padding:9px;border:1px solid #eedcc8">'+escapeHtml(r.shop)+'</td><td style="padding:9px;border:1px solid #eedcc8">'+escapeHtml(r.item)+'</td><td style="padding:9px;border:1px solid #eedcc8;text-align:center;white-space:nowrap">'+fmt(r.qty)+' '+escapeHtml(r.unit||'ຫິ້ວ')+'</td></tr>';
+  });
+  html+='</table>';
+  wrap.innerHTML=html;
+  document.body.appendChild(wrap);
+  try{
+    const canvas=await html2canvas(wrap,{scale:2,backgroundColor:'#ffffff'});
+    let copied=false;
+    if(navigator.clipboard && window.ClipboardItem){
+      try{
+        const blob=await new Promise(res=>canvas.toBlob(res,'image/png'));
+        await navigator.clipboard.write([new ClipboardItem({'image/png':blob})]);
+        copied=true; toast('ກັອບປີ້ຮູບລາຍການແລ້ວ — Paste ໃສ່ໄດ້ເລີຍ');
+      }catch(e){}
+    }
+    if(!copied){
+      const a=document.createElement('a');
+      a.download='ລາຍການອໍເດີ.png'; a.href=canvas.toDataURL('image/png'); a.click();
+      toast('ບັນທຶກຮູບລາຍການແລ້ວ');
+    }
+  }catch(e){ toast('ສ້າງຮູບບໍ່ສຳເລັດ'); }
+  finally{ document.body.removeChild(wrap); }
 }
 function rmQueue(i){ QUEUE.splice(i,1); saveQueue(); renderQueue(); }
 function clearQueue(){ QUEUE=[]; saveQueue(); renderQueue(); }
