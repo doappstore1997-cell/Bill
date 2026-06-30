@@ -1490,9 +1490,7 @@ function buildThermalCanvas(){
     ctx.fillRect(pad,y,W-2*pad,2); y+=14;
     ctx.fillStyle='#000';
     ctx.font="bold 21px 'Noto Sans Lao',sans-serif";
-    t='ສະແກນ QR ເພື່ອຊຳລະ'; ctx.fillText(t,center-ctx.measureText(t).width/2,y); y+=32;
-    ctx.font="bold 18px 'Noto Sans Lao',sans-serif";
-    y=thWrap(ctx,'ຂາຍອາຫານທະເລ (ນາງ ຕາເຫຼັກ ພົມມະວົງ)',center,y,W-2*pad,24,'center')+28;
+    t='ສະແກນ QR ເພື່ອຊຳລະ'; ctx.fillText(t,center-ctx.measureText(t).width/2,y); y+=34;
     if(qrDataUrl===DEFAULT_QR){
       const mod=7, qpx=QR_DEF_N*mod, qx=Math.round(center-qpx/2);
       drawQRMatrix(ctx, QR_DEF_BITS, QR_DEF_N, qx, y, mod);   // ໂມດູນຄົມ ເທົ່າກັນ
@@ -1533,15 +1531,6 @@ function buildThermalCanvas(){
   drawHeart(ctx,scx-sr-22,hy,hs);
   drawHeart(ctx,scx+sr+22,hy,hs);
   y+=sr*2+14;
-  // ❤ ❤ Thank You ❤ ❤ (ແຖວລຸ່ມສຸດໆ)
-  ctx.fillStyle='#000';
-  ctx.font="bold 22px 'Noto Sans Lao',sans-serif";
-  const ty='Thank You', tw=ctx.measureText(ty).width, tcy=y+11;
-  ctx.fillText(ty, center-tw/2, y);
-  const hs2=9, lx=center-tw/2-15, rx=center+tw/2+15;
-  drawHeart(ctx,lx,tcy,hs2); drawHeart(ctx,lx-21,tcy,hs2);
-  drawHeart(ctx,rx,tcy,hs2); drawHeart(ctx,rx+21,tcy,hs2);
-  y+=32;
   const h=Math.ceil(y+pad);
   const fin=document.createElement('canvas'); fin.width=W; fin.height=h;
   const fctx=fin.getContext('2d'); fctx.fillStyle='#fff'; fctx.fillRect(0,0,W,h); fctx.drawImage(tall,0,0);
@@ -1552,7 +1541,7 @@ function canvasToEscpos(canvas){
   const img=canvas.getContext('2d').getImageData(0,0,W,H).data;
   const bpr=Math.ceil(W/8);
   const parts=[ new Uint8Array([0x1B,0x40]) ]; // ESC @ init
-  const band=48; // ພິມເທື່ອລະ band ແຖວ (ນ້ອຍ ເພື່ອບໍ່ໃຫ້ buffer ເຄື່ອງພິມລົ້ນ)
+  const band=128; // ພິມເທື່ອລະ band ແຖວ
   for(let y0=0;y0<H;y0+=band){
     const rows=Math.min(band,H-y0);
     const raster=new Uint8Array(bpr*rows);
@@ -1581,28 +1570,19 @@ async function btPrint(bytes){
   });
   const server=await device.gatt.connect();
   const services=await server.getPrimaryServices();
-  let ch=null, chNoResp=null;
+  let ch=null;
   for(const s of services){
     let chars=[]; try{ chars=await s.getCharacteristics(); }catch(e){ continue; }
-    for(const c of chars){
-      if(c.properties.write){ ch=c; break; }
-      if(c.properties.writeWithoutResponse && !chNoResp) chNoResp=c;
-    }
+    for(const c of chars){ if(c.properties.write||c.properties.writeWithoutResponse){ ch=c; break; } }
     if(ch) break;
   }
-  if(!ch) ch=chNoResp;
   if(!ch) throw new Error('no-writable-characteristic');
-  // ສົ່ງແບບລໍຄຳຕອບ (ເຊື່ອຖືໄດ້ ບໍ່ຕົກ byte) ຖ້າຮອງຮັບ; ບໍ່ດັ່ງນັ້ນ ສົ່ງແບບໄວ + ຖ່ວງເວລາ
-  const canResp = !!ch.properties.write && !!ch.writeValue;
-  const chunk = canResp ? 200 : 120;
+  const useNoResp = ch.properties.writeWithoutResponse && ch.writeValueWithoutResponse;
+  const chunk=180;
   for(let i=0;i<bytes.length;i+=chunk){
     const slice=bytes.slice(i,i+chunk);
-    if(canResp){
-      await ch.writeValue(slice);
-    }else{
-      await ch.writeValueWithoutResponse(slice);
-      await new Promise(r=>setTimeout(r,28));
-    }
+    if(useNoResp) await ch.writeValueWithoutResponse(slice); else await ch.writeValue(slice);
+    await new Promise(r=>setTimeout(r,18));
   }
   try{ server.disconnect(); }catch(e){}
 }
