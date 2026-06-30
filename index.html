@@ -634,6 +634,8 @@ const DEFAULT_QR="data:image/jpeg;base64,/9j/4AAQSkZJRgABAQAAAQABAAD/2wBDAAYEBAU
 let qrDataUrl=DEFAULT_QR;
 const qrPrintImg=new Image();
 qrPrintImg.src=qrDataUrl;
+const QR_DEF_N=41;
+const QR_DEF_BITS="1111111000100110010110111110100110111111110000010000010110011010111110111001000001101110101011011111110100011011110010111011011101001110111111111000001101000101110110111010011111101110101100011010001011101100000100100101111011100110101111010000011111111010101010101010101010101010111111100000000101001010111000011010100000000000111011111101001010100010101011010110001000101010011100110110101000001110011011000011011111101110110011000001100101100010101101100001101111001110011110010100111110010111101110011010101010100110100000010011100100000000110111111110011010110010101011111100110001100110111010110010001010011010011110101001000100011110101010001000000111110110110101010001100111001100011000001010110000101100100101010110111011000011101100001000001101010000111011001000100000000000101110000011001001100000110100001010000100101100000100010101000011011001010011001010100110101000100000101100000100101010011111010001000110001000001001101100101101010010111000101110010111011001010001100111011010000010100010011011110100110110100001000111011010111011111000111101100000111011101100001010111010000011110111101000100110100010110011001010001000110010010011111110011010111010101000010100101000101001001011001101110111000001101001111000101010001010111011101110011011111100101010101110001101010001000101001000110100100010100110101011110100011011100110101111110000000000010100010101100000000011110001111011111110101101001100010111111010101011111100000101011100100010000010110011000111111011101011000001000000001100100011111110010111010001100010001000100001110000000010101110101110011001100000000010101101101011000001010110101010100011100111011010110011111110100010101010000010110101110010101";
 
 /* ---------- ລະບົບຮ້ານ (ເລືອກ / ເພີ່ມ / ລົບ) ---------- */
 const DEFAULT_SHOPS=[
@@ -1405,6 +1407,14 @@ function drawHeart(ctx,cx,cy,s){
   ctx.closePath();
   ctx.fill();
 }
+function drawQRMatrix(ctx, bits, n, x, y, mod){
+  ctx.fillStyle='#000';
+  for(let r=0;r<n;r++){
+    for(let c=0;c<n;c++){
+      if(bits.charCodeAt(r*n+c)===49) ctx.fillRect(x+c*mod, y+r*mod, mod, mod);
+    }
+  }
+}
 function thWrap(ctx,text,x,y,maxW,lh,align){
   text=(text==null?'':String(text));
   let line='', lines=[];
@@ -1475,29 +1485,36 @@ function buildThermalCanvas(){
   // ໂຕອ່ານ (ຕົວໜັງສືລາວ)
   ctx.font="bold 19px 'Noto Sans Lao',sans-serif";
   y=thWrap(ctx,'('+laoWords(total)+' ກີບ)',center,y,W-2*pad,26,'center')+16;
-  // QR ຊຳລະເງິນ ຢູ່ລຸ່ມສຸດ — ຕັດເອົາສະເພາະ QR ພິມໃຫຍ່ ມີຂອບຂາວ
-  if(qrDataUrl && qrPrintImg.complete && qrPrintImg.naturalWidth>0){
+  // QR ຊຳລະເງິນ — ສ້າງ QR ໃໝ່ໃຫ້ຄົມ (default) ຫຼື ຂະຫຍາຍຮູບ (custom)
+  if(qrDataUrl){
     ctx.fillRect(pad,y,W-2*pad,2); y+=14;
     ctx.fillStyle='#000';
     ctx.font="bold 21px 'Noto Sans Lao',sans-serif";
     t='ສະແກນ QR ເພື່ອຊຳລະ'; ctx.fillText(t,center-ctx.measureText(t).width/2,y); y+=34;
-    // ແຫຼ່ງຕັດ: ຖ້າເປັນ QR ກາດເດີມ ໃຫ້ຕັດເອົາສະເພາະຮູບ QR
-    let sx=0,sy=0,sw=qrPrintImg.naturalWidth,sh=qrPrintImg.naturalHeight;
-    if(qrDataUrl===DEFAULT_QR){ sx=116; sy=166; sw=286; sh=286; }
-    const qd=300, qx=Math.round(center-qd/2), qy=y;
-    // ພື້ນຂາວ quiet zone
-    ctx.fillStyle='#fff'; ctx.fillRect(qx-18,qy-10,qd+36,qd+20); ctx.fillStyle='#000';
-    ctx.drawImage(qrPrintImg, sx,sy,sw,sh, qx,qy,qd,qd);
-    // ເຮັດ QR ໃຫ້ຄົມ ດຳ/ຂາວ ຊັດ
-    try{
-      const id=ctx.getImageData(qx,qy,qd,qd), d=id.data;
-      for(let p=0;p<d.length;p+=4){
-        const l=d[p]*0.299+d[p+1]*0.587+d[p+2]*0.114;
-        const v=l<128?0:255; d[p]=d[p+1]=d[p+2]=v; d[p+3]=255;
-      }
-      ctx.putImageData(id,qx,qy);
-    }catch(e){}
-    y+=qd+16;
+    if(qrDataUrl===DEFAULT_QR){
+      const mod=7, qpx=QR_DEF_N*mod, qx=Math.round(center-qpx/2);
+      drawQRMatrix(ctx, QR_DEF_BITS, QR_DEF_N, qx, y, mod);   // ໂມດູນຄົມ ເທົ່າກັນ
+      y+=qpx+30;
+    } else if(qrPrintImg.complete && qrPrintImg.naturalWidth>0){
+      const qd=320, qx=Math.round(center-qd/2), qy=y;
+      ctx.fillStyle='#fff'; ctx.fillRect(qx-20,qy-12,qd+40,qd+24); ctx.fillStyle='#000';
+      ctx.imageSmoothingEnabled=false;
+      ctx.drawImage(qrPrintImg, qx,qy,qd,qd);
+      ctx.imageSmoothingEnabled=true;
+      try{
+        const id=ctx.getImageData(qx,qy,qd,qd), d=id.data;
+        for(let p=0;p<d.length;p+=4){
+          const l=d[p]*0.299+d[p+1]*0.587+d[p+2]*0.114;
+          const v=l<128?0:255; d[p]=d[p+1]=d[p+2]=v; d[p+3]=255;
+        }
+        ctx.putImageData(id,qx,qy);
+      }catch(e){}
+      y+=qd+18;
+    }
+    // ເລກບັນຊີ ກ້ອງ QR
+    ctx.fillStyle='#000';
+    ctx.font="bold 26px 'Noto Sans Lao',sans-serif";
+    t='1041232330133'; ctx.fillText(t,center-ctx.measureText(t).width/2,y); y+=34;
   }
   // ແຖວລຸ່ມສຸດ
   ctx.fillStyle='#000';
