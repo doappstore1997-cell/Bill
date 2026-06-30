@@ -1475,32 +1475,35 @@ function buildThermalCanvas(){
   // ໂຕອ່ານ (ຕົວໜັງສືລາວ)
   ctx.font="bold 19px 'Noto Sans Lao',sans-serif";
   y=thWrap(ctx,'('+laoWords(total)+' ກີບ)',center,y,W-2*pad,26,'center')+16;
-  // QR ຊຳລະເງິນ ຢູ່ລຸ່ມສຸດ
+  // QR ຊຳລະເງິນ ຢູ່ລຸ່ມສຸດ — ຕັດເອົາສະເພາະ QR ພິມໃຫຍ່ ມີຂອບຂາວ
   if(qrDataUrl && qrPrintImg.complete && qrPrintImg.naturalWidth>0){
     ctx.fillRect(pad,y,W-2*pad,2); y+=14;
+    ctx.fillStyle='#000';
     ctx.font="bold 21px 'Noto Sans Lao',sans-serif";
-    t='ສະແກນ QR ເພື່ອຊຳລະ'; ctx.fillText(t,center-ctx.measureText(t).width/2,y); y+=32;
-    const qw=W-2*pad;
-    const qh=qrPrintImg.naturalHeight*(qw/qrPrintImg.naturalWidth);
-    ctx.drawImage(qrPrintImg,pad,y,qw,qh);
-    // ເຮັດ QR ໃຫ້ຄົມ ດຳ/ຂາວ ຊັດ ສະແກນງ່າຍ
+    t='ສະແກນ QR ເພື່ອຊຳລະ'; ctx.fillText(t,center-ctx.measureText(t).width/2,y); y+=34;
+    // ແຫຼ່ງຕັດ: ຖ້າເປັນ QR ກາດເດີມ ໃຫ້ຕັດເອົາສະເພາະຮູບ QR
+    let sx=0,sy=0,sw=qrPrintImg.naturalWidth,sh=qrPrintImg.naturalHeight;
+    if(qrDataUrl===DEFAULT_QR){ sx=116; sy=166; sw=286; sh=286; }
+    const qd=300, qx=Math.round(center-qd/2), qy=y;
+    // ພື້ນຂາວ quiet zone
+    ctx.fillStyle='#fff'; ctx.fillRect(qx-18,qy-10,qd+36,qd+20); ctx.fillStyle='#000';
+    ctx.drawImage(qrPrintImg, sx,sy,sw,sh, qx,qy,qd,qd);
+    // ເຮັດ QR ໃຫ້ຄົມ ດຳ/ຂາວ ຊັດ
     try{
-      const ix=pad, iy=Math.floor(y), iw=Math.ceil(qw), ih=Math.ceil(qh);
-      const id=ctx.getImageData(ix,iy,iw,ih), d=id.data;
+      const id=ctx.getImageData(qx,qy,qd,qd), d=id.data;
       for(let p=0;p<d.length;p+=4){
         const l=d[p]*0.299+d[p+1]*0.587+d[p+2]*0.114;
-        const v=l<135?0:255; d[p]=d[p+1]=d[p+2]=v; d[p+3]=255;
+        const v=l<128?0:255; d[p]=d[p+1]=d[p+2]=v; d[p+3]=255;
       }
-      ctx.putImageData(id,ix,iy);
+      ctx.putImageData(id,qx,qy);
     }catch(e){}
-    y+=qh+14;
+    y+=qd+16;
   }
-  // 3 ແຖວລຸ່ມສຸດ
+  // ແຖວລຸ່ມສຸດ
   ctx.fillStyle='#000';
   ctx.font="bold 21px 'Noto Sans Lao',sans-serif";
-  let f1='ຂາຍດີ ເຮັງໆ ລວຍໆ'; ctx.fillText(f1,center-ctx.measureText(f1).width/2,y); y+=32;
-  let f2='ລູກຄ້າຍິ້ມ'; ctx.fillText(f2,center-ctx.measureText(f2).width/2,y); y+=36;
-  // ❤️ ໜ້າຍິ້ມ ❤️ (ແຖວ 3)
+  let f1='ຂາຍດີ ເຮັງໆ ລວຍໆ'; ctx.fillText(f1,center-ctx.measureText(f1).width/2,y); y+=36;
+  // ❤️ ໜ້າຍິ້ມ ❤️
   const sr=24, scx=center, scy=y+sr;
   ctx.lineWidth=3; ctx.strokeStyle='#000'; ctx.fillStyle='#000';
   ctx.beginPath(); ctx.arc(scx,scy,sr,0,Math.PI*2); ctx.stroke();
