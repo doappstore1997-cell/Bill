@@ -1411,17 +1411,16 @@ function buildThermalCanvas(){
   ctx.font="bold 30px 'Noto Sans Lao',sans-serif";
   let t='ຮ້ານ D&L'; ctx.fillText(t,center-ctx.measureText(t).width/2,y); y+=40;
   ctx.font="bold 24px 'Noto Sans Lao',sans-serif";
-  t=document.getElementById('f-doc').value||'ໃບຮັບເງິນ'; ctx.fillText(t,center-ctx.measureText(t).width/2,y); y+=36;
+  t='ໃບຮັບເຄື່ອງ'; ctx.fillText(t,center-ctx.measureText(t).width/2,y); y+=36;
   ctx.fillRect(pad,y,W-2*pad,2); y+=12;
   // ວັນທີ
   ctx.font="20px 'Noto Sans Lao',sans-serif";
   const dateStr=(document.getElementById('p-date')||{}).textContent||'';
   y=thWrap(ctx,dateStr,pad,y,W-2*pad,26,'left')+4;
-  // ຊື່ຮ້ານ + ລະຫັດ
+  // ຊື່ຮ້ານ (ບໍ່ໃສ່ລະຫັດ)
   const cust=document.getElementById('f-cust').value||'';
-  const code=document.getElementById('f-code').value||'';
   ctx.font="bold 22px 'Noto Sans Lao',sans-serif";
-  y=thWrap(ctx,'ຮ້ານ: '+cust+(code?(' ('+code+')'):''),pad,y,W-2*pad,28,'left')+8;
+  y=thWrap(ctx,'ຮ້ານ: '+cust,pad,y,W-2*pad,28,'left')+8;
   ctx.fillRect(pad,y,W-2*pad,2); y+=10;
   // ຫົວຕາຕະລາງ
   const noX=pad, itemX=44, itemMaxW=116, qtyC=238;
