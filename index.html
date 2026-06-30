@@ -1424,25 +1424,30 @@ function buildThermalCanvas(){
   y=thWrap(ctx,'ຮ້ານ: '+cust+(code?(' ('+code+')'):''),pad,y,W-2*pad,28,'left')+8;
   ctx.fillRect(pad,y,W-2*pad,2); y+=10;
   // ຫົວຕາຕະລາງ
-  const qtyC=232;
+  const noX=pad, itemX=44, itemMaxW=116, qtyC=238;
   ctx.font="bold 19px 'Noto Sans Lao',sans-serif";
-  ctx.fillText('ລາຍການ',pad,y);
+  ctx.fillText('No',noX,y);
+  ctx.fillText('ລາຍການ',itemX,y);
   t='ຈຳນວນ'; ctx.fillText(t,qtyC-ctx.measureText(t).width/2,y);
   t='ເປັນເງິນ'; ctx.fillText(t,right-ctx.measureText(t).width,y);
-  y+=28; ctx.fillRect(pad,y-2,W-2*pad,1); y+=4;
+  y+=28; ctx.fillRect(pad,y-2,W-2*pad,2); y+=6;
   // ລາຍການ
-  ctx.font="20px 'Noto Sans Lao',sans-serif";
-  let total=0;
+  let total=0, n=0;
   const list=items.filter(it=>(it.name&&it.name.trim())||it.qty||it.price);
   list.forEach(it=>{
+    n++;
     const amt=(it.qty||0)*(it.price||0); total+=amt;
     const startY=y;
-    const afterItem=thWrap(ctx,it.name||'',pad,y,150,26,'left');
+    ctx.font="bold 20px 'Noto Sans Lao',sans-serif";
+    ctx.fillText(String(n),noX,startY);
+    const afterItem=thWrap(ctx,it.name||'',itemX,y,itemMaxW,26,'left');
+    ctx.font="bold 19px 'Noto Sans Lao',sans-serif";
     const qtyT=it.qty?(fmt(it.qty)+' '+(it.unit||'ຫິ້ວ')):'';
     if(qtyT) ctx.fillText(qtyT,qtyC-ctx.measureText(qtyT).width/2,startY);
+    ctx.font="bold 20px 'Noto Sans Lao',sans-serif";
     const amtT=amt?fmt(amt):'';
     if(amtT) ctx.fillText(amtT,right-ctx.measureText(amtT).width,startY);
-    y=Math.max(afterItem,startY+26)+6;
+    y=Math.max(afterItem,startY+26)+7;
   });
   ctx.fillRect(pad,y,W-2*pad,2); y+=12;
   ctx.font="bold 24px 'Noto Sans Lao',sans-serif";
@@ -1465,7 +1470,7 @@ function canvasToEscpos(canvas){
       for(let xx=0;xx<W;xx++){
         const idx=((y0+yy)*W+xx)*4;
         const lum=img[idx]*0.299+img[idx+1]*0.587+img[idx+2]*0.114;
-        if(img[idx+3]>128 && lum<128) raster[yy*bpr+(xx>>3)] |= (0x80>>(xx&7));
+        if(img[idx+3]>128 && lum<165) raster[yy*bpr+(xx>>3)] |= (0x80>>(xx&7));
       }
     }
     parts.push(new Uint8Array([0x1D,0x76,0x30,0x00, bpr&0xff,(bpr>>8)&0xff, rows&0xff,(rows>>8)&0xff]));
