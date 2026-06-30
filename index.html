@@ -1490,7 +1490,9 @@ function buildThermalCanvas(){
     ctx.fillRect(pad,y,W-2*pad,2); y+=14;
     ctx.fillStyle='#000';
     ctx.font="bold 21px 'Noto Sans Lao',sans-serif";
-    t='ສະແກນ QR ເພື່ອຊຳລະ'; ctx.fillText(t,center-ctx.measureText(t).width/2,y); y+=34;
+    t='ສະແກນ QR ເພື່ອຊຳລະ'; ctx.fillText(t,center-ctx.measureText(t).width/2,y); y+=32;
+    ctx.font="bold 18px 'Noto Sans Lao',sans-serif";
+    y=thWrap(ctx,'ຂາຍອາຫານທະເລ (ນາງ ຕາເຫຼັກ ພົມມະວົງ)',center,y,W-2*pad,24,'center')+28;
     if(qrDataUrl===DEFAULT_QR){
       const mod=7, qpx=QR_DEF_N*mod, qx=Math.round(center-qpx/2);
       drawQRMatrix(ctx, QR_DEF_BITS, QR_DEF_N, qx, y, mod);   // ໂມດູນຄົມ ເທົ່າກັນ
@@ -1531,6 +1533,15 @@ function buildThermalCanvas(){
   drawHeart(ctx,scx-sr-22,hy,hs);
   drawHeart(ctx,scx+sr+22,hy,hs);
   y+=sr*2+14;
+  // ❤ ❤ Thank You ❤ ❤ (ແຖວລຸ່ມສຸດໆ)
+  ctx.fillStyle='#000';
+  ctx.font="bold 22px 'Noto Sans Lao',sans-serif";
+  const ty='Thank You', tw=ctx.measureText(ty).width, tcy=y+11;
+  ctx.fillText(ty, center-tw/2, y);
+  const hs2=9, lx=center-tw/2-15, rx=center+tw/2+15;
+  drawHeart(ctx,lx,tcy,hs2); drawHeart(ctx,lx-21,tcy,hs2);
+  drawHeart(ctx,rx,tcy,hs2); drawHeart(ctx,rx+21,tcy,hs2);
+  y+=32;
   const h=Math.ceil(y+pad);
   const fin=document.createElement('canvas'); fin.width=W; fin.height=h;
   const fctx=fin.getContext('2d'); fctx.fillStyle='#fff'; fctx.fillRect(0,0,W,h); fctx.drawImage(tall,0,0);
