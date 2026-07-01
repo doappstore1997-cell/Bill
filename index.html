@@ -423,6 +423,7 @@
       <img id="print-preview-img" style="width:100%;display:block" alt="ຕົວຢ່າງໃບບິນ">
     </div>
     <button class="pm-save" onclick="doPrint()">🖨️ ພິມຜ່ານ Bluetooth (ສົ່ງເປັນຮູບ)</button>
+    <button class="pm-save" style="background:#0a7d4d;margin-top:8px" onclick="shareBillImage()">📤 ແຊຣ໌/ບັນທຶກຮູບໃບບິນ (ພິມຈາກແອັບເຄື່ອງພິມ)</button>
     <button class="pm-save" style="background:#6b7280;margin-top:8px;font-size:14px" onclick="printPng()">📄 ເປີດໜ້າພິມ (ຮູບ) → ຄົ້ນຫາ Bluetooth / ລະບົບ</button>
     <div class="pm-hint">ກົດ “ພິມຜ່ານ Bluetooth” → ເລືອກເຄື່ອງພິມ 58mm → ໃບບິນຖືກສົ່ງເປັນ**ຮູບ (bitmap) ບໍ່ແມ່ນຂໍ້ຄວາມ** ຈຶ່ງອອກຄົບທຸກພາສາ.<br>ຫຼື ກົດ “ເປີດໜ້າພິມ” → ໃນໜ້ານັ້ນມີປຸ່ມ **🔍 ຄົ້ນຫາ &amp; ພິມຜ່ານ Bluetooth** ໃຫ້ກົດ ແລ້ວເລືອກເຄື່ອງພິມ (ສົ່ງເປັນຮູບຄືກັນ). ສົ່ງຊ້າໜ້ອຍ — ຢ່າຫ່າງເຄື່ອງພິມຈົນຈົບ</div>
   </div>
@@ -1447,7 +1448,7 @@ function thWrap(ctx,text,x,y,maxW,lh,align){
   return y+lines.length*lh;
 }
 function buildThermalCanvas(){
-  const W=384, pad=10;
+  const W=384, pad=4;
   const tall=document.createElement('canvas'); tall.width=W; tall.height=6000;
   const ctx=tall.getContext('2d');
   ctx.textBaseline='top'; ctx.fillStyle='#000';
@@ -1604,6 +1605,7 @@ async function btPrint(segs){
   if(!ch) throw new Error('no-writable-characteristic');
   if(typeof toast==='function') toast('ກຳລັງສົ່ງຮູບໄປພິມ... ຢ່າຫ່າງເຄື່ອງພິມ');
   const canResp = !!ch.properties.write && !!ch.writeValue;
+  if(typeof toast==='function') toast(canResp?'ກຳລັງສົ່ງຮູບ (ໂໝດໝັ້ນຄົງ)...':'ກຳລັງສົ່ງຮູບ (ໂໝດໄວ ອາດຕົກ byte)...');
   const sleep=ms=>new Promise(r=>setTimeout(r,ms));
   const sub = canResp?180:20;   // ບໍ່ລໍຄຳຕອບ → packet 20 byte (ພໍດີ MTU ຕໍ່າສຸດ) ກັນ byte ຕົກ
   for(const seg of segs){
@@ -1672,6 +1674,26 @@ function printPng(){
   const canvas=_printCanvas; if(!canvas){ closePrintModal(); return; }
   closePrintModal();
   thermalPrintFallback(canvas);
+}
+function shareBillImage(){
+  const canvas=_printCanvas; if(!canvas){ toast('ກົດ “ພິມໃບບິນ” ກ່ອນ'); return; }
+  const name='ໃບບິນ-'+((document.getElementById('f-cust')||{}).value||'DL')+'.png';
+  canvas.toBlob(async (blob)=>{
+    if(!blob){ toast('ສ້າງຮູບບໍ່ສຳເລັດ'); return; }
+    try{
+      const file=new File([blob], name, {type:'image/png'});
+      if(navigator.canShare && navigator.canShare({files:[file]})){
+        await navigator.share({files:[file], title:'ໃບບິນ D&L'});
+        return; // ຜູ້ໃຊ້ເລືອກແອັບເຄື່ອງພິມເອງ
+      }
+    }catch(e){ if(e && e.name==='AbortError') return; }
+    // ສຳຮອງ: ດາວໂຫລດຮູບ ໃຫ້ໄປເປີດໃນແອັບເຄື່ອງພິມ/ແກລເລີ
+    try{
+      const a=document.createElement('a');
+      a.download=name; a.href=canvas.toDataURL('image/png'); a.click();
+      toast('ບັນທຶກຮູບແລ້ວ — ເປີດໃນແອັບເຄື່ອງພິມ ຫຼື ແກລເລີ ເພື່ອສັ່ງພິມ');
+    }catch(e2){ toast('ບັນທຶກຮູບບໍ່ສຳເລັດ'); }
+  }, 'image/png');
 }
 async function doPrint(){
   const canvas=_printCanvas;
