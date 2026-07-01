@@ -422,9 +422,9 @@
     <div style="max-height:58vh;overflow:auto;border:1px solid #ddd;border-radius:8px;margin:8px 0;background:#fff">
       <img id="print-preview-img" style="width:100%;display:block" alt="ຕົວຢ່າງໃບບິນ">
     </div>
-    <button class="pm-save" onclick="printPng()">🖨️ ພິມໃບບິນ (ຮູບ)</button>
-    <button class="pm-save" style="background:#6b7280;margin-top:8px;font-size:14px" onclick="doPrint()">ລອງພິມຜ່ານ Bluetooth ໂດຍກົງ</button>
-    <div class="pm-hint">ພິມແບບ “ຮູບ” ຈະແປງໃບບິນເປັນຮູບກ່ອນ ແລ້ວສັ່ງພິມຜ່ານລະບົບ/ແອັບເຄື່ອງພິມ — ບໍ່ມີບັນຫາ font ພາສາລາວ</div>
+    <button class="pm-save" onclick="doPrint()">🖨️ ພິມຜ່ານ Bluetooth (ຮູບ)</button>
+    <button class="pm-save" style="background:#6b7280;margin-top:8px;font-size:14px" onclick="printPng()">📄 ພິມຜ່ານລະບົບ (PNG) — ສຳຮອງ</button>
+    <div class="pm-hint">ກົດ “ພິມຜ່ານ Bluetooth (ຮູບ)” → ເລືອກເຄື່ອງພິມ 58MBII → ສົ່ງໃບບິນເປັນ**ຮູບ**ໄປພິມ (ອອກຄົບທຸກພາສາ ບໍ່ error font). ຖ້າຍັງມົ້ວ ໃຫ້ລອງ “ພິມຜ່ານລະບົບ (PNG)”</div>
   </div>
 </div>
 
@@ -1607,14 +1607,14 @@ async function btPrint(segs){
   if(!ch) throw new Error('no-writable-characteristic');
   const canResp = !!ch.properties.write && !!ch.writeValue;
   const sleep=ms=>new Promise(r=>setTimeout(r,ms));
-  const sub = canResp?200:40;   // ບໍ່ລໍຄຳຕອບ → packet ນ້ອຍ ກັນ byte ຕົກ
+  const sub = canResp?180:100;  // packet; ບໍ່ລໍຄຳຕອບ → ນ້ອຍລົງ ກັນ byte ຕົກ
   for(const seg of segs){
     for(let i=0;i<seg.length;i+=sub){
       const slice=seg.slice(i,i+sub);
       if(canResp){ await ch.writeValue(slice); }
-      else { await ch.writeValueWithoutResponse(slice); await sleep(12); }
+      else { await ch.writeValueWithoutResponse(slice); await sleep(8); }
     }
-    await sleep(120); // ພັກ ໃຫ້ເຄື່ອງພິມພິມ band ນີ້ໃຫ້ທັນ ກ່ອນສົ່ງຕໍ່
+    await sleep(180); // ພັກໃຫ້ເຄື່ອງພິມພິມ band ນີ້ໃຫ້ຈົບກ່ອນ (ກັນ buffer ລົ້ນ = ຕົວມົ້ວ)
   }
   try{ server.disconnect(); }catch(e){}
 }
