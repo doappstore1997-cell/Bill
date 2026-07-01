@@ -1495,7 +1495,10 @@ function buildThermalCanvas(){
   });
   ctx.fillRect(pad,y,W-2*pad,2); y+=12;
   ctx.font="bold 24px 'Noto Sans Lao',sans-serif";
-  t='ລວມ: '+fmt(total)+' ກີບ'; ctx.fillText(t,right-ctx.measureText(t).width,y); y+=40;
+  t='ລວມ: '+fmt(total)+' ກີບ'; ctx.fillText(t,right-ctx.measureText(t).width,y); y+=34;
+  // ໂຕອ່ານ (ຕົວໜັງສືລາວ)
+  ctx.font="bold 19px 'Noto Sans Lao',sans-serif";
+  y=thWrap(ctx,'('+laoWords(total)+' ກີບ)',center,y,W-2*pad,26,'center')+16;
   // QR ຊຳລະເງິນ — ສ້າງ QR ໃໝ່ໃຫ້ຄົມ (default) ຫຼື ຂະຫຍາຍຮູບ (custom)
   if(qrDataUrl){
     ctx.fillRect(pad,y,W-2*pad,2); y+=14;
