@@ -1164,28 +1164,38 @@ function clearQueue(){ QUEUE=[]; saveQueue(); renderQueue(); }
 function buildBulk(){
   const rows=QUEUE.slice().concat(parseBulk(document.getElementById('bulk-input').value));
   if(!rows.length){ toast('ຍັງບໍ່ມີຂໍ້ມູນ — ເພີ່ມລາຍການກ່ອນ ຫຼື ວາງຕາຕະລາງ'); return; }
-  // ກຸ່ມຮ້ານທີ່ໃຫ້ລວມເປັນໃບດຽວ
+  // ໃບຮັບເງິນ (ໜ້າຈໍ) = ລວມ ໂຕໝູ / ໝູນ້ອຍ ເປັນໃບດຽວ; ແຕ່ເກັບຂໍ້ມູນແຕ່ລະສາຂາໄວ້ ໃຫ້ຕອນພິມແຍກໄດ້
   const MERGE_GROUPS=[
-    {shops:['ໂຕໝູ ແຄມຂອງ','ໂຕໝູ ຈອມມະນີ','ໂຕໝູ ໜອງໄຮ'], name:'ໂຕໝູ 3 ສາຂາ', code:'D5,D6,D7', strip:'ໂຕໝູ'},
-    {shops:['ໝູນ້ອຍ ໂພນຕ້ອງ','ໝູນ້ອຍ ໜອງໜ້ຽວ'], name:'ໝູນ້ອຍ 2 ສາຂາ', code:'D4,D40', strip:'ໝູນ້ອຍ'}
+    {name:'ໂຕໝູ 3 ສາຂາ', pre:'ໂຕໝູ', code:'D5,D6,D7'},
+    {name:'ໝູນ້ອຍ 2 ສາຂາ', pre:'ໝູນ້ອຍ', code:'D4,D40'}
   ];
-  // ຈັດກຸ່ມຕາມຮ້ານ (ຮັກສາລຳດັບ)
-  const map=new Map();
+  const map=new Map();  // key -> {group, groupName, items:[], branches:Map(shop->items[])}
   rows.forEach(r=>{
-    let shopName=r.shop, itemName=r.item;
-    const g=MERGE_GROUPS.find(gr=>gr.shops.includes(r.shop));
-    if(g){ shopName=g.name; itemName=(r.shop.startsWith(g.strip)? r.shop.slice(g.strip.length):r.shop).trim(); }  // ໃສ່ແຕ່ຊື່ສາຂາ
-    if(!map.has(shopName)) map.set(shopName,[]);
-    map.get(shopName).push({name:itemName, qty:r.qty, price:(r.price&&r.price>0)?r.price:(recallPrice(r.shop,r.item)||priceOf(r.item)), unit:r.unit||'ຫິ້ວ'});
+    const g=MERGE_GROUPS.find(gr=>String(r.shop).startsWith(gr.pre));
+    const key=g?g.name:r.shop;
+    if(!map.has(key)) map.set(key,{group:!!g, gcode:g?g.code:'', items:[], branches:new Map()});
+    const e=map.get(key);
+    const it={name:r.item, qty:r.qty, price:(r.price&&r.price>0)?r.price:(recallPrice(r.shop,r.item)||priceOf(r.item)), unit:r.unit||'ຫິ້ວ'};
+    if(g){
+      const branch=(r.shop.startsWith(g.pre)?r.shop.slice(g.pre.length):r.shop).trim();
+      // ໜ້າຈໍ (ລວມ): ສະແດງ ສາຂາ · ລາຍການ
+      e.items.push({name:branch+' · '+r.item, qty:r.qty, price:it.price, unit:it.unit});
+      // ເກັບຕົວຈິງແຕ່ລະສາຂາ ໄວ້ພິມແຍກ
+      if(!e.branches.has(r.shop)) e.branches.set(r.shop,[]);
+      e.branches.get(r.shop).push(it);
+    }else{
+      e.items.push(it);
+    }
   });
-  BULK=[...map.entries()].map(([shop,items])=>({shop,items}));
-  // ເພີ່ມຮ້ານທີ່ບໍ່ມີໃນລະບົບ ໃຫ້ເລືອກໄດ້ (ຮ້ານລວມໃຊ້ລະຫັດທີ່ກຳນົດ)
+  BULK=[...map.entries()].map(([shop,e])=>{
+    const o={shop, items:e.items};
+    if(e.group){ o.gcode=e.gcode; o.branches=[...e.branches.entries()].map(([bshop,bitems])=>({shop:bshop, items:bitems})); }
+    return o;
+  });
+  // ເພີ່ມຮ້ານທີ່ບໍ່ມີໃນລະບົບ ໃຫ້ເລືອກໄດ້
   let added=false;
   BULK.forEach(b=>{
-    if(!SHOPS.some(s=>s.name===b.shop)){
-      const g=MERGE_GROUPS.find(gr=>gr.name===b.shop);
-      SHOPS.push({name:b.shop, code:g?g.code:''}); added=true;
-    }
+    if(!SHOPS.some(s=>s.name===b.shop)){ SHOPS.push({name:b.shop, code:b.gcode||''}); added=true; }
   });
   if(added){ saveShops(); populateShops(); }
   BULK_IDX=0;
@@ -1447,7 +1457,35 @@ function thWrap(ctx,text,x,y,maxW,lh,align){
   });
   return y+lines.length*lh;
 }
+function stackCanvases(cvs){
+  const gap=30, W=384;
+  let h=0; cvs.forEach(c=>h+=c.height+gap);
+  const out=document.createElement('canvas'); out.width=W; out.height=Math.max(1,Math.ceil(h));
+  const ctx=out.getContext('2d'); ctx.fillStyle='#fff'; ctx.fillRect(0,0,out.width,out.height);
+  let y=0;
+  cvs.forEach((c,i)=>{
+    ctx.drawImage(c,0,y); y+=c.height;
+    if(i<cvs.length-1){
+      ctx.strokeStyle='#000'; ctx.lineWidth=2; ctx.setLineDash([8,6]);
+      ctx.beginPath(); ctx.moveTo(6,Math.round(y+gap/2)); ctx.lineTo(W-6,Math.round(y+gap/2)); ctx.stroke();
+      ctx.setLineDash([]);
+      ctx.fillStyle='#000'; ctx.font="15px 'Noto Sans Lao',sans-serif"; ctx.textBaseline='middle';
+      ctx.fillText('✂ ຕັດ', 10, Math.round(y+gap/2)); ctx.textBaseline='top';
+    }
+    y+=gap;
+  });
+  return out;
+}
 function buildThermalCanvas(){
+  const bill=(BULK.length && BULK[BULK_IDX])?BULK[BULK_IDX]:null;
+  if(bill && bill.branches && bill.branches.length){
+    // ໃບລວມ (ໂຕໝູ/ໝູນ້ອຍ) → ພິມແຍກແຕ່ລະສາຂາ ຕໍ່ກັນ ມີເສັ້ນຕັດ
+    const cvs=bill.branches.map(b=>buildReceiptCanvas(b.shop, b.items));
+    return stackCanvases(cvs);
+  }
+  return buildReceiptCanvas(document.getElementById('f-cust').value||'', items);
+}
+function buildReceiptCanvas(custArg, listArg){
   const W=384, pad=4;
   const tall=document.createElement('canvas'); tall.width=W; tall.height=6000;
   const ctx=tall.getContext('2d');
@@ -1458,7 +1496,7 @@ function buildThermalCanvas(){
   ctx.font="bold 24px 'Noto Sans Lao',sans-serif";
   t='ໃບຮັບເຄື່ອງ'; ctx.fillText(t,center-ctx.measureText(t).width/2,y); y+=34;
   // ຊື່ຮ້ານ ໃຕ້ຫົວຂໍ້ (ບໍ່ໃສ່ລະຫັດ) — ໃຫຍ່ຂຶ້ນ
-  const cust=document.getElementById('f-cust').value||'';
+  const cust=(custArg!=null)?custArg:(document.getElementById('f-cust').value||'');
   ctx.font="bold 27px 'Noto Sans Lao',sans-serif";
   y=thWrap(ctx,'ຮ້ານ: '+cust,center,y,W-2*pad,33,'center')+6;
   ctx.fillRect(pad,y,W-2*pad,2); y+=12;
@@ -1477,7 +1515,7 @@ function buildThermalCanvas(){
   y+=28; ctx.fillRect(pad,y-2,W-2*pad,2); y+=6;
   // ລາຍການ
   let total=0, n=0;
-  const list=items.filter(it=>(it.name&&it.name.trim())||it.qty||it.price);
+  const list=(listArg||items).filter(it=>(it.name&&it.name.trim())||it.qty||it.price);
   list.forEach(it=>{
     n++;
     const amt=(it.qty||0)*(it.price||0); total+=amt;
