@@ -423,8 +423,8 @@
       <img id="print-preview-img" style="width:100%;display:block" alt="ຕົວຢ່າງໃບບິນ">
     </div>
     <button class="pm-save" onclick="doPrint()">🖨️ ພິມຜ່ານ Bluetooth (ສົ່ງເປັນຮູບ)</button>
-    <button class="pm-save" style="background:#6b7280;margin-top:8px;font-size:14px" onclick="printPng()">📄 ພິມຜ່ານໜ້າພິມ (PNG) — ສຳຮອງ</button>
-    <div class="pm-hint">ກົດ “ພິມຜ່ານ Bluetooth” → ເລືອກເຄື່ອງພິມ 58mm → ໃບບິນຖືກສົ່ງເປັນ**ຮູບ (bitmap) ບໍ່ແມ່ນຂໍ້ຄວາມ** ຈຶ່ງອອກຄົບທຸກພາສາ. ສົ່ງຊ້າໜ້ອຍ (ກັນ byte ຕົກ) — ລໍໃຫ້ພິມຈົບກ່ອນ ຢ່າຫ່າງເຄື່ອງພິມ</div>
+    <button class="pm-save" style="background:#6b7280;margin-top:8px;font-size:14px" onclick="printPng()">📄 ເປີດໜ້າພິມ (ຮູບ) → ຄົ້ນຫາ Bluetooth / ລະບົບ</button>
+    <div class="pm-hint">ກົດ “ພິມຜ່ານ Bluetooth” → ເລືອກເຄື່ອງພິມ 58mm → ໃບບິນຖືກສົ່ງເປັນ**ຮູບ (bitmap) ບໍ່ແມ່ນຂໍ້ຄວາມ** ຈຶ່ງອອກຄົບທຸກພາສາ.<br>ຫຼື ກົດ “ເປີດໜ້າພິມ” → ໃນໜ້ານັ້ນມີປຸ່ມ **🔍 ຄົ້ນຫາ &amp; ພິມຜ່ານ Bluetooth** ໃຫ້ກົດ ແລ້ວເລືອກເຄື່ອງພິມ (ສົ່ງເປັນຮູບຄືກັນ). ສົ່ງຊ້າໜ້ອຍ — ຢ່າຫ່າງເຄື່ອງພິມຈົນຈົບ</div>
   </div>
 </div>
 
@@ -1620,14 +1620,44 @@ async function btPrint(segs){
   await sleep(300); // ລໍໃຫ້ byte ສຸດທ້າຍ flush ອອກ ກ່ອນຕັດການເຊື່ອມຕໍ່
   try{ server.disconnect(); }catch(e){}
 }
+function u8ToB64(u8){ var s=''; var CH=0x8000; for(var i=0;i<u8.length;i+=CH){ s+=String.fromCharCode.apply(null, u8.subarray(i,i+CH)); } return btoa(s); }
 function thermalPrintFallback(canvas){
-  const url=canvas.toDataURL('image/jpeg',0.95);
-  const w=window.open('','_blank');
+  var url=canvas.toDataURL('image/jpeg',0.92);
+  var segsB64='[]';
+  try{ var segs=canvasToBands(canvas); segsB64=JSON.stringify(segs.map(u8ToB64)); }catch(e){}
+  var svc=JSON.stringify([0xFFE0,0xFF00,0x18F0,0xFEE7,'000018f0-0000-1000-8000-00805f9b34fb','0000ffe0-0000-1000-8000-00805f9b34fb','49535343-fe7d-4ae5-8fa9-9fafd205e455']);
+  var w=window.open('','_blank');
   if(!w){ toast('ກະລຸນາອະນຸຍາດ popup ເພື່ອພິມ'); return; }
-  w.document.write('<html><head><meta name="viewport" content="width=device-width"><title>ພິມໃບບິນ</title><style>@page{size:58mm auto;margin:0}*{margin:0;padding:0;box-sizing:border-box}body{font-family:sans-serif;text-align:center}img{width:58mm;display:block;margin:0 auto}.pb{margin:10px auto;padding:12px 22px;font-size:16px;font-weight:700;border:none;border-radius:10px;background:#4b5320;color:#fff}@media print{.pb{display:none}}</style></head><body><button class="pb" onclick="window.print()">🖨️ ພິມ</button><img src="'+url+'"><button class="pb" onclick="window.print()">🖨️ ພິມ</button></body></html>');
+  var doc=''
+    +'<!DOCTYPE html><html><head><meta name="viewport" content="width=device-width,initial-scale=1"><title>ພິມໃບບິນ</title>'
+    +'<style>@page{size:58mm auto;margin:0}*{margin:0;padding:0;box-sizing:border-box}body{font-family:sans-serif;text-align:center;background:#f4f4f4}'
+    +'.bar{position:sticky;top:0;background:#fff;padding:10px;box-shadow:0 2px 6px rgba(0,0,0,.15);z-index:2}'
+    +'.pb{margin:4px;padding:14px 16px;font-size:15px;font-weight:700;border:none;border-radius:11px;color:#fff}'
+    +'.bt{background:#4b5320}.sys{background:#6b7280}#st{font-size:13px;color:#333;padding:8px 6px 2px;min-height:18px}'
+    +'img{width:58mm;max-width:100%;display:block;margin:10px auto;background:#fff}'
+    +'@media print{.bar,#st{display:none}img{width:58mm;margin:0 auto}}</style></head><body>'
+    +'<div class="bar"><button class="pb bt" onclick="btPrint()">🔍 ຄົ້ນຫາ &amp; ພິມຜ່ານ Bluetooth</button>'
+    +'<button class="pb sys" onclick="window.print()">🖨️ ພິມຜ່ານລະບົບ</button><div id="st">ກົດ “ຄົ້ນຫາ &amp; ພິມຜ່ານ Bluetooth” ເພື່ອເລືອກເຄື່ອງພິມ 58mm</div></div>'
+    +'<img src="'+url+'">'
+    +'<scr'+'ipt>'
+    +'var SVC='+svc+';'
+    +'var SEGS='+segsB64+'.map(function(s){var b=atob(s);var u=new Uint8Array(b.length);for(var i=0;i<b.length;i++)u[i]=b.charCodeAt(i);return u;});'
+    +'function setSt(t){document.getElementById("st").textContent=t;}'
+    +'async function btPrint(){try{'
+    +'if(!navigator.bluetooth){setSt("ບຣາວເຊີນີ້ບໍ່ຮອງຮັບ Bluetooth — ໃຫ້ໃຊ້ Chrome ໃນ Android");return;}'
+    +'setSt("ກຳລັງຄົ້ນຫາເຄື່ອງພິມ...");'
+    +'var device=await navigator.bluetooth.requestDevice({acceptAllDevices:true,optionalServices:SVC});'
+    +'var server=await device.gatt.connect();var services=await server.getPrimaryServices();var ch=null,chn=null;'
+    +'for(var si=0;si<services.length;si++){var cs=[];try{cs=await services[si].getCharacteristics();}catch(e){continue;}for(var ci=0;ci<cs.length;ci++){var c=cs[ci];if(c.properties.write){ch=c;break;}if(c.properties.writeWithoutResponse&&!chn)chn=c;}if(ch)break;}'
+    +'if(!ch)ch=chn;if(!ch){setSt("ບໍ່ພົບຊ່ອງຂຽນຂໍ້ມູນ");return;}'
+    +'var canResp=!!ch.properties.write&&!!ch.writeValue;var sleep=function(ms){return new Promise(function(r){setTimeout(r,ms);});};var sub=canResp?180:20;'
+    +'setSt("ກຳລັງສົ່ງຮູບໄປພິມ... ຢ່າຫ່າງເຄື່ອງພິມ");'
+    +'for(var k=0;k<SEGS.length;k++){var seg=SEGS[k];for(var i=0;i<seg.length;i+=sub){var sl=seg.slice(i,i+sub);if(canResp){await ch.writeValue(sl);}else{await ch.writeValueWithoutResponse(sl);await sleep(6);}}await sleep(200);}'
+    +'await sleep(300);try{server.disconnect();}catch(e){}setSt("ສົ່ງໄປພິມແລ້ວ ✓ (ຖ້າມົ້ວ ລອງ ພິມຜ່ານລະບົບ)");'
+    +'}catch(e){setSt((e&&e.name==="NotFoundError")?"ຍົກເລີກການເລືອກເຄື່ອງພິມ":("ຜິດພາດ: "+((e&&e.message)||e)));}}'
+    +'</scr'+'ipt></body></html>';
+  w.document.write(doc);
   w.document.close();
-  const im=w.document.images[0];
-  if(im){ im.onload=()=>{ setTimeout(()=>{ try{ w.focus(); w.print(); }catch(e){} }, 300); }; }
 }
 let _printCanvas=null;
 function printBill(){
