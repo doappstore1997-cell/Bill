@@ -422,9 +422,9 @@
     <div style="max-height:58vh;overflow:auto;border:1px solid #ddd;border-radius:8px;margin:8px 0;background:#fff">
       <img id="print-preview-img" style="width:100%;display:block" alt="ຕົວຢ່າງໃບບິນ">
     </div>
-    <button class="pm-save" onclick="doPrint()">🖨️ ພິມຜ່ານ Bluetooth (ຮູບ)</button>
-    <button class="pm-save" style="background:#6b7280;margin-top:8px;font-size:14px" onclick="printPng()">📄 ພິມຜ່ານລະບົບ (PNG) — ສຳຮອງ</button>
-    <div class="pm-hint">ກົດ “ພິມຜ່ານ Bluetooth (ຮູບ)” → ເລືອກເຄື່ອງພິມ 58MBII → ສົ່ງໃບບິນເປັນ**ຮູບ**ໄປພິມ (ອອກຄົບທຸກພາສາ ບໍ່ error font). ຖ້າຍັງມົ້ວ ໃຫ້ລອງ “ພິມຜ່ານລະບົບ (PNG)”</div>
+    <button class="pm-save" onclick="printPng()">🖨️ ພິມ → ເລືອກເຄື່ອງພິມ Bluetooth 58mm</button>
+    <button class="pm-save" style="background:#6b7280;margin-top:8px;font-size:14px" onclick="doPrint()">ລອງສົ່ງ Bluetooth ໂດຍກົງ (ບໍ່ຜ່ານໜ້າພິມ)</button>
+    <div class="pm-hint">ກົດ “ພິມ” → ຈະເປີດ**ຮູບໃບຮັບ (JPG)** ຂຶ້ນໜ້າພິມ → ໃນນັ້ນ**ເລືອກເຄື່ອງພິມ Bluetooth 58mm** ຂອງທ່ານ ແລ້ວກົດພິມ (ອອກຄົບທຸກພາສາ ບໍ່ error font)</div>
   </div>
 </div>
 
@@ -1619,7 +1619,7 @@ async function btPrint(segs){
   try{ server.disconnect(); }catch(e){}
 }
 function thermalPrintFallback(canvas){
-  const url=canvas.toDataURL('image/png');
+  const url=canvas.toDataURL('image/jpeg',0.95);
   const w=window.open('','_blank');
   if(!w){ toast('ກະລຸນາອະນຸຍາດ popup ເພື່ອພິມ'); return; }
   w.document.write('<html><head><meta name="viewport" content="width=device-width"><title>ພິມໃບບິນ</title><style>@page{size:58mm auto;margin:0}*{margin:0;padding:0;box-sizing:border-box}body{font-family:sans-serif;text-align:center}img{width:58mm;display:block;margin:0 auto}.pb{margin:10px auto;padding:12px 22px;font-size:16px;font-weight:700;border:none;border-radius:10px;background:#4b5320;color:#fff}@media print{.pb{display:none}}</style></head><body><button class="pb" onclick="window.print()">🖨️ ພິມ</button><img src="'+url+'"><button class="pb" onclick="window.print()">🖨️ ພິມ</button></body></html>');
@@ -1634,7 +1634,7 @@ function printBill(){
   try{ canvas=buildThermalCanvas(); }
   catch(e){ toast('ສ້າງໃບພິມບໍ່ສຳເລັດ'); return; }
   _printCanvas=canvas;
-  document.getElementById('print-preview-img').src=canvas.toDataURL('image/png');
+  document.getElementById('print-preview-img').src=canvas.toDataURL('image/jpeg',0.95);
   document.getElementById('print-modal').style.display='flex';
 }
 function closePrintModal(){ document.getElementById('print-modal').style.display='none'; }
