@@ -49,8 +49,8 @@
   .topbar h1{font-size:18px;margin:0;font-weight:700;letter-spacing:.3px}
   .topbar .sub{font-size:12.5px;opacity:.9;font-weight:400}
   .actions{display:flex;gap:6px;flex-wrap:wrap;justify-content:space-between;width:100%}
-  .bill-actions{display:flex;gap:4px;width:100%;max-width:680px;flex-wrap:nowrap}
-  .bill-actions .act{flex:1 1 0;font-size:16.5px;font-weight:800;color:#000;white-space:normal;line-height:1.12;padding:12px 2px;min-width:0;box-shadow:0 3px 10px rgba(0,0,0,.3)}
+  .bill-actions{display:flex;gap:6px;width:100%;max-width:680px;flex-wrap:wrap}
+  .bill-actions .act{flex:1 1 calc(50% - 3px);font-size:18px;font-weight:800;color:#fff;text-shadow:0 1px 2px rgba(0,0,0,.55);white-space:normal;line-height:1.15;padding:18px 8px;min-width:0;box-shadow:0 3px 10px rgba(0,0,0,.3)}
   button.act{
     font-family:inherit;font-size:13px;font-weight:700;
     border:none;border-radius:9px;padding:12px 4px;cursor:pointer;flex:1 1 0;white-space:nowrap;text-align:center;
@@ -537,10 +537,10 @@
   <!-- ============ PREVIEW ============ -->
   <div class="preview-col">
     <div class="bill-actions">
-      <button class="act" onclick="copyImage()" style="background:#1e88e5">📋 ກັອບປີ້ໃບບິນ</button>
-      <button class="act" onclick="printBill()" style="background:#22c55e">🖨️ ພິມໃບນີ້</button>
-      <button class="act" onclick="printAllBills()" style="background:#ff8c00">🖨️ ພິມທັງໝົດ</button>
-      <button class="act" onclick="downloadImage()" style="background:#a855f7">📷 ດາວໂຫລດຮູບ</button>
+      <button class="act" onclick="copyImage()" style="background:#1565c0">📋 ກັອບປີ້ໃບບິນ</button>
+      <button class="act" onclick="printBill()" style="background:#15803d">🖨️ ພິມໃບນີ້</button>
+      <button class="act" onclick="printAllBills()" style="background:#e65100">🖨️ ພິມທັງໝົດ</button>
+      <button class="act" onclick="downloadImage()" style="background:#7e22ce">📷 ດາວໂຫລດຮູບ</button>
     </div>
     <div id="bill-nav" class="bill-nav" style="display:none">
       <button onclick="bulkGo(-1)" aria-label="ໃບກ່ອນ">◀</button>
