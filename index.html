@@ -49,6 +49,8 @@
   .topbar h1{font-size:18px;margin:0;font-weight:700;letter-spacing:.3px}
   .topbar .sub{font-size:12.5px;opacity:.9;font-weight:400}
   .actions{display:flex;gap:6px;flex-wrap:wrap;justify-content:space-between;width:100%}
+  .bill-actions{display:flex;gap:6px;width:100%;max-width:680px;flex-wrap:wrap}
+  .bill-actions .act{font-size:12px;white-space:normal;line-height:1.15;padding:11px 4px;min-width:0}
   button.act{
     font-family:inherit;font-size:13px;font-weight:700;
     border:none;border-radius:9px;padding:12px 4px;cursor:pointer;flex:1 1 0;white-space:nowrap;text-align:center;
@@ -231,7 +233,7 @@
   .preview-col{display:flex;flex-direction:column;align-items:center;gap:10px}
   .scaler{width:100%;overflow:hidden}
   .bill-nav{
-    position:sticky;top:64px;z-index:40;
+    position:sticky;top:6px;z-index:40;
     width:100%;max-width:680px;display:flex;align-items:center;justify-content:space-evenly;gap:10px;
     background:var(--topbar);color:#fff;border-radius:10px;padding:8px 10px;box-shadow:0 3px 10px rgba(0,0,0,.18);
   }
@@ -295,7 +297,7 @@
   table.r-tab{width:100%;border-collapse:collapse;margin-top:6px;font-size:18px;table-layout:fixed}
   table.r-tab td, table.r-tab th{overflow-wrap:anywhere;word-break:break-word}
   table.r-tab th, table.r-tab td{border:1.5px solid var(--line);padding:8px 9px;text-align:center;color:#000}
-  table.r-tab th{font-weight:800;background:#e6e6e6;font-size:17px;color:#000;border-bottom-width:2.5px}
+  table.r-tab th{font-weight:800;background:#e6e6e6;font-size:15.5px;color:#000;border-bottom-width:2.5px;white-space:nowrap}
   table.r-tab td{font-weight:600;font-size:19px}
   table.r-tab td.it{text-align:left;font-size:17px;cursor:text;vertical-align:top}
   table.r-tab td.it:focus{outline:2px solid var(--topbar);outline-offset:-2px;background:#fff8f0}
@@ -306,18 +308,18 @@
   .cell-in{width:100%;box-sizing:border-box;border:none;background:transparent;color:#000;font-family:inherit;font-size:19px;font-weight:600;padding:0;margin:0;text-align:left}
   .cell-in:focus{outline:2px solid var(--topbar);outline-offset:1px;border-radius:3px;background:#fff8f0}
   .qtywrap{display:inline-flex;align-items:baseline;justify-content:center;gap:2px;max-width:100%}
-  .unit-txt{font-size:15px;font-weight:600;color:#000}
+  .unit-txt{font-size:14px;font-weight:600;color:#000}
   .pricewrap{display:inline-flex;align-items:baseline;justify-content:flex-end;gap:2px;white-space:nowrap}
-  .punit-txt{font-size:13px;font-weight:600;color:#333;white-space:pre}
-  .price-in{width:70px;border:none;background:transparent;color:#000;font-family:inherit;font-size:17px;font-weight:600;text-align:right;padding:0;margin:0}
+  .punit-txt{font-size:11px;font-weight:600;color:#333;white-space:pre}
+  .price-in{width:74px;border:none;background:transparent;color:#000;font-family:inherit;font-size:15px;font-weight:600;text-align:right;padding:0;margin:0}
   .price-in:focus{outline:2px solid var(--topbar);outline-offset:1px;border-radius:3px;background:#fff8f0}
-  .qty-in{width:38px;border:none;background:transparent;color:#000;font-family:inherit;font-size:17px;font-weight:600;text-align:right;padding:0;margin:0}
+  .qty-in{width:38px;border:none;background:transparent;color:#000;font-family:inherit;font-size:15px;font-weight:600;text-align:right;padding:0;margin:0}
   .qty-in:focus{outline:2px solid var(--topbar);outline-offset:1px;border-radius:3px;background:#fff8f0}
   .unit-sel{border:none;background:transparent;color:#000;font-family:inherit;font-size:15px;font-weight:600;-webkit-appearance:none;appearance:none;padding:0 1px;cursor:pointer;border-bottom:1px dashed var(--topbar)}
   .unit-sel:focus{outline:2px solid var(--topbar);border-radius:3px}
   .unit-ed{font-family:inherit;font-size:13px;background:var(--field);border:1px solid var(--field-line);border-radius:7px;padding:7px 4px}
   table.r-tab td.num{text-align:right}
-  table.r-tab td.num{white-space:nowrap;padding-left:5px;padding-right:6px;font-size:17px}
+  table.r-tab td.num{white-space:nowrap;padding-left:4px;padding-right:5px;font-size:15px}
   table.r-tab .ord{padding-left:2px;padding-right:2px}
   table.r-tab .total-row td{font-weight:800;font-size:20px}
   table.r-tab .total-lbl{text-align:left;font-weight:800}
@@ -361,15 +363,6 @@
 </style>
 </head>
 <body>
-
-<div class="topbar">
-  <div class="actions">
-    <button class="act" onclick="copyImage()" style="background:#2563eb;white-space:normal;font-size:12.5px;line-height:1.15">📋 ກັອບປີ້ໃບບິນ</button>
-    <button class="act" onclick="printBill()" style="background:#16a34a;white-space:normal;font-size:12.5px;line-height:1.15">🖨️ ພິມໃບນີ້</button>
-    <button class="act" onclick="printAllBills()" style="background:#ea580c;white-space:normal;font-size:12.5px;line-height:1.15">🖨️ ພິມທັງໝົດ</button>
-    <button class="act" onclick="downloadImage()" style="background:#9333ea;white-space:normal;font-size:12.5px;line-height:1.15">📷 ດາວໂຫລດຮູບ</button>
-  </div>
-</div>
 
 <div id="auto-page" class="auto-page" style="display:none">
   <div class="ap-bar">
@@ -433,7 +426,9 @@
     <button class="pm-save" onclick="doPrint()">🖨️ ພິມຜ່ານ Bluetooth (ສົ່ງເປັນຮູບ)</button>
     <button class="pm-save" style="background:#0a7d4d;margin-top:8px" onclick="shareBillImage()">📤 ແຊຣ໌/ບັນທຶກຮູບໃບບິນ (ພິມຈາກແອັບເຄື່ອງພິມ)</button>
     <button class="pm-save" style="background:#6b7280;margin-top:8px;font-size:14px" onclick="printPng()">📄 ເປີດໜ້າພິມ (ຮູບ) → ຄົ້ນຫາ Bluetooth / ລະບົບ</button>
+    <button class="pm-save" style="background:#b91c1c;margin-top:8px" onclick="closePrintModal()">✖ ປິດ</button>
     <div class="pm-hint">ກົດ “ພິມຜ່ານ Bluetooth” → ເລືອກເຄື່ອງພິມ 58mm → ໃບບິນຖືກສົ່ງເປັນ**ຮູບ (bitmap) ບໍ່ແມ່ນຂໍ້ຄວາມ** ຈຶ່ງອອກຄົບທຸກພາສາ.<br>ຫຼື ກົດ “ເປີດໜ້າພິມ” → ໃນໜ້ານັ້ນມີປຸ່ມ **🔍 ຄົ້ນຫາ &amp; ພິມຜ່ານ Bluetooth** ໃຫ້ກົດ ແລ້ວເລືອກເຄື່ອງພິມ (ສົ່ງເປັນຮູບຄືກັນ). ສົ່ງຊ້າໜ້ອຍ — ຢ່າຫ່າງເຄື່ອງພິມຈົນຈົບ</div>
+    <button class="pm-save" style="background:#b91c1c;margin-top:10px" onclick="closePrintModal()">✖ ປິດ</button>
   </div>
 </div>
 
@@ -541,15 +536,17 @@
 
   <!-- ============ PREVIEW ============ -->
   <div class="preview-col">
+    <div class="bill-actions">
+      <button class="act" onclick="copyImage()" style="background:#1e88e5">📋 ກັອບປີ້ໃບບິນ</button>
+      <button class="act" onclick="printBill()" style="background:#22c55e">🖨️ ພິມໃບນີ້</button>
+      <button class="act" onclick="printAllBills()" style="background:#ff8c00">🖨️ ພິມທັງໝົດ</button>
+      <button class="act" onclick="downloadImage()" style="background:#a855f7">📷 ດາວໂຫລດຮູບ</button>
+    </div>
     <div id="bill-nav" class="bill-nav" style="display:none">
       <button onclick="bulkGo(-1)" aria-label="ໃບກ່ອນ">◀</button>
       <select id="bill-select" class="bill-select" onchange="bulkJump(this.value)" aria-label="ເລືອກໃບບິນຮ້ານ"></select>
       <button onclick="bulkGo(1)" aria-label="ໃບຕໍ່ໄປ">▶</button>
       <button class="bill-close" onclick="clearBulk()" aria-label="ປິດໂໝດຫຼາຍຮ້ານ" title="ປິດ">✕</button>
-    </div>
-    <div id="bulk-print-bar" style="display:none;width:100%;max-width:680px;gap:8px;margin-top:6px">
-      <button class="act" style="flex:1 1 0" onclick="printBill()">🖨️ ພິມໃບນີ້</button>
-      <button class="act" style="flex:1 1 0" onclick="printAllBills()">🖨️ ພິມທັງໝົດ</button>
     </div>
     <div class="scaler">
       <div id="receipt">
@@ -567,11 +564,11 @@
           <table class="r-tab">
             <thead>
               <tr>
-                <th style="width:5%" class="ord">No</th>
-                <th style="width:33%">ລາຍການ</th>
-                <th style="width:14%">ຈຳນວນ</th>
-                <th style="width:16%">ລາຄາ</th>
-                <th style="width:19%">ຈຳນວນເງິນ</th>
+                <th style="width:4%" class="ord">No</th>
+                <th style="width:36%">ລາຍການ</th>
+                <th style="width:12%">ຈຳນວນ</th>
+                <th style="width:18%">ລາຄາ</th>
+                <th style="width:17%">ຈຳນວນເງິນ</th>
                 <th style="width:13%">ໝາຍເຫດ</th>
               </tr>
             </thead>
@@ -579,8 +576,7 @@
             <tfoot>
               <tr class="total-row">
                 <td class="total-lbl" colspan="4">ລວມເງິນ</td>
-                <td class="num" id="p-total"></td>
-                <td></td>
+                <td class="num" id="p-total" colspan="2" style="text-align:left"></td>
               </tr>
             </tfoot>
           </table>
@@ -1705,7 +1701,9 @@ function thermalPrintFallback(canvas){
     +'img{width:58mm;max-width:100%;display:block;margin:10px auto;background:#fff}'
     +'@media print{.bar,#st{display:none}img{width:58mm;margin:0 auto}}</style></head><body>'
     +'<div class="bar"><button class="pb bt" onclick="btPrint()">🔍 ຄົ້ນຫາ &amp; ພິມຜ່ານ Bluetooth</button>'
-    +'<button class="pb sys" onclick="window.print()">🖨️ ພິມຜ່ານລະບົບ</button><div id="st">ກົດ “ຄົ້ນຫາ &amp; ພິມຜ່ານ Bluetooth” ເພື່ອເລືອກເຄື່ອງພິມ 58mm</div></div>'
+    +'<button class="pb sys" onclick="window.print()">🖨️ ພິມຜ່ານລະບົບ</button>'
+    +'<button class="pb" style="background:#b91c1c" onclick="window.close()">✖ ປິດ</button>'
+    +'<div id="st">ກົດ “ຄົ້ນຫາ &amp; ພິມຜ່ານ Bluetooth” ເພື່ອເລືອກເຄື່ອງພິມ 58mm</div></div>'
     +'<img src="'+url+'">'
     +'<scr'+'ipt>'
     +'var SVC='+svc+';'
