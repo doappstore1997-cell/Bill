@@ -1457,15 +1457,15 @@ function buildThermalCanvas(){
   let t='ຮ້ານ D&L'; ctx.fillText(t,center-ctx.measureText(t).width/2,y); y+=40;
   ctx.font="bold 24px 'Noto Sans Lao',sans-serif";
   t='ໃບຮັບເຄື່ອງ'; ctx.fillText(t,center-ctx.measureText(t).width/2,y); y+=34;
-  // ຊື່ຮ້ານ ໃຕ້ຫົວຂໍ້ (ບໍ່ໃສ່ລະຫັດ)
+  // ຊື່ຮ້ານ ໃຕ້ຫົວຂໍ້ (ບໍ່ໃສ່ລະຫັດ) — ໃຫຍ່ຂຶ້ນ
   const cust=document.getElementById('f-cust').value||'';
-  ctx.font="bold 22px 'Noto Sans Lao',sans-serif";
-  y=thWrap(ctx,'ຮ້ານ: '+cust,center,y,W-2*pad,28,'center')+6;
+  ctx.font="bold 27px 'Noto Sans Lao',sans-serif";
+  y=thWrap(ctx,'ຮ້ານ: '+cust,center,y,W-2*pad,33,'center')+6;
   ctx.fillRect(pad,y,W-2*pad,2); y+=12;
-  // ວັນທີ
-  ctx.font="20px 'Noto Sans Lao',sans-serif";
+  // ວັນທີ — ໃຫຍ່ຂຶ້ນ + ໜາເຂັ້ມ
+  ctx.font="bold 24px 'Noto Sans Lao',sans-serif";
   const dateStr=(document.getElementById('p-date')||{}).textContent||'';
-  y=thWrap(ctx,dateStr,pad,y,W-2*pad,26,'left')+8;
+  y=thWrap(ctx,dateStr,pad,y,W-2*pad,30,'left')+8;
   ctx.fillRect(pad,y,W-2*pad,2); y+=10;
   // ຫົວຕາຕະລາງ
   const noX=pad, itemX=44, itemMaxW=116, qtyC=238;
