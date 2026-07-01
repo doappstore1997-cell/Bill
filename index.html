@@ -415,6 +415,18 @@
   </div>
 </div>
 
+<div id="print-modal" class="price-modal" style="display:none">
+  <div class="pm-card" style="max-width:430px">
+    <button class="pm-x" onclick="closePrintModal()" aria-label="ປິດ">✕</button>
+    <div class="pm-title">🖨️ ຕົວຢ່າງໃບບິນທີ່ຈະພິມ</div>
+    <div style="max-height:58vh;overflow:auto;border:1px solid #ddd;border-radius:8px;margin:8px 0;background:#fff">
+      <img id="print-preview-img" style="width:100%;display:block" alt="ຕົວຢ່າງໃບບິນ">
+    </div>
+    <button class="pm-save" onclick="doPrint()">🖨️ ພິມເລີຍ</button>
+    <div class="pm-hint">ກວດຄວາມຖືກຕ້ອງກ່ອນ ແລ້ວກົດ “ພິມເລີຍ” ເພື່ອສົ່ງໄປເຄື່ອງພິມ 58mm</div>
+  </div>
+</div>
+
 <div id="note-modal" class="price-modal" style="display:none">
   <div class="pm-card">
     <button class="pm-x" onclick="closeNoteModal()" aria-label="ປິດ">✕</button>
@@ -1547,12 +1559,12 @@ function buildThermalCanvas(){
   const fctx=fin.getContext('2d'); fctx.fillStyle='#fff'; fctx.fillRect(0,0,W,h); fctx.drawImage(tall,0,0);
   return fin;
 }
-function canvasToEscpos(canvas){
+function canvasToBands(canvas){
   const W=canvas.width, H=canvas.height;
   const img=canvas.getContext('2d').getImageData(0,0,W,H).data;
   const bpr=Math.ceil(W/8);
-  const parts=[ new Uint8Array([0x1B,0x40]) ]; // ESC @ init
-  const band=128; // ພິມເທື່ອລະ band ແຖວ
+  const segs=[ new Uint8Array([0x1B,0x40]) ]; // ESC @ init
+  const band=24; // band ນ້ອຍໆ ໃຫ້ເຄື່ອງພິມພິມທັນ ບໍ່ໃຫ້ buffer ລົ້ນ
   for(let y0=0;y0<H;y0+=band){
     const rows=Math.min(band,H-y0);
     const raster=new Uint8Array(bpr*rows);
@@ -1563,15 +1575,15 @@ function canvasToEscpos(canvas){
         if(img[idx+3]>128 && lum<165) raster[yy*bpr+(xx>>3)] |= (0x80>>(xx&7));
       }
     }
-    parts.push(new Uint8Array([0x1D,0x76,0x30,0x00, bpr&0xff,(bpr>>8)&0xff, rows&0xff,(rows>>8)&0xff]));
-    parts.push(raster);
+    const head=new Uint8Array([0x1D,0x76,0x30,0x00, bpr&0xff,(bpr>>8)&0xff, rows&0xff,(rows>>8)&0xff]);
+    const seg=new Uint8Array(head.length+raster.length);
+    seg.set(head,0); seg.set(raster,head.length);
+    segs.push(seg);
   }
-  parts.push(new Uint8Array([0x0A,0x0A,0x0A])); // feed
-  let len=0; parts.forEach(p=>len+=p.length);
-  const out=new Uint8Array(len); let o=0; parts.forEach(p=>{ out.set(p,o); o+=p.length; });
-  return out;
+  segs.push(new Uint8Array([0x0A,0x0A,0x0A])); // feed
+  return segs;
 }
-async function btPrint(bytes){
+async function btPrint(segs){
   const device=await navigator.bluetooth.requestDevice({
     acceptAllDevices:true,
     optionalServices:[0xFFE0,0xFF00,0x18F0,0xFEE7,
@@ -1581,19 +1593,27 @@ async function btPrint(bytes){
   });
   const server=await device.gatt.connect();
   const services=await server.getPrimaryServices();
-  let ch=null;
+  let ch=null, chNoResp=null;
   for(const s of services){
     let chars=[]; try{ chars=await s.getCharacteristics(); }catch(e){ continue; }
-    for(const c of chars){ if(c.properties.write||c.properties.writeWithoutResponse){ ch=c; break; } }
+    for(const c of chars){
+      if(c.properties.write){ ch=c; break; }
+      if(c.properties.writeWithoutResponse && !chNoResp) chNoResp=c;
+    }
     if(ch) break;
   }
+  if(!ch) ch=chNoResp;
   if(!ch) throw new Error('no-writable-characteristic');
-  const useNoResp = ch.properties.writeWithoutResponse && ch.writeValueWithoutResponse;
-  const chunk=180;
-  for(let i=0;i<bytes.length;i+=chunk){
-    const slice=bytes.slice(i,i+chunk);
-    if(useNoResp) await ch.writeValueWithoutResponse(slice); else await ch.writeValue(slice);
-    await new Promise(r=>setTimeout(r,18));
+  const canResp = !!ch.properties.write && !!ch.writeValue;
+  const sleep=ms=>new Promise(r=>setTimeout(r,ms));
+  const sub=100; // ຂະໜາດ packet
+  for(const seg of segs){
+    for(let i=0;i<seg.length;i+=sub){
+      const slice=seg.slice(i,i+sub);
+      if(canResp){ await ch.writeValue(slice); }
+      else { await ch.writeValueWithoutResponse(slice); await sleep(14); }
+    }
+    await sleep(canResp?70:45); // ຖ້າໃຫ້ເຄື່ອງພິມພິມ band ນີ້ກ່ອນສົ່ງຕໍ່
   }
   try{ server.disconnect(); }catch(e){}
 }
@@ -1606,16 +1626,26 @@ function thermalPrintFallback(canvas){
   const im=w.document.images[0];
   if(im){ im.onload=()=>{ try{ w.focus(); w.print(); }catch(e){} }; }
 }
-async function printBill(){
+let _printCanvas=null;
+function printBill(){
   if(!items.some(it=>(it.name&&it.name.trim())||it.qty||it.price)){ toast('ໃບບິນຍັງວ່າງ'); return; }
   let canvas;
   try{ canvas=buildThermalCanvas(); }
   catch(e){ toast('ສ້າງໃບພິມບໍ່ສຳເລັດ'); return; }
+  _printCanvas=canvas;
+  document.getElementById('print-preview-img').src=canvas.toDataURL('image/png');
+  document.getElementById('print-modal').style.display='flex';
+}
+function closePrintModal(){ document.getElementById('print-modal').style.display='none'; }
+async function doPrint(){
+  const canvas=_printCanvas;
+  if(!canvas){ closePrintModal(); return; }
+  closePrintModal();
   if(navigator.bluetooth){
     try{
-      const bytes=canvasToEscpos(canvas);
+      const segs=canvasToBands(canvas);
       toast('ເລືອກເຄື່ອງພິມ 58MBII...');
-      await btPrint(bytes);
+      await btPrint(segs);
       toast('ສົ່ງໄປພິມແລ້ວ ✓');
       return;
     }catch(e){
