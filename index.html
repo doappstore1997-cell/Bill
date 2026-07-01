@@ -1494,10 +1494,7 @@ function buildThermalCanvas(){
   });
   ctx.fillRect(pad,y,W-2*pad,2); y+=12;
   ctx.font="bold 24px 'Noto Sans Lao',sans-serif";
-  t='ລວມ: '+fmt(total)+' ກີບ'; ctx.fillText(t,right-ctx.measureText(t).width,y); y+=34;
-  // ໂຕອ່ານ (ຕົວໜັງສືລາວ)
-  ctx.font="bold 19px 'Noto Sans Lao',sans-serif";
-  y=thWrap(ctx,'('+laoWords(total)+' ກີບ)',center,y,W-2*pad,26,'center')+16;
+  t='ລວມ: '+fmt(total)+' ກີບ'; ctx.fillText(t,right-ctx.measureText(t).width,y); y+=40;
   // QR ຊຳລະເງິນ — ສ້າງ QR ໃໝ່ໃຫ້ຄົມ (default) ຫຼື ຂະຫຍາຍຮູບ (custom)
   if(qrDataUrl){
     ctx.fillRect(pad,y,W-2*pad,2); y+=14;
@@ -1613,7 +1610,7 @@ async function btPrint(segs){
     for(let i=0;i<seg.length;i+=sub){
       const slice=seg.slice(i,i+sub);
       if(canResp){ await ch.writeValue(slice); }
-      else { await ch.writeValueWithoutResponse(slice); await sleep(6); }
+      else { await ch.writeValueWithoutResponse(slice); await sleep(12); }
     }
     await sleep(200); // ພັກໃຫ້ເຄື່ອງພິມພິມ band ນີ້ໃຫ້ຈົບກ່ອນ (ກັນ buffer ລົ້ນ = ຕົວມົ້ວ)
   }
@@ -1652,7 +1649,7 @@ function thermalPrintFallback(canvas){
     +'if(!ch)ch=chn;if(!ch){setSt("ບໍ່ພົບຊ່ອງຂຽນຂໍ້ມູນ");return;}'
     +'var canResp=!!ch.properties.write&&!!ch.writeValue;var sleep=function(ms){return new Promise(function(r){setTimeout(r,ms);});};var sub=canResp?180:20;'
     +'setSt("ກຳລັງສົ່ງຮູບໄປພິມ... ຢ່າຫ່າງເຄື່ອງພິມ");'
-    +'for(var k=0;k<SEGS.length;k++){var seg=SEGS[k];for(var i=0;i<seg.length;i+=sub){var sl=seg.slice(i,i+sub);if(canResp){await ch.writeValue(sl);}else{await ch.writeValueWithoutResponse(sl);await sleep(6);}}await sleep(200);}'
+    +'for(var k=0;k<SEGS.length;k++){var seg=SEGS[k];for(var i=0;i<seg.length;i+=sub){var sl=seg.slice(i,i+sub);if(canResp){await ch.writeValue(sl);}else{await ch.writeValueWithoutResponse(sl);await sleep(12);}}await sleep(200);}'
     +'await sleep(300);try{server.disconnect();}catch(e){}setSt("ສົ່ງໄປພິມແລ້ວ ✓ (ຖ້າມົ້ວ ລອງ ພິມຜ່ານລະບົບ)");'
     +'}catch(e){setSt((e&&e.name==="NotFoundError")?"ຍົກເລີກການເລືອກເຄື່ອງພິມ":("ຜິດພາດ: "+((e&&e.message)||e)));}}'
     +'</scr'+'ipt></body></html>';
@@ -1660,8 +1657,9 @@ function thermalPrintFallback(canvas){
   w.document.close();
 }
 let _printCanvas=null;
-function printBill(){
+async function printBill(){
   if(!items.some(it=>(it.name&&it.name.trim())||it.qty||it.price)){ toast('ໃບບິນຍັງວ່າງ'); return; }
+  try{ if(document.fonts && document.fonts.load){ await document.fonts.load("bold 24px 'Noto Sans Lao'"); await document.fonts.load("20px 'Noto Sans Lao'"); await document.fonts.ready; } }catch(e){}
   let canvas;
   try{ canvas=buildThermalCanvas(); }
   catch(e){ toast('ສ້າງໃບພິມບໍ່ສຳເລັດ'); return; }
