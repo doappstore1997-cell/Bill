@@ -422,8 +422,9 @@
     <div style="max-height:58vh;overflow:auto;border:1px solid #ddd;border-radius:8px;margin:8px 0;background:#fff">
       <img id="print-preview-img" style="width:100%;display:block" alt="ຕົວຢ່າງໃບບິນ">
     </div>
-    <button class="pm-save" onclick="doPrint()">🖨️ ພິມເລີຍ</button>
-    <div class="pm-hint">ກວດຄວາມຖືກຕ້ອງກ່ອນ ແລ້ວກົດ “ພິມເລີຍ” ເພື່ອສົ່ງໄປເຄື່ອງພິມ 58mm</div>
+    <button class="pm-save" onclick="doPrint()">🖨️ ພິມຜ່ານ Bluetooth (58mm)</button>
+    <button class="pm-save" style="background:#0a7d4d;margin-top:8px" onclick="printPng()">📄 ພິມຜ່ານລະບົບ (PNG)</button>
+    <div class="pm-hint">ຖ້າພິມ Bluetooth ອອກເປັນຕົວໜັງສືມົ້ວ ໃຫ້ລອງ “ພິມຜ່ານລະບົບ (PNG)” — ຈະເປີດຮູບໃຫ້ສັ່ງພິມຜ່ານລະບົບ/ແອັບເຄື່ອງພິມ</div>
   </div>
 </div>
 
@@ -1606,14 +1607,14 @@ async function btPrint(segs){
   if(!ch) throw new Error('no-writable-characteristic');
   const canResp = !!ch.properties.write && !!ch.writeValue;
   const sleep=ms=>new Promise(r=>setTimeout(r,ms));
-  const sub=100; // ຂະໜາດ packet
+  const sub = canResp?200:40;   // ບໍ່ລໍຄຳຕອບ → packet ນ້ອຍ ກັນ byte ຕົກ
   for(const seg of segs){
     for(let i=0;i<seg.length;i+=sub){
       const slice=seg.slice(i,i+sub);
       if(canResp){ await ch.writeValue(slice); }
-      else { await ch.writeValueWithoutResponse(slice); await sleep(14); }
+      else { await ch.writeValueWithoutResponse(slice); await sleep(12); }
     }
-    await sleep(canResp?70:45); // ຖ້າໃຫ້ເຄື່ອງພິມພິມ band ນີ້ກ່ອນສົ່ງຕໍ່
+    await sleep(120); // ພັກ ໃຫ້ເຄື່ອງພິມພິມ band ນີ້ໃຫ້ທັນ ກ່ອນສົ່ງຕໍ່
   }
   try{ server.disconnect(); }catch(e){}
 }
@@ -1637,6 +1638,11 @@ function printBill(){
   document.getElementById('print-modal').style.display='flex';
 }
 function closePrintModal(){ document.getElementById('print-modal').style.display='none'; }
+function printPng(){
+  const canvas=_printCanvas; if(!canvas){ closePrintModal(); return; }
+  closePrintModal();
+  thermalPrintFallback(canvas);
+}
 async function doPrint(){
   const canvas=_printCanvas;
   if(!canvas){ closePrintModal(); return; }
