@@ -422,9 +422,9 @@
     <div style="max-height:58vh;overflow:auto;border:1px solid #ddd;border-radius:8px;margin:8px 0;background:#fff">
       <img id="print-preview-img" style="width:100%;display:block" alt="ຕົວຢ່າງໃບບິນ">
     </div>
-    <button class="pm-save" onclick="printPng()">🖨️ ພິມ → ເລືອກເຄື່ອງພິມ Bluetooth 58mm</button>
-    <button class="pm-save" style="background:#6b7280;margin-top:8px;font-size:14px" onclick="doPrint()">ລອງສົ່ງ Bluetooth ໂດຍກົງ (ບໍ່ຜ່ານໜ້າພິມ)</button>
-    <div class="pm-hint">ກົດ “ພິມ” → ຈະເປີດ**ຮູບໃບຮັບ (JPG)** ຂຶ້ນໜ້າພິມ → ໃນນັ້ນ**ເລືອກເຄື່ອງພິມ Bluetooth 58mm** ຂອງທ່ານ ແລ້ວກົດພິມ (ອອກຄົບທຸກພາສາ ບໍ່ error font)</div>
+    <button class="pm-save" onclick="doPrint()">🖨️ ພິມຜ່ານ Bluetooth (ສົ່ງເປັນຮູບ)</button>
+    <button class="pm-save" style="background:#6b7280;margin-top:8px;font-size:14px" onclick="printPng()">📄 ພິມຜ່ານໜ້າພິມ (PNG) — ສຳຮອງ</button>
+    <div class="pm-hint">ກົດ “ພິມຜ່ານ Bluetooth” → ເລືອກເຄື່ອງພິມ 58mm → ໃບບິນຖືກສົ່ງເປັນ**ຮູບ (bitmap) ບໍ່ແມ່ນຂໍ້ຄວາມ** ຈຶ່ງອອກຄົບທຸກພາສາ. ສົ່ງຊ້າໜ້ອຍ (ກັນ byte ຕົກ) — ລໍໃຫ້ພິມຈົບກ່ອນ ຢ່າຫ່າງເຄື່ອງພິມ</div>
   </div>
 </div>
 
@@ -1605,17 +1605,19 @@ async function btPrint(segs){
   }
   if(!ch) ch=chNoResp;
   if(!ch) throw new Error('no-writable-characteristic');
+  if(typeof toast==='function') toast('ກຳລັງສົ່ງຮູບໄປພິມ... ຢ່າຫ່າງເຄື່ອງພິມ');
   const canResp = !!ch.properties.write && !!ch.writeValue;
   const sleep=ms=>new Promise(r=>setTimeout(r,ms));
-  const sub = canResp?180:100;  // packet; ບໍ່ລໍຄຳຕອບ → ນ້ອຍລົງ ກັນ byte ຕົກ
+  const sub = canResp?180:20;   // ບໍ່ລໍຄຳຕອບ → packet 20 byte (ພໍດີ MTU ຕໍ່າສຸດ) ກັນ byte ຕົກ
   for(const seg of segs){
     for(let i=0;i<seg.length;i+=sub){
       const slice=seg.slice(i,i+sub);
       if(canResp){ await ch.writeValue(slice); }
-      else { await ch.writeValueWithoutResponse(slice); await sleep(8); }
+      else { await ch.writeValueWithoutResponse(slice); await sleep(6); }
     }
-    await sleep(180); // ພັກໃຫ້ເຄື່ອງພິມພິມ band ນີ້ໃຫ້ຈົບກ່ອນ (ກັນ buffer ລົ້ນ = ຕົວມົ້ວ)
+    await sleep(200); // ພັກໃຫ້ເຄື່ອງພິມພິມ band ນີ້ໃຫ້ຈົບກ່ອນ (ກັນ buffer ລົ້ນ = ຕົວມົ້ວ)
   }
+  await sleep(300); // ລໍໃຫ້ byte ສຸດທ້າຍ flush ອອກ ກ່ອນຕັດການເຊື່ອມຕໍ່
   try{ server.disconnect(); }catch(e){}
 }
 function thermalPrintFallback(canvas){
