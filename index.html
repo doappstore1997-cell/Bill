@@ -423,11 +423,16 @@
     <div style="max-height:58vh;overflow:auto;border:1px solid #ddd;border-radius:8px;margin:8px 0;background:#fff">
       <img id="print-preview-img" style="width:100%;display:block" alt="ຕົວຢ່າງໃບບິນ">
     </div>
-    <button class="pm-save" onclick="doPrint()">🖨️ ພິມຜ່ານ Bluetooth (ສົ່ງເປັນຮູບ)</button>
-    <button class="pm-save" style="background:#0a7d4d;margin-top:8px" onclick="shareBillImage()">📤 ແຊຣ໌/ບັນທຶກຮູບໃບບິນ (ພິມຈາກແອັບເຄື່ອງພິມ)</button>
-    <button class="pm-save" style="background:#6b7280;margin-top:8px;font-size:14px" onclick="printPng()">📄 ເປີດໜ້າພິມ (ຮູບ) → ຄົ້ນຫາ Bluetooth / ລະບົບ</button>
-    <button class="pm-save" style="background:#b91c1c;margin-top:8px" onclick="closePrintModal()">✖ ປິດ</button>
-    <div class="pm-hint">ກົດ “ພິມຜ່ານ Bluetooth” → ເລືອກເຄື່ອງພິມ 58mm → ໃບບິນຖືກສົ່ງເປັນ**ຮູບ (bitmap) ບໍ່ແມ່ນຂໍ້ຄວາມ** ຈຶ່ງອອກຄົບທຸກພາສາ.<br>ຫຼື ກົດ “ເປີດໜ້າພິມ” → ໃນໜ້ານັ້ນມີປຸ່ມ **🔍 ຄົ້ນຫາ &amp; ພິມຜ່ານ Bluetooth** ໃຫ້ກົດ ແລ້ວເລືອກເຄື່ອງພິມ (ສົ່ງເປັນຮູບຄືກັນ). ສົ່ງຊ້າໜ້ອຍ — ຢ່າຫ່າງເຄື່ອງພິມຈົນຈົບ</div>
+    <div id="paper-pick" style="display:flex;gap:8px;margin:6px 0;align-items:center">
+      <span style="font-weight:700;font-size:14px;white-space:nowrap">ຂະໜາດເຈ້ຍ:</span>
+      <button data-w="384" onclick="setPaper(384)" style="flex:1;border:none;border-radius:8px;padding:11px;font-weight:800;font-family:inherit;font-size:15px;background:#4b5320;color:#fff">58mm</button>
+      <button data-w="576" onclick="setPaper(576)" style="flex:1;border:none;border-radius:8px;padding:11px;font-weight:800;font-family:inherit;font-size:15px;background:#cbd5e1;color:#111">80mm</button>
+    </div>
+    <button class="pm-save" onclick="doPrint()">🖨️ ພິມຜ່ານ Bluetooth</button>
+    <button class="pm-save" style="background:#6b7280;margin-top:8px;font-size:14px" onclick="printPng()">📄 ເປີດໜ້າພິມ (ຮູບ) → Bluetooth / ລະບົບ</button>
+    <button class="pm-save" style="background:#0a7d4d;margin-top:8px;font-size:14px" onclick="shareBillImage()">📤 ແຊຣ໌/ບັນທຶກຮູບ (ສຳຮອງ)</button>
+    <div class="pm-hint">ເລືອກ <b>ຂະໜາດເຈ້ຍ</b> ໃຫ້ຕົງກັບເຄື່ອງພິມ (58mm ຫຼື 80mm) → ກົດ <b>ພິມຜ່ານ Bluetooth</b> → ເລືອກເຄື່ອງພິມ. ຮູບຖືກສ້າງຕາມຄວາມກວ້າງທີ່ເລືອກ ແລ້ວສົ່ງເປັນ raster. ຢ່າຫ່າງເຄື່ອງພິມຈົນพิมพ์ຈົບ.</div>
+    <button class="pm-save" style="background:#b91c1c;margin-top:10px" onclick="closePrintModal()">✖ ປິດ</button>
     <button class="pm-save" style="background:#b91c1c;margin-top:10px" onclick="closePrintModal()">✖ ປິດ</button>
   </div>
 </div>
@@ -1725,18 +1730,40 @@ function thermalPrintFallback(canvas){
   w.document.write(doc);
   w.document.close();
 }
-let _printCanvas=null;
+let _printCanvas=null, _baseCanvas=null, PAPER_W=384;
+function scaleCanvasWidth(src, targetW){
+  if(!src) return src;
+  if(src.width===targetW) return src;
+  const scale=targetW/src.width;
+  const out=document.createElement('canvas');
+  out.width=targetW; out.height=Math.max(1,Math.round(src.height*scale));
+  const ctx=out.getContext('2d');
+  ctx.imageSmoothingEnabled=true; ctx.imageSmoothingQuality='high';
+  ctx.fillStyle='#fff'; ctx.fillRect(0,0,out.width,out.height);
+  ctx.drawImage(src,0,0,out.width,out.height);
+  return out;
+}
+function applyPaper(){
+  if(!_baseCanvas) return;
+  _printCanvas=scaleCanvasWidth(_baseCanvas, PAPER_W);
+  const img=document.getElementById('print-preview-img');
+  if(img) img.src=_printCanvas.toDataURL('image/jpeg',0.95);
+  document.querySelectorAll('#paper-pick button').forEach(b=>{
+    const on=parseInt(b.getAttribute('data-w'),10)===PAPER_W;
+    b.style.background=on?'#4b5320':'#cbd5e1';
+    b.style.color=on?'#fff':'#111';
+  });
+}
+function setPaper(w){ PAPER_W=w; applyPaper(); }
 async function ensureLaoFont(){
   try{ if(document.fonts && document.fonts.load){ await document.fonts.load("bold 24px 'Noto Sans Lao'"); await document.fonts.load("20px 'Noto Sans Lao'"); await document.fonts.ready; } }catch(e){}
 }
 async function printBill(){
   if(!items.some(it=>(it.name&&it.name.trim())||it.qty||it.price)){ toast('ໃບບິນຍັງວ່າງ'); return; }
   await ensureLaoFont();
-  let canvas;
-  try{ canvas=buildThermalCanvas(); }
+  try{ _baseCanvas=buildThermalCanvas(); }
   catch(e){ toast('ສ້າງໃບພິມບໍ່ສຳເລັດ'); return; }
-  _printCanvas=canvas;
-  document.getElementById('print-preview-img').src=canvas.toDataURL('image/jpeg',0.95);
+  applyPaper();
   document.getElementById('print-modal').style.display='flex';
 }
 async function printAllBills(){
@@ -1751,8 +1778,8 @@ async function printAllBills(){
     });
   }catch(e){ toast('ສ້າງໃບພິມບໍ່ສຳເລັດ'); return; }
   if(!cvs.length){ toast('ບໍ່ມີຂໍ້ມູນພິມ'); return; }
-  _printCanvas=stackCanvases(cvs);
-  document.getElementById('print-preview-img').src=_printCanvas.toDataURL('image/jpeg',0.95);
+  _baseCanvas=stackCanvases(cvs);
+  applyPaper();
   document.getElementById('print-modal').style.display='flex';
   toast('ລວມ '+cvs.length+' ໃບ — ພິມເທື່ອດຽວ ແລ້ວຕັດຕາມເສັ້ນ');
 }
