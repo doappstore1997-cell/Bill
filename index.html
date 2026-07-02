@@ -8,6 +8,7 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+Lao:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcode-generator/1.4.4/qrcode.min.js"></script>
 <style>
   :root{
     --paper:#ffffff;
@@ -160,6 +161,10 @@
   .queue-clear:hover{background:var(--brand);color:#fff}
   .queue-item{display:flex;align-items:center;justify-content:space-between;gap:8px;background:#f4f6f8;border:1px solid var(--panel-line);border-radius:7px;padding:6px 9px;margin-bottom:5px;font-size:13px}
   .queue-item button{border:none;background:transparent;color:var(--brand);font-size:17px;line-height:1;cursor:pointer;padding:0 2px}
+  .q-actions{display:inline-flex;align-items:center;gap:6px;flex-shrink:0}
+  .q-mv{background:#4b5320 !important;color:#fff !important;border-radius:7px !important;width:36px;height:36px;font-size:16px !important;font-weight:800}
+  .q-mv:disabled{opacity:.3}
+  .q-del{color:#c8102e !important;font-weight:800}
   .q-pricebtn{font-size:13px !important;padding:2px 8px !important;border-radius:6px !important;background:#eef3e6 !important;font-family:inherit}
   .q-notebtn{font-size:13px !important;padding:2px 8px !important;border-radius:6px !important;background:#eef0f5 !important;font-family:inherit}
   .q-price{color:#4b5320;font-weight:700}
@@ -386,6 +391,8 @@
           <select id="qa-unit" class="ap-in"><option>ຫິ້ວ</option><option>Kg</option></select>
         </div>
       </div>
+      <label class="ap-label">5. ໃສ່ໝາຍເຫດ (ຖ້າມີ)</label>
+      <input id="qa-note" class="ap-in" placeholder="ໝາຍເຫດ (ບໍ່ບັງຄັບ) — ຈະຕິດนำລາຍການนี้">
       <button class="ap-add" onclick="addQueue()">+ ເພີ່ມລາຍການ</button>
     </div>
 
@@ -427,6 +434,11 @@
       <span style="font-weight:700;font-size:14px;width:100%">ຂະໜາດເຈ້ຍບິນ (POS):</span>
       <button data-w="384" onclick="setPaper(384)" style="flex:1;min-width:64px;border:none;border-radius:8px;padding:11px 4px;font-weight:800;font-family:inherit;font-size:14px;background:#4b5320;color:#fff">58mm</button>
       <button data-w="576" onclick="setPaper(576)" style="flex:1;min-width:64px;border:none;border-radius:8px;padding:11px 4px;font-weight:800;font-family:inherit;font-size:14px;background:#cbd5e1;color:#111">80mm</button>
+    </div>
+    <div id="money-pick" style="display:flex;gap:6px;margin:6px 0;align-items:center;flex-wrap:wrap">
+      <span style="font-weight:700;font-size:14px;width:100%">ສະແດງລາຄາ / ເງິນ:</span>
+      <button data-m="0" onclick="setMoney(false)" style="flex:1;min-width:64px;border:none;border-radius:8px;padding:11px 4px;font-weight:800;font-family:inherit;font-size:15px;background:#cbd5e1;color:#111">ເຊື່ອງລາຄາ</button>
+      <button data-m="1" onclick="setMoney(true)" style="flex:1;min-width:64px;border:none;border-radius:8px;padding:11px 4px;font-weight:800;font-family:inherit;font-size:15px;background:#4b5320;color:#fff">ບອກລາຄາ</button>
     </div>
     <button class="pm-save" onclick="doPrint()">🖨️ ພິມຜ່ານ Bluetooth (ໂດຍກົງ)</button>
     <button class="pm-save" style="background:#0a7d4d;margin-top:8px" onclick="shareBillImage()">📲 ພິມຜ່ານແອັບ (Thermer)</button>
@@ -1111,10 +1123,13 @@ function addQueue(){
   if(!item){ toast('ເລືອກ ຫຼື ພິມ ລາຍການ'); return; }
   if(!qty){ toast('ໃສ່ຈຳນວນ'); return; }
   const unit=document.getElementById('qa-unit').value||'ຫິ້ວ';
-  QUEUE.push({shop,item,qty,unit,price:recallPrice(shop,item),note:''});
+  const noteEl=document.getElementById('qa-note');
+  const note=noteEl?noteEl.value.trim():'';
+  QUEUE.push({shop,item,qty,unit,price:recallPrice(shop,item),note:note});
   saveQueue();
   document.getElementById('qa-item').value='';
   document.getElementById('qa-qty').value='';
+  if(noteEl) noteEl.value='';
   document.getElementById('qa-item').focus();
   renderQueue();
   toast('ເພີ່ມແລ້ວ ('+QUEUE.length+' ລາຍການລໍຖ້າ)');
@@ -1127,7 +1142,7 @@ function renderQueue(){
   QUEUE.forEach((r,i)=>{
     const priceTxt = (r.price&&r.price>0) ? '<span class="q-price">'+fmt(r.price)+' ກີບ</span>' : '<span class="q-noprice">ໃສ່ລາຄາ</span>';
     const noteTxt = (r.note&&r.note.trim()) ? '<span class="q-note">📝 '+escapeHtml(r.note)+'</span>' : '<span class="q-nonote">ໃສ່ໝາຍເຫດ</span>';
-    h+='<div class="queue-item"><span><b class="qnum">'+(i+1)+'</b> '+escapeHtml(r.shop)+' · '+escapeHtml(r.item)+' · '+fmt(r.qty)+' '+escapeHtml(r.unit||'ຫິ້ວ')+' · <button class="q-pricebtn" onclick="showPricePopup('+i+')">'+priceTxt+'</button> <button class="q-notebtn" onclick="showNotePopup('+i+')">'+noteTxt+'</button></span><button title="ລົບ" onclick="rmQueue('+i+')">×</button></div>';
+    h+='<div class="queue-item"><span><b class="qnum">'+(i+1)+'</b> '+escapeHtml(r.shop)+' · '+escapeHtml(r.item)+' · '+fmt(r.qty)+' '+escapeHtml(r.unit||'ຫິ້ວ')+' · <button class="q-pricebtn" onclick="showPricePopup('+i+')">'+priceTxt+'</button> <button class="q-notebtn" onclick="showNotePopup('+i+')">'+noteTxt+'</button></span><span class="q-actions"><button class="q-mv" title="ເລື່ອນຂຶ້ນ" onclick="moveQueue('+i+',-1)"'+(i===0?' disabled':'')+'>▲</button><button class="q-mv" title="ເລື່ອນລົງ" onclick="moveQueue('+i+',1)"'+(i===QUEUE.length-1?' disabled':'')+'>▼</button><button class="q-del" title="ລົບ" onclick="rmQueue('+i+')">×</button></span></div>';
   });
   h+='<button class="queue-copy" onclick="copyQueueImage()">🖼️ ກັອບປີ້ລາຍການເປັນຮູບ</button>';
   box.innerHTML=h;
@@ -1170,6 +1185,7 @@ async function copyQueueImage(){
   finally{ document.body.removeChild(wrap); }
 }
 function rmQueue(i){ QUEUE.splice(i,1); saveQueue(); renderQueue(); }
+function moveQueue(i,dir){ const j=i+dir; if(j<0||j>=QUEUE.length) return; const t=QUEUE[i]; QUEUE[i]=QUEUE[j]; QUEUE[j]=t; saveQueue(); renderQueue(); }
 function clearQueue(){ QUEUE=[]; saveQueue(); renderQueue(); }
 
 function buildBulk(){
@@ -1317,8 +1333,17 @@ function render(){
 
   // QR — ຖ້າມີຮູບ ໃຫ້ສະແດງຮູບເຕັມໃບ, ຖ້າບໍ່ມີ ສະແດງກ່ອງວ່າງໃຫ້ອັບໂຫລດ
   const qrBox=document.getElementById('p-qr');
-  if(qrDataUrl){
-    qrBox.innerHTML=`<img class="qr-full" src="${qrDataUrl}" alt="QR ການຊຳລະ">`;
+  let dynMtx=null;
+  if(qrDataUrl===DEFAULT_QR && total>0){ dynMtx=makeQrMatrix(laoQrWithAmount(total)); }
+  if(dynMtx){
+    const mod=8, size=dynMtx.n*mod;
+    const cv=document.createElement('canvas'); cv.width=size; cv.height=size;
+    const cx=cv.getContext('2d'); cx.fillStyle='#fff'; cx.fillRect(0,0,size,size);
+    drawQRMatrix(cx, dynMtx.bits, dynMtx.n, 0,0, mod);
+    qrBox.innerHTML='<img class="qr-full" alt="QR ການຊຳລະ" src="'+cv.toDataURL('image/png')+'"><div style="text-align:center;font-weight:700;font-size:14px;margin-top:2px">(ຍອດ '+fmt(total)+' ກີບ ຢູ່ໃນ QR)</div>';
+    if(qrPrintImg.src!==qrDataUrl) qrPrintImg.src=qrDataUrl;
+  }else if(qrDataUrl){
+    qrBox.innerHTML='<img class="qr-full" src="'+qrDataUrl+'" alt="QR ການຊຳລະ">';
     if(qrPrintImg.src!==qrDataUrl) qrPrintImg.src=qrDataUrl;
   }else{
     qrBox.innerHTML=`
@@ -1466,6 +1491,40 @@ function drawQRMatrix(ctx, bits, n, x, y, mod){
     }
   }
 }
+/* ---------- LAO QR (EMVCo) ໃສ່ຍອດເງິນ ---------- */
+function emvCrc(str){
+  let crc=0xFFFF;
+  for(let i=0;i<str.length;i++){
+    crc^=str.charCodeAt(i)<<8;
+    for(let b=0;b<8;b++){ crc = (crc&0x8000) ? ((crc<<1)^0x1021)&0xFFFF : (crc<<1)&0xFFFF; }
+  }
+  return ('0000'+crc.toString(16).toUpperCase()).slice(-4);
+}
+// ໂຄງสร้าง QR ຮ້ານ (ຖອດຈາກ QR เดิม) — head=ก่อนยอด, tail=หลังยอด (ก่อน CRC)
+const LAOQR_HEAD='000201'+'010211'+'15302031041800520446MCH19E6D5569DB'+'38570016A00526628466257701082771041802030020314mch19E6D5569DB'+'52045811'+'5303418';
+const LAOQR_TAIL='5802LA'+'5919TALEK PHOMMAVONG MS'+'6002VT'+'6212020859990599';
+function laoQrWithAmount(amount){
+  const amt=String(Math.max(0,Math.round(amount||0)));
+  const t54='54'+('0'+amt.length).slice(-2)+amt;
+  const noCrc=LAOQR_HEAD+t54+LAOQR_TAIL+'6304';
+  return noCrc+emvCrc(noCrc);
+}
+function makeQrMatrix(text){
+  if(typeof qrcode==='undefined') return null;
+  let qr=null;
+  try{ qr=qrcode(0,'M'); qr.addData(text); qr.make(); }
+  catch(e){
+    qr=null;
+    for(let tn=6; tn<=25 && !qr; tn++){
+      try{ const q=qrcode(tn,'M'); q.addData(text); q.make(); qr=q; }catch(_){}
+    }
+  }
+  if(!qr) return null;
+  const n=qr.getModuleCount();
+  let bits='';
+  for(let r=0;r<n;r++) for(let c=0;c<n;c++) bits+= qr.isDark(r,c)?'1':'0';
+  return {n:n, bits:bits};
+}
 function thWrap(ctx,text,x,y,maxW,lh,align){
   text=(text==null?'':String(text));
   let line='', lines=[];
@@ -1533,20 +1592,24 @@ function buildReceiptCanvas(custArg, listArg){
   const dateStr=(document.getElementById('p-date')||{}).textContent||'';
   y=thWrap(ctx,dateStr,pad,y,W-2*pad,30,'left')+8;
   ctx.fillRect(pad,y,W-2*pad,2); y+=10;
+  // ຄິດຍອດລວມກ່ອນ ເພື່ອຕັດສິນວ່າຈະສະແດງຖັນ "ເປັນເງິນ" ບໍ
+  const list=(listArg||items).filter(it=>(it.name&&it.name.trim())||it.qty||it.price);
+  let total=0; list.forEach(it=>{ total+=(it.qty||0)*(it.price||0); });
+  const showMoney = (SHOW_MONEY!==false) && total>0;
   // ຫົວຕາຕະລາງ
-  const noX=pad, itemX=44, itemMaxW=116, qtyC=238;
+  const noX=pad, itemX=44, qtyC=238;
+  const itemMaxW = showMoney?116:150;
   ctx.font="bold 19px 'Noto Sans Lao',sans-serif";
   ctx.fillText('No',noX,y);
   ctx.fillText('ລາຍການ',itemX,y);
   t='ຈຳນວນ'; ctx.fillText(t,qtyC-ctx.measureText(t).width/2,y);
-  t='ເປັນເງິນ'; ctx.fillText(t,right-ctx.measureText(t).width,y);
+  if(showMoney){ t='ເປັນເງິນ'; ctx.fillText(t,right-ctx.measureText(t).width,y); }
   y+=28; ctx.fillRect(pad,y-2,W-2*pad,2); y+=6;
   // ລາຍການ
-  let total=0, n=0;
-  const list=(listArg||items).filter(it=>(it.name&&it.name.trim())||it.qty||it.price);
+  let n=0;
   list.forEach(it=>{
     n++;
-    const amt=(it.qty||0)*(it.price||0); total+=amt;
+    const amt=(it.qty||0)*(it.price||0);
     const startY=y;
     ctx.font="bold 20px 'Noto Sans Lao',sans-serif";
     ctx.fillText(String(n),noX,startY);
@@ -1554,19 +1617,23 @@ function buildReceiptCanvas(custArg, listArg){
     ctx.font="bold 19px 'Noto Sans Lao',sans-serif";
     const qtyT=it.qty?(fmt(it.qty)+' '+(it.unit||'ຫິ້ວ')):'';
     if(qtyT) ctx.fillText(qtyT,qtyC-ctx.measureText(qtyT).width/2,startY);
-    ctx.font="bold 20px 'Noto Sans Lao',sans-serif";
-    const amtT=amt?fmt(amt):'';
-    if(amtT) ctx.fillText(amtT,right-ctx.measureText(amtT).width,startY);
+    if(showMoney){
+      ctx.font="bold 20px 'Noto Sans Lao',sans-serif";
+      const amtT=amt?fmt(amt):'';
+      if(amtT) ctx.fillText(amtT,right-ctx.measureText(amtT).width,startY);
+    }
     y=Math.max(afterItem,startY+26)+7;
   });
   ctx.fillRect(pad,y,W-2*pad,2); y+=12;
-  ctx.font="bold 24px 'Noto Sans Lao',sans-serif";
-  t='ລວມ: '+fmt(total)+' ກີບ'; ctx.fillText(t,right-ctx.measureText(t).width,y); y+=34;
-  // ໂຕອ່ານ (ຕົວໜັງສືລາວ)
-  ctx.font="bold 19px 'Noto Sans Lao',sans-serif";
-  y=thWrap(ctx,'('+laoWords(total)+' ກີບ)',center,y,W-2*pad,26,'center')+16;
-  // QR ຊຳລະເງິນ — ສ້າງ QR ໃໝ່ໃຫ້ຄົມ (default) ຫຼື ຂະຫຍາຍຮູບ (custom)
-  if(qrDataUrl){
+  if(showMoney){
+    ctx.font="bold 24px 'Noto Sans Lao',sans-serif";
+    t='ລວມ: '+fmt(total)+' ກີບ'; ctx.fillText(t,right-ctx.measureText(t).width,y); y+=34;
+    // ໂຕອ່ານ (ຕົວໜັງສືລາວ)
+    ctx.font="bold 19px 'Noto Sans Lao',sans-serif";
+    y=thWrap(ctx,'('+laoWords(total)+' ກີບ)',center,y,W-2*pad,26,'center')+16;
+  }
+  // QR ຊຳລະເງິນ + ເລກບັນຊີ — ສະແດງສະເພາະเวลาโชว์เงิน
+  if(showMoney && qrDataUrl){
     ctx.fillRect(pad,y,W-2*pad,2); y+=14;
     ctx.fillStyle='#000';
     ctx.font="bold 21px 'Noto Sans Lao',sans-serif";
@@ -1574,9 +1641,21 @@ function buildReceiptCanvas(custArg, listArg){
     ctx.font="bold 18px 'Noto Sans Lao',sans-serif";
     y=thWrap(ctx,'ຂາຍອາຫານທະເລ (ນາງ ຕາເຫຼັກ ພົມມະວົງ)',center,y,W-2*pad,24,'center')+28;
     if(qrDataUrl===DEFAULT_QR){
-      const mod=7, qpx=QR_DEF_N*mod, qx=Math.round(center-qpx/2);
-      drawQRMatrix(ctx, QR_DEF_BITS, QR_DEF_N, qx, y, mod);   // ໂມດູນຄົມ ເທົ່າກັນ
-      y+=qpx+30;
+      let mtx=null;
+      if(showMoney && total>0){ mtx = makeQrMatrix(laoQrWithAmount(total)); }  // QR ໃສ່ຍອດເງິນ
+      if(mtx){
+        const avail=W-2*pad-8;
+        const mod=Math.max(3, Math.floor(avail/mtx.n));
+        const qpx=mtx.n*mod, qx=Math.round(center-qpx/2);
+        drawQRMatrix(ctx, mtx.bits, mtx.n, qx, y, mod);
+        y+=qpx+10;
+        ctx.font="bold 18px 'Noto Sans Lao',sans-serif";
+        t='(ຍອດ '+fmt(total)+' ກີບ ຢູ່ໃນ QR)'; ctx.fillText(t,center-ctx.measureText(t).width/2,y); y+=26;
+      }else{
+        const mod=7, qpx=QR_DEF_N*mod, qx=Math.round(center-qpx/2);
+        drawQRMatrix(ctx, QR_DEF_BITS, QR_DEF_N, qx, y, mod);   // ໂມດູນຄົມ (ບໍ່ໃສ່ຍອດ)
+        y+=qpx+30;
+      }
     } else if(qrPrintImg.complete && qrPrintImg.naturalWidth>0){
       const qd=320, qx=Math.round(center-qd/2), qy=y;
       ctx.fillStyle='#fff'; ctx.fillRect(qx-20,qy-12,qd+40,qd+24); ctx.fillStyle='#000';
@@ -1738,7 +1817,7 @@ function thermalPrintFallback(canvas){
   w.document.write(doc);
   w.document.close();
 }
-let _printCanvas=null, _rebuildFn=null, PAPER_W=384;
+let _printCanvas=null, _rebuildFn=null, PAPER_W=384, SHOW_MONEY=true;
 function refreshPrint(){
   if(!_rebuildFn) return;
   try{ _printCanvas=_rebuildFn(); }
@@ -1750,7 +1829,13 @@ function refreshPrint(){
     b.style.background=on?'#4b5320':'#cbd5e1';
     b.style.color=on?'#fff':'#111';
   });
+  document.querySelectorAll('#money-pick button').forEach(b=>{
+    const on=(b.getAttribute('data-m')==='1')===(SHOW_MONEY!==false);
+    b.style.background=on?'#4b5320':'#cbd5e1';
+    b.style.color=on?'#fff':'#111';
+  });
 }
+function setMoney(on){ SHOW_MONEY=!!on; refreshPrint(); }   // ເລືອກສະແດງເງິນ ຫຼື ບໍ່
 function setPaper(w){ PAPER_W=w; refreshPrint(); }   // rebuild native ຕາມຂະໜາດໃໝ່
 async function ensureLaoFont(){
   try{ if(document.fonts && document.fonts.load){ await document.fonts.load("bold 24px 'Noto Sans Lao'"); await document.fonts.load("20px 'Noto Sans Lao'"); await document.fonts.ready; } }catch(e){}
