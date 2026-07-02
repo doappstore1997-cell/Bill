@@ -427,13 +427,11 @@
       <span style="font-weight:700;font-size:14px;width:100%">ຂະໜາດເຈ້ຍບິນ (POS):</span>
       <button data-w="384" onclick="setPaper(384)" style="flex:1;min-width:64px;border:none;border-radius:8px;padding:11px 4px;font-weight:800;font-family:inherit;font-size:14px;background:#4b5320;color:#fff">58mm</button>
       <button data-w="576" onclick="setPaper(576)" style="flex:1;min-width:64px;border:none;border-radius:8px;padding:11px 4px;font-weight:800;font-family:inherit;font-size:14px;background:#cbd5e1;color:#111">80mm</button>
-      <button data-w="832" onclick="setPaper(832)" style="flex:1;min-width:64px;border:none;border-radius:8px;padding:11px 4px;font-weight:800;font-family:inherit;font-size:14px;background:#cbd5e1;color:#111">112mm</button>
     </div>
     <button class="pm-save" onclick="doPrint()">🖨️ ພິມຜ່ານ Bluetooth (ໂດຍກົງ)</button>
     <button class="pm-save" style="background:#0a7d4d;margin-top:8px" onclick="shareBillImage()">📲 ພິມຜ່ານແອັບ (Thermer)</button>
+    <button class="pm-save" style="background:#b91c1c;margin-top:8px" onclick="closePrintModal()">✖ ປິດ</button>
     <div class="pm-hint">ເລືອກ <b>ຂະໜາດເຈ້ຍ</b> ໃຫ້ຕົງກັບເຄື່ອງພິມກ່ອນ → ຈາກນັ້ນ:<br>• <b>ພິມຜ່ານ Bluetooth</b> = ສົ່ງ raster ຫາເຄື່ອງພິມໂດຍກົງ<br>• <b>ພິມຜ່ານແອັບ</b> = ສົ່ງຮູບເຂົ້າ Thermer → ຕັ້ງ Image → ກົດ 🖨️ ພິມ</div>
-    <button class="pm-save" style="background:#b91c1c;margin-top:10px" onclick="closePrintModal()">✖ ປິດ</button>
-    <button class="pm-save" style="background:#b91c1c;margin-top:10px" onclick="closePrintModal()">✖ ປິດ</button>
   </div>
 </div>
 
@@ -1631,12 +1629,12 @@ function buildReceiptCanvas(custArg, listArg){
   const fctx=fin.getContext('2d'); fctx.fillStyle='#fff'; fctx.fillRect(0,0,Wp,Hp); fctx.drawImage(tall,0,0,Wp,Hp,0,0,Wp,Hp);
   return fin;
 }
-function canvasToBands(canvas){
+function canvasToBands(canvas, bandArg){
   const W=canvas.width, H=canvas.height;
   const img=canvas.getContext('2d').getImageData(0,0,W,H).data;
   const bpr=Math.ceil(W/8);
   const segs=[ new Uint8Array([0x1B,0x40]) ]; // ESC @ init
-  const band=24; // band ນ້ອຍໆ ໃຫ້ເຄື່ອງພິມພິມທັນ ບໍ່ໃຫ້ buffer ລົ້ນ
+  const band=bandArg||24; // band ນ້ອຍໆ ໃຫ້ເຄື່ອງພິມພິມທັນ ບໍ່ໃຫ້ buffer ລົ້ນ
   for(let y0=0;y0<H;y0+=band){
     const rows=Math.min(band,H-y0);
     const raster=new Uint8Array(bpr*rows);
@@ -1655,13 +1653,16 @@ function canvasToBands(canvas){
   segs.push(new Uint8Array([0x0A,0x0A,0x0A])); // feed
   return segs;
 }
-async function btPrint(segs){
+async function btPrint(canvas){
   const device=await navigator.bluetooth.requestDevice({
     acceptAllDevices:true,
-    optionalServices:[0xFFE0,0xFF00,0x18F0,0xFEE7,
+    optionalServices:[0xFFE0,0xFFE5,0xFF00,0xFFF0,0x18F0,0xFEE7,0xAE30,0xFF12,
       '000018f0-0000-1000-8000-00805f9b34fb',
       '0000ffe0-0000-1000-8000-00805f9b34fb',
-      '49535343-fe7d-4ae5-8fa9-9fafd205e455']
+      '0000ff00-0000-1000-8000-00805f9b34fb',
+      '0000fff0-0000-1000-8000-00805f9b34fb',
+      '49535343-fe7d-4ae5-8fa9-9fafd205e455',
+      'e7810a71-73ae-499d-8c15-faa9aef0c3f2']
   });
   const server=await device.gatt.connect();
   const services=await server.getPrimaryServices();
@@ -1676,20 +1677,22 @@ async function btPrint(segs){
   }
   if(!ch) ch=chNoResp;
   if(!ch) throw new Error('no-writable-characteristic');
-  if(typeof toast==='function') toast('ກຳລັງສົ່ງຮູບໄປພິມ... ຢ່າຫ່າງເຄື່ອງພິມ');
   const canResp = !!ch.properties.write && !!ch.writeValue;
-  if(typeof toast==='function') toast(canResp?'ກຳລັງສົ່ງຮູບ (ໂໝດໝັ້ນຄົງ)...':'ກຳລັງສົ່ງຮູບ (ໂໝດໄວ ອາດຕົກ byte)...');
+  if(typeof toast==='function') toast(canResp?'ກຳລັງສົ່ງຮູບ (ໂໝດໝັ້ນຄົງ)...':'ກຳລັງສົ່ງຮູບ (ໂໝດຊ້າ ກັນ byte ຕົກ)...');
   const sleep=ms=>new Promise(r=>setTimeout(r,ms));
-  const sub = canResp?180:20;   // ບໍ່ລໍຄຳຕອບ → packet 20 byte (ພໍດີ MTU ຕໍ່າສຸດ) ກັນ byte ຕົກ
+  // ບໍ່ມີ flow control → band ນ້ອຍ + chunk ນ້ອຍ + ຊ້າ ເພື່ອກັນ byte ຕົກ (ຕົວໜັງສືต่างด้าว)
+  const band = canResp?48:8;
+  const segs = canvasToBands(canvas, band);
+  const sub = canResp?400:20;
   for(const seg of segs){
     for(let i=0;i<seg.length;i+=sub){
       const slice=seg.slice(i,i+sub);
       if(canResp){ await ch.writeValue(slice); }
-      else { await ch.writeValueWithoutResponse(slice); await sleep(12); }
+      else { await ch.writeValueWithoutResponse(slice); await sleep(16); }
     }
-    await sleep(200); // ພັກໃຫ້ເຄື່ອງພິມພິມ band ນີ້ໃຫ້ຈົບກ່ອນ (ກັນ buffer ລົ້ນ = ຕົວມົ້ວ)
+    await sleep(canResp?40:60);
   }
-  await sleep(300); // ລໍໃຫ້ byte ສຸດທ້າຍ flush ອອກ ກ່ອນຕັດການເຊື່ອມຕໍ່
+  await sleep(400);
   try{ server.disconnect(); }catch(e){}
 }
 function u8ToB64(u8){ var s=''; var CH=0x8000; for(var i=0;i<u8.length;i+=CH){ s+=String.fromCharCode.apply(null, u8.subarray(i,i+CH)); } return btoa(s); }
@@ -1809,14 +1812,13 @@ async function doPrint(){
   closePrintModal();
   if(navigator.bluetooth){
     try{
-      const segs=canvasToBands(canvas);
-      toast('ເລືອກເຄື່ອງພິມ 58MBII...');
-      await btPrint(segs);
+      toast('ເລືອກເຄື່ອງພິມ Bluetooth...');
+      await btPrint(canvas);
       toast('ສົ່ງໄປພິມແລ້ວ ✓');
       return;
     }catch(e){
       if(e && e.name==='NotFoundError'){ toast('ຍົກເລີກການເລືອກເຄື່ອງພິມ'); return; }
-      toast('ຕໍ່ Bluetooth ບໍ່ໄດ້ — ເປີດໜ້າພິມແທນ');
+      toast('BT ຜິດພາດ: '+((e&&(e.message||e.name))||e)+' — ເປີດໜ້າພິມແທນ');
     }
   }else{
     toast('ບຣາວເຊີນີ້ບໍ່ຮອງຮັບ Bluetooth — ເປີດໜ້າພິມແທນ');
