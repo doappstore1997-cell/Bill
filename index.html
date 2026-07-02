@@ -2399,6 +2399,11 @@ var qrcode = function() {
   .pm-title{font-size:19px;font-weight:800;color:var(--brand);margin-bottom:6px}
   .pm-name{font-size:17px;font-weight:600;color:var(--ink);margin-bottom:3px;word-break:break-word}
   .pm-shop{font-size:14px;color:var(--brand);font-weight:700;margin-bottom:14px}
+  .pm-hist{margin:-4px 0 12px}
+  .pm-hist-lbl{font-size:13px;font-weight:700;color:var(--muted);margin-bottom:6px;text-align:left}
+  .pm-chips{display:flex;flex-wrap:wrap;gap:7px;justify-content:center}
+  .pm-chip{font-family:inherit;font-size:16px;font-weight:800;color:#111;background:#e8efe1;border:1.5px solid #4b5320;border-radius:9px;padding:9px 13px;cursor:pointer}
+  .pm-chip:active{background:#4b5320;color:#fff}
   .pm-input{width:100%;box-sizing:border-box;font-family:inherit;font-size:20px;text-align:center;background:var(--field);border:2px solid var(--field-line);border-radius:10px;padding:13px;margin-bottom:12px}
   .pm-input:focus{outline:none;border-color:var(--brand)}
   .pm-save{width:100%;font-family:inherit;font-size:17px;font-weight:700;border:none;border-radius:11px;padding:14px;cursor:pointer;background:var(--army);color:#fff}
@@ -2720,6 +2725,7 @@ var qrcode = function() {
     <div class="pm-title">💰 ໃສ່ລາຄາ</div>
     <div class="pm-name" id="pm-name"></div>
     <div class="pm-shop" id="pm-shop"></div>
+    <div id="pm-hist" class="pm-hist" style="display:none"></div>
     <input id="pm-price" class="pm-input" type="number" inputmode="numeric" placeholder="ລາຄາ (ກີບ)" onkeydown="if(event.key==='Enter')savePriceModal()">
     <button class="pm-save" onclick="savePriceModal()">ບັນທຶກລາຄາ</button>
     <div class="pm-hint">ບໍ່ໃສ່ກໍໄດ້ — ກົດ ✕ ແລ້ວໄປພິມລາຄາໃນໃບບິນກໍໄດ້</div>
@@ -3240,7 +3246,9 @@ const DEFAULT_PRODUCTS=[
   {name:'ສະໃບນາງເຕັມ',price:0},
   {name:'ສະໃບນາງຊອຍ',price:0},
   {name:'ໄສ້ຕັນ',price:0},
-  {name:'ມຶກກອບ',price:0}
+  {name:'ປາມຶກກອບ',price:0},
+  {name:'ແກັດໂຟມ',price:0},
+  {name:'ຄ່າຂົນສົ່ງ',price:0}
 ];
 const PROD_KEY='dl_products_v1';
 let PRODUCTS=loadProducts();
@@ -3261,6 +3269,15 @@ function loadProducts(){
       localStorage.setItem('dl_rn_soi','1');
     }
   }catch(e){ list.forEach(p=>{ if(p.name==='ສະໃບນາງຫັ່ນ') p.name='ສະໃບນາງຊອຍ'; }); }
+  // ແທนที่ລາຍการທັງໝົດ ດ້ວຍชุดใหม่ 6 ລາຍการ (ເທື່ອດຽວ) — ຮັກສາລາຄາທີ່ຊື່ตรงกัน
+  try{
+    if(!localStorage.getItem('dl_prod_v3')){
+      const oldPrice={}; list.forEach(p=>{ oldPrice[p.name]=p.price; });
+      list = DEFAULT_PRODUCTS.map(d=>({name:d.name, price:(oldPrice[d.name]||d.price||0)}));
+      localStorage.setItem('dl_prod_v3','1');
+      try{ localStorage.setItem(PROD_KEY, JSON.stringify(list)); }catch(e){}
+    }
+  }catch(e){ list = DEFAULT_PRODUCTS.map(d=>({name:d.name, price:d.price})); }
   // ເພີ່ມລາຍການພື້ນຖານທີ່ຍັງບໍ່ມີ ໃຫ້ປະກົດສະເໝີ
   DEFAULT_PRODUCTS.forEach(d=>{ if(!list.some(p=>p.name===d.name)) list.push({name:d.name,price:d.price}); });
   return list;
@@ -3378,7 +3395,40 @@ let PRICE_MEM=loadPriceMem();
 function loadPriceMem(){ try{ const raw=localStorage.getItem(PRICEMEM_KEY); if(raw){ const o=JSON.parse(raw); if(o&&typeof o==='object') return o; } }catch(e){} return {}; }
 function savePriceMem(){ try{ localStorage.setItem(PRICEMEM_KEY, JSON.stringify(PRICE_MEM)); }catch(e){} }
 function pmKey(shop,item){ return (shop||'').trim()+'\u241F'+(item||'').trim(); }
-function rememberPrice(shop,item,price){ if(price>0){ PRICE_MEM[pmKey(shop,item)]=price; savePriceMem(); } }
+/* ---------- ປະຫວັດລາຄາທີ່ເຄີຍໃສ່ (ຕາມ ຮ້ານ+ລາຍການ) ---------- */
+const PRICEHIST_KEY='dl_pricehist_v1';
+let PRICE_HIST=loadPriceHist();
+function loadPriceHist(){ try{ const raw=localStorage.getItem(PRICEHIST_KEY); if(raw){ const o=JSON.parse(raw); if(o&&typeof o==='object') return o; } }catch(e){} return {}; }
+function savePriceHist(){ try{ localStorage.setItem(PRICEHIST_KEY, JSON.stringify(PRICE_HIST)); }catch(e){} }
+function pushPriceHist(shop,item,price){
+  if(!(price>0)) return;
+  [pmKey(shop,item), pmKey('',item)].forEach(k=>{
+    let a=Array.isArray(PRICE_HIST[k])?PRICE_HIST[k]:[];
+    a=a.filter(x=>x!==price); a.unshift(price); if(a.length>8) a=a.slice(0,8);
+    PRICE_HIST[k]=a;
+  });
+  savePriceHist();
+}
+function getPriceHist(shop,item){
+  const seen={}, out=[];
+  [pmKey(shop,item), pmKey('',item)].forEach(k=>{
+    (PRICE_HIST[k]||[]).forEach(p=>{ if(p>0 && !seen[p]){ seen[p]=1; out.push(p); } });
+  });
+  return out.slice(0,8);
+}
+// seed history ຈາກລາຄາเก่าที่จำไว้ (ເທື່ອດຽວ) ໃຫ້ໂຊทันที
+try{
+  if(!localStorage.getItem('dl_pricehist_seed')){
+    Object.keys(PRICE_MEM).forEach(k=>{
+      const v=PRICE_MEM[k]; if(!(v>0)) return;
+      let a=Array.isArray(PRICE_HIST[k])?PRICE_HIST[k]:[]; if(!a.includes(v)) a.unshift(v); PRICE_HIST[k]=a;
+      const parts=k.split('\u241F');
+      if(parts.length===2){ const ik=pmKey('',parts[1]); let b=Array.isArray(PRICE_HIST[ik])?PRICE_HIST[ik]:[]; if(!b.includes(v)) b.unshift(v); PRICE_HIST[ik]=b; }
+    });
+    localStorage.setItem('dl_pricehist_seed','1'); savePriceHist();
+  }
+}catch(e){}
+function rememberPrice(shop,item,price){ if(price>0){ PRICE_MEM[pmKey(shop,item)]=price; savePriceMem(); pushPriceHist(shop,item,price); } }
 function recallPrice(shop,item){ const v=PRICE_MEM[pmKey(shop,item)]; return (v&&v>0)?v:0; }
 let QUEUE=loadQueue();
 function loadQueue(){
@@ -3392,12 +3442,22 @@ function showPricePopup(idx){
   _pmIdx=idx;
   document.getElementById('pm-name').textContent=r.item;
   document.getElementById('pm-shop').textContent='ຮ້ານ: '+r.shop;
-  const cur = (r.price && r.price>0) ? r.price : (recallPrice(r.shop,r.item) || (priceOf(r.item)>0 ? priceOf(r.item) : ''));
+  const cur = (r.price && r.price>0) ? r.price
+    : (recallPrice(r.shop,r.item) || getPriceHist(r.shop,r.item)[0] || (priceOf(r.item)>0 ? priceOf(r.item) : ''));
   document.getElementById('pm-price').value = cur;
+  const hbox=document.getElementById('pm-hist');
+  if(hbox){
+    const hist=getPriceHist(r.shop, r.item);
+    if(hist.length){
+      hbox.innerHTML='<div class="pm-hist-lbl">ລາຄາທີ່ເຄີຍໃສ່ (ຕິກເລືອກ):</div><div class="pm-chips">'+hist.map(p=>'<button type="button" class="pm-chip" onclick="pmPick('+p+')">'+fmt(p)+'</button>').join('')+'</div>';
+      hbox.style.display='block';
+    }else{ hbox.innerHTML=''; hbox.style.display='none'; }
+  }
   document.getElementById('price-modal').style.display='flex';
   setTimeout(()=>{ const p=document.getElementById('pm-price'); p.focus(); p.select && p.select(); },60);
 }
 function closePriceModal(){ document.getElementById('price-modal').style.display='none'; _pmIdx=-1; }
+function pmPick(p){ const el=document.getElementById('pm-price'); if(el){ el.value=p; el.focus(); } }
 let _nmIdx=-1;
 function showNotePopup(idx){
   const r=QUEUE[idx]; if(!r) return;
