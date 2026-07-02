@@ -1695,6 +1695,7 @@ async function btPrint(segs){
 function u8ToB64(u8){ var s=''; var CH=0x8000; for(var i=0;i<u8.length;i+=CH){ s+=String.fromCharCode.apply(null, u8.subarray(i,i+CH)); } return btoa(s); }
 function thermalPrintFallback(canvas){
   var url=canvas.toDataURL('image/jpeg',0.92);
+  var mm=(PAPER_W>=832?'112mm':(PAPER_W>=576?'80mm':'58mm'));
   var segsB64='[]';
   try{ var segs=canvasToBands(canvas); segsB64=JSON.stringify(segs.map(u8ToB64)); }catch(e){}
   var svc=JSON.stringify([0xFFE0,0xFF00,0x18F0,0xFEE7,'000018f0-0000-1000-8000-00805f9b34fb','0000ffe0-0000-1000-8000-00805f9b34fb','49535343-fe7d-4ae5-8fa9-9fafd205e455']);
@@ -1711,7 +1712,7 @@ function thermalPrintFallback(canvas){
     +'<div class="bar"><button class="pb bt" onclick="btPrint()">🔍 ຄົ້ນຫາ &amp; ພິມຜ່ານ Bluetooth</button>'
     +'<button class="pb sys" onclick="window.print()">🖨️ ພິມຜ່ານລະບົບ</button>'
     +'<button class="pb" style="background:#b91c1c" onclick="window.close()">✖ ປິດ</button>'
-    +'<div id="st">ກົດ “ຄົ້ນຫາ &amp; ພິມຜ່ານ Bluetooth” ເພື່ອເລືອກເຄື່ອງພິມ 58mm</div></div>'
+    +'<div id="st">ກົດ “ຄົ້ນຫາ &amp; ພິມຜ່ານ Bluetooth” ເພື່ອເລືອກເຄື່ອງພິມ '+mm+'</div></div>'
     +'<img src="'+url+'">'
     +'<scr'+'ipt>'
     +'var SVC='+svc+';'
@@ -1730,6 +1731,7 @@ function thermalPrintFallback(canvas){
     +'await sleep(300);try{server.disconnect();}catch(e){}setSt("ສົ່ງໄປພິມແລ້ວ ✓ (ຖ້າມົ້ວ ລອງ ພິມຜ່ານລະບົບ)");'
     +'}catch(e){setSt((e&&e.name==="NotFoundError")?"ຍົກເລີກການເລືອກເຄື່ອງພິມ":("ຜິດພາດ: "+((e&&e.message)||e)));}}'
     +'</scr'+'ipt></body></html>';
+  doc=doc.split('58mm').join(mm);
   w.document.write(doc);
   w.document.close();
 }
