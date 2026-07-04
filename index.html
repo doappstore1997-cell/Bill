@@ -2915,7 +2915,7 @@ var qrcode = function() {
           <div class="r-line"><span class="lbl">ວັນເດືອນປີ:</span> <span class="r-date-wrap"><span id="p-date" class="r-pick"></span><input type="date" id="r-date" class="r-date-input" onchange="onDateChangeReceipt()" aria-label="ເລືອກວັນທີ"></span></div>
           <div class="r-cust">
             <span><b>ຊື່ຮ້ານ:</b> <select id="r-cust" class="r-cust-sel" onchange="onShopChangeReceipt()"></select></span>
-            <span><b>ລະຫັດ</b> <span id="p-code"></span></span>
+            <span id="p-code-wrap"><b>ລະຫັດ</b> <span id="p-code"></span></span>
           </div>
           <div class="tab-wrap">
           <div class="watermark"><span class="wm-small">ຂາຍດີ ເຮັງໆ ລວຍໆ</span><span class="wm-big">DDML</span><span class="wm-small">ນ້ຳໜັກເຕັມ ລູກຄ້າຍິ້ມ</span></div>
@@ -3880,6 +3880,7 @@ function render(){
   const rd=document.getElementById('r-date'); if(rd) rd.value=g('f-date');
   const rc=document.getElementById('r-cust'); if(rc) rc.value=g('f-cust');
   document.getElementById('p-code').textContent=g('f-code');
+  { const cw=document.getElementById('p-code-wrap'); if(cw) cw.style.display = (g('f-code').trim()? '' : 'none'); }
   document.getElementById('p-acct').textContent=g('f-acct');
 
   // ແຖວສິນຄ້າ (ພິມໃນຕາຕະລາງໄດ້ໂດຍກົງ)
