@@ -2463,6 +2463,9 @@ var qrcode = function() {
   .queue-list{margin-bottom:8px}
   .queue-head{display:flex;align-items:center;justify-content:space-between;font-size:12.5px;font-weight:700;color:var(--brand-dark);margin:2px 0 6px}
   .queue-clear{font-family:inherit;font-size:11.5px;border:none;background:#fde7ea;color:var(--brand);border-radius:6px;padding:4px 9px;cursor:pointer}
+  .queue-head-btns{display:inline-flex;gap:6px;flex-shrink:0}
+  .queue-refresh{font-family:inherit;font-size:11.5px;font-weight:700;border:none;background:#e0ecff;color:#1d4ed8;border-radius:6px;padding:4px 9px;cursor:pointer}
+  .ap-queue .queue-refresh,.ap-queue .queue-clear{font-size:13.5px;padding:7px 12px}
   .queue-clear:hover{background:var(--brand);color:#fff}
   .queue-item{display:flex;align-items:center;justify-content:space-between;gap:8px;background:#f4f6f8;border:1px solid var(--panel-line);border-radius:7px;padding:6px 9px;margin-bottom:5px;font-size:13px}
   .queue-item button{border:none;background:transparent;color:var(--brand);font-size:17px;line-height:1;cursor:pointer;padding:0 2px}
@@ -2655,6 +2658,8 @@ var qrcode = function() {
   }
   .qr-card img.qr-img{width:100%;border-radius:6px;display:block}
   .qr-full{width:300px;max-width:84%;margin:6px auto 2px;display:block;border-radius:10px}
+  .dl-spin{width:36px;height:36px;border:4px solid #e2e2e2;border-top-color:#4b5320;border-radius:50%;animation:dlspin .8s linear infinite;margin:0 auto 12px}
+  @keyframes dlspin{to{transform:rotate(360deg)}}
   .qr-toggle{display:flex;flex-direction:column;gap:4px;align-items:center;margin:4px auto 8px;font-size:14px;font-weight:700}
   .qr-toggle label{display:inline-flex;align-items:center;gap:6px;cursor:pointer;background:#f2f4f6;border:1px solid var(--panel-line);border-radius:8px;padding:6px 12px}
   .qr-toggle input{width:18px;height:18px}
@@ -2703,7 +2708,8 @@ var qrcode = function() {
     </div>
     <div class="ap-card">
       <label class="ap-label">1. ເລືອກຮ້ານ</label>
-      <select id="qa-shop" class="ap-in"></select>
+      <select id="qa-shop" class="ap-in" onchange="onQaShopChange()"></select>
+      <input id="qa-shop-custom" class="ap-in" style="display:none;margin-top:6px" placeholder="ພິມຊື່ຮ້ານເອງ...">
       <label class="ap-label">2. ເລືອກ ຫຼື ພິມ ລາຍການ</label>
       <input id="qa-item" class="ap-in" list="product-list" placeholder="ເລືອກ ຫຼື ພິມ ລາຍການ">
       <div class="ap-two">
@@ -2736,6 +2742,12 @@ var qrcode = function() {
   </div>
 </div>
 
+<div id="adding-overlay" style="display:none;position:fixed;inset:0;z-index:99999;background:rgba(0,0,0,.45);align-items:center;justify-content:center">
+  <div style="background:#fff;border-radius:16px;padding:24px 30px;text-align:center;box-shadow:0 8px 30px rgba(0,0,0,.3)">
+    <div class="dl-spin"></div>
+    <div id="adding-text" style="font-weight:800;font-size:16px;color:#111">ກຳລັງເພີ່ມ...</div>
+  </div>
+</div>
 <div id="price-modal" class="price-modal" style="display:none">
   <div class="pm-card">
     <button class="pm-x" onclick="closePriceModal()" aria-label="ປິດ">✕</button>
@@ -3060,7 +3072,7 @@ function loadShops(){
 }
 function saveShops(){ try{ localStorage.setItem(SHOP_KEY, JSON.stringify(SHOPS)); }catch(e){} }
 
-function fillShopSelect(sel, keep){
+function fillShopSelect(sel, keep, withCustom){
   if(!sel) return;
   sel.innerHTML='';
   SHOPS.forEach(s=>{
@@ -3069,6 +3081,11 @@ function fillShopSelect(sel, keep){
     o.textContent=s.name;
     sel.appendChild(o);
   });
+  if(withCustom){
+    const o=document.createElement('option');
+    o.value='__custom__'; o.textContent='✏️ ຂຽນເອງ (ພິມຊື່ຮ້ານ)';
+    sel.appendChild(o);
+  }
   if(keep && SHOPS.some(s=>s.name===keep)) sel.value=keep;
 }
 function populateShops(selectName){
@@ -3077,7 +3094,7 @@ function populateShops(selectName){
   fillShopSelect(f, keep);
   fillShopSelect(document.getElementById('r-cust'), keep);
   const qa=document.getElementById('qa-shop');
-  if(qa) fillShopSelect(qa, qa.value || keep);
+  if(qa){ const prev=qa.value; fillShopSelect(qa, qa.value || keep, true); if(prev==='__custom__') qa.value='__custom__'; }
   syncCode();
 }
 function syncCode(){
@@ -3426,12 +3443,18 @@ function pushPriceHist(shop,item,price){
   });
   savePriceHist();
 }
+let CLOUD_PRICES={};
 function getPriceHist(shop,item){
   const seen={}, out=[];
+  // ລາຄາຈາກ Google Sheet ກ່ອນ (sync ທຸກເครื่อง): ปัจจุบัน + ก่อนหน้า 2
+  [pmKey(shop,item), pmKey('',item)].forEach(k=>{
+    (CLOUD_PRICES[k]||[]).forEach(p=>{ p=Number(p); if(p>0 && !seen[p]){ seen[p]=1; out.push(p); } });
+  });
+  // เสริมด้วยประวัติในเครื่อง (offline)
   [pmKey(shop,item), pmKey('',item)].forEach(k=>{
     (PRICE_HIST[k]||[]).forEach(p=>{ if(p>0 && !seen[p]){ seen[p]=1; out.push(p); } });
   });
-  return out.slice(0,8);
+  return out.slice(0,3);
 }
 // seed history ຈາກລາຄາเก่าที่จำไว้ (ເທື່ອດຽວ) ໃຫ້ໂຊทันที
 try{
@@ -3453,11 +3476,38 @@ function loadQueue(){
   return [];
 }
 function saveQueue(){ try{ localStorage.setItem(QUEUE_KEY, JSON.stringify(QUEUE)); }catch(e){} }
+/* ---------- Pending: ບັນທຶກຄ້າງຕອນ offline → upload ຕອນມີເນັດ ---------- */
+const PENDING_KEY='dl_pending_v1';
+let PENDING=loadPending();
+let CLOUD_ITEMS=[];
+function loadPending(){ try{ const r=localStorage.getItem(PENDING_KEY); if(r){ const a=JSON.parse(r); if(Array.isArray(a)) return a; } }catch(e){} return []; }
+function savePending(){ try{ localStorage.setItem(PENDING_KEY, JSON.stringify(PENDING)); }catch(e){} }
+function pendingItems(){ return PENDING.map(function(p){ return {shop:p.shop,item:p.item,qty:p.qty,unit:p.unit,price:p.price,note:p.note,addedBy:p.addedBy,_pending:true,_puid:p._puid}; }); }
+function addPending(row){ row._puid='p'+Date.now()+Math.floor(Math.random()*1000); PENDING.push(row); savePending(); }
+function renderMerged(){ QUEUE = CLOUD_ITEMS.concat(pendingItems()); try{saveQueue();}catch(e){} renderQueue(); }
+function setCloudItems(items){ CLOUD_ITEMS = items||[]; renderMerged(); if(PENDING.length) flushPending(true); }
+function flushPending(auto){
+  if(!syncOn() || !PENDING.length) return;
+  showAdding(true,'ກຳລັງອັປໂຫລດ '+PENDING.length+' ລາຍການ...');
+  (function next(){
+    if(!PENDING.length){ showAdding(false); toast('ອັປໂຫລດຄົບແລ້ວ ✓'); setTimeout(function(){cloudRefresh(true);},500); return; }
+    const p=PENDING[0];
+    cloudPost({action:'add', row:{shop:p.shop,item:p.item,qty:p.qty,unit:p.unit,price:p.price,note:p.note,addedBy:p.addedBy}})
+      .then(function(){ PENDING.shift(); savePending(); renderMerged(); setTimeout(next,450); })
+      .catch(function(){ showAdding(false); if(!auto) toast('ຍັງບໍ່ມີເນັດ — ອັປໂຫລດບໍ່ໄດ້'); });
+  })();
+}
+if(typeof window!=='undefined'){ window.addEventListener('online', function(){ if(syncOn() && PENDING.length) flushPending(true); }); }
+CLOUD_ITEMS = QUEUE.filter(function(q){ return !q._pending; });
+QUEUE = CLOUD_ITEMS.concat(pendingItems());
 /* ================= ONLINE SYNC (Google Sheets) ================= */
-const SYNC_URL_DEFAULT='https://script.google.com/macros/s/AKfycbwSSRd9AofrbjSHca6CTfdeTJdPvA7TiQ09mEu53cxqlTCK8nd66mBO_c_MyRpFO70dPA/exec';
+const SYNC_URL_DEFAULT='https://script.google.com/macros/s/AKfycbzhqimA14EgK6CI3nXOxTYv-3vC9CuJMOxZbXUpkXgVnxYfJ0hmrMphtg8zA8EU7jjSRQ/exec';
+const SYNC_URL_OLD='https://script.google.com/macros/s/AKfycbwSSRd9AofrbjSHca6CTfdeTJdPvA7TiQ09mEu53cxqlTCK8nd66mBO_c_MyRpFO70dPA/exec';
 let SYNC_URL='', SYNC_USER='', SYNC_TOKEN='DL2026';
 try{
-  SYNC_URL=localStorage.getItem('dl_sync_url')||SYNC_URL_DEFAULT;
+  let stored=localStorage.getItem('dl_sync_url');
+  if(stored===SYNC_URL_OLD){ stored=''; localStorage.removeItem('dl_sync_url'); }  // ລ້າງ URL ເກົ່າ
+  SYNC_URL=stored||SYNC_URL_DEFAULT;
   SYNC_USER=localStorage.getItem('dl_sync_user')||'';
   SYNC_TOKEN=localStorage.getItem('dl_sync_token')||'DL2026';
 }catch(e){ SYNC_URL=SYNC_URL_DEFAULT; }
@@ -3482,17 +3532,18 @@ let _syncTimer=null, _syncBusy=false;
 function syncOn(){ return !!SYNC_URL; }
 function syncStatus(msg,color){ const el=document.getElementById('sy-status'); if(el){ el.textContent=msg; el.style.color=color||'#555'; } }
 function syncInitUI(){
-  const u=document.getElementById('sy-url'); if(u) u.value=SYNC_URL;
+  const u=document.getElementById('sy-url'); if(u) u.value=(SYNC_URL||SYNC_URL_DEFAULT);
   const n=document.getElementById('sy-user'); if(n) n.value=SYNC_USER;
   const t=document.getElementById('sy-token'); if(t) t.value=SYNC_TOKEN;
   syncStatus(syncOn()?('ໂໝດ: ອອນລາຍ ✓ ('+(SYNC_USER||'ບໍ່ລະບຸຊື່')+')'):'ໂໝດ: ໃນເຄື່ອງ (localStorage)', syncOn()?'#0a7d4d':'#555');
 }
-function _applyItems(j){ if(j&&j.items){ QUEUE=j.items; saveQueue(); renderQueue(); } return j; }
+function _applyItems(j){ if(j&&j.items){ setCloudItems(j.items); } return j; }
 async function cloudGet(){
   const j=await _jsonp(SYNC_URL+'?token='+encodeURIComponent(SYNC_TOKEN));
-  if(j&&j.ok&&Array.isArray(j.rows)) return {items:j.rows.map(rowToItem)};
+  if(j&&j.ok&&Array.isArray(j.rows)){ if(j.prices && typeof j.prices==='object') CLOUD_PRICES=j.prices; return {items:j.rows.map(rowToItem)}; }
   throw new Error((j&&j.error)||'err');
 }
+function recordCloudPrice(shop,item,price){ if(syncOn() && price>0){ cloudPost({action:'price', shop:shop, item:item, price:price}); } }
 function cloudPost(body){
   body.token=SYNC_TOKEN;
   return fetch(SYNC_URL,{method:'POST',mode:'no-cors',headers:{'Content-Type':'text/plain;charset=utf-8'},body:JSON.stringify(body)});
@@ -3505,8 +3556,18 @@ async function cloudRefresh(silent){
   finally{ _syncBusy=false; }
 }
 function cloudDo(body){ return cloudPost(body).then(function(){ setTimeout(function(){cloudRefresh(true);},700); }).catch(function(){ toast('ອອນລາຍຜິດພາດ — ລອງໃໝ່'); }); }
+function manualRefresh(){
+  if(syncOn()){
+    showAdding(true,'ກຳລັງໂຫລດ...');
+    cloudGet().then(function(j){ if(j&&j.items){ setCloudItems(j.items); } showAdding(false); toast('ໂຫລດຄືນແລ້ວ ('+QUEUE.length+' ລາຍການ)'); })
+              .catch(function(){ showAdding(false); toast('ໂຫລດບໍ່ໄດ້ — ເຊັກເນັດ/ລິ້ງ'); });
+  }else{
+    QUEUE=loadQueue(); renderQueue(); toast('ໂຫລດຄືນແລ້ວ');
+  }
+}
 function syncConnect(){
-  const u=(document.getElementById('sy-url').value||'').trim();
+  let u=(document.getElementById('sy-url').value||'').trim();
+  if(!u) u=SYNC_URL_DEFAULT;
   const n=(document.getElementById('sy-user').value||'').trim();
   const tk=((document.getElementById('sy-token')||{}).value||'DL2026').trim()||'DL2026';
   if(!/^https:\/\/script\.google\.com\/.*\/exec/.test(u)){ toast('ລິ້ງບໍ່ຖືກ — ຕ້ອງລົງທ້າຍ /exec'); return; }
@@ -3562,7 +3623,8 @@ function saveNoteModal(){
   if(_nmIdx>=0 && QUEUE[_nmIdx]){
     const val=document.getElementById('nm-note').value.trim();
     const r=QUEUE[_nmIdx];
-    if(syncOn()&&r.id){ cloudDo({action:'update',id:r.id,note:val}); }
+    if(r._pending){ const p=PENDING.filter(function(x){return x._puid===r._puid;})[0]; if(p){ p.note=val; savePending(); } renderMerged(); }
+    else if(syncOn()&&r.id){ cloudDo({action:'update',id:r.id,fields:{note:val}}); }
     else { r.note=val; saveQueue(); renderQueue(); }
   }
   closeNoteModal();
@@ -3572,14 +3634,41 @@ function savePriceModal(){
   if(_pmIdx>=0 && QUEUE[_pmIdx]){
     const r=QUEUE[_pmIdx];
     if(pr>0) rememberPrice(r.shop, r.item, pr);
-    if(syncOn()&&r.id){ cloudDo({action:'update',id:r.id,fields:{price:pr>0?pr:0}}); }
+    if(r._pending){ const p=PENDING.filter(function(x){return x._puid===r._puid;})[0]; if(p){ p.price=pr>0?pr:0; savePending(); } renderMerged(); }
+    else if(syncOn()&&r.id){ cloudDo({action:'update',id:r.id,fields:{price:pr>0?pr:0}}); }
     else { r.price = pr>0?pr:0; saveQueue(); renderQueue(); }
     if(pr>0) toast('ໃສ່ລາຄາ '+fmt(pr)+' ກີບ ສຳລັບ '+r.shop);
   }
   closePriceModal();
 }
+function showAdding(on,txt){
+  const o=document.getElementById('adding-overlay'); if(!o) return;
+  if(txt){ const t=document.getElementById('adding-text'); if(t) t.textContent=txt; }
+  o.style.display=on?'flex':'none';
+}
+function waitForNewItem(beforeIds, shop, item, cb){
+  let tries=0;
+  (function attempt(){
+    tries++;
+    cloudGet().then(function(j){
+      if(j&&j.items){ setCloudItems(j.items); }
+      let idx=-1;
+      for(let k=QUEUE.length-1;k>=0;k--){ const q=QUEUE[k]; if(q && !beforeIds[q.id] && q.shop===shop && q.item===item){ idx=k; break; } }
+      if(idx>=0 || tries>=6) cb(idx);
+      else setTimeout(attempt,800);
+    }).catch(function(){ if(tries>=6) cb(-1); else setTimeout(attempt,800); });
+  })();
+}
+function onQaShopChange(){
+  const sel=document.getElementById('qa-shop');
+  const ci=document.getElementById('qa-shop-custom');
+  if(!sel||!ci) return;
+  if(sel.value==='__custom__'){ ci.style.display='block'; ci.focus(); }
+  else{ ci.style.display='none'; }
+}
 function addQueue(){
-  const shop=document.getElementById('qa-shop').value;
+  let shop=document.getElementById('qa-shop').value;
+  if(shop==='__custom__'){ shop=(document.getElementById('qa-shop-custom').value||'').trim(); }
   const item=document.getElementById('qa-item').value.trim();
   const qty=parseFloat((document.getElementById('qa-qty').value||'').replace(/[^\d.]/g,''))||0;
   if(!shop){ toast('ເລືອກຮ້ານກ່ອນ'); return; }
@@ -3590,9 +3679,19 @@ function addQueue(){
   const note=noteEl?noteEl.value.trim():'';
   const clearInputs=()=>{ document.getElementById('qa-item').value=''; document.getElementById('qa-qty').value=''; if(noteEl) noteEl.value=''; document.getElementById('qa-item').focus(); };
   if(syncOn()){
-    cloudPost({action:'add', row:{shop:shop, item:item, qty:qty, unit:unit, price:recallPrice(shop,item), note:note, addedBy:SYNC_USER}})
-      .then(function(){ clearInputs(); toast('ເພີ່ມແລ້ວ (ອອນລາຍ)'); setTimeout(function(){cloudRefresh(true);},700); })
-      .catch(function(){ toast('ເພີ່ມອອນລາຍບໍ່ສຳເລັດ'); });
+    showAdding(true,'ກຳລັງເພີ່ມ...');
+    const beforeIds={}; QUEUE.forEach(function(q){ if(q&&q.id) beforeIds[q.id]=1; });
+    const row={shop:shop, item:item, qty:qty, unit:unit, price:recallPrice(shop,item)||0, note:note, addedBy:SYNC_USER};
+    cloudPost({action:'add', row:row})
+      .then(function(){
+        clearInputs();
+        waitForNewItem(beforeIds, shop, item, function(idx){
+          showAdding(false);
+          if(idx>=0){ toast('ເພີ່ມແລ້ວ (ອອນລາຍ)'); showPricePopup(idx); }
+          else { toast('ເພີ່ມແລ້ວ — ກຳລັງໂຫລດລາຍການ'); }
+        });
+      })
+      .catch(function(){ showAdding(false); clearInputs(); addPending(row); renderMerged(); toast('ບໍ່ມີເນັດ — ບັນທຶກຄ້າງໃນເຄື່ອງ ຈະອັປໂຫລດເມື່ອມີເນັດ'); showPricePopup(QUEUE.length-1); });
     return;
   }
   QUEUE.push({shop,item,qty,unit,price:recallPrice(shop,item),note:note});
@@ -3605,14 +3704,15 @@ function addQueue(){
 function renderQueue(){
   const box=document.getElementById('queue-list');
   if(!QUEUE.length){ box.innerHTML=''; return; }
-  let h='<div class="queue-head">ລໍຖ້າສ້າງ: '+QUEUE.length+' ລາຍການ <button class="queue-clear" onclick="clearQueue()">ລ້າງທັງໝົດ</button></div>';
+  let upBtn=(syncOn()&&PENDING.length)?'<button class="queue-refresh" style="background:#fff4d6;color:#92600a" onclick="flushPending()">⬆️ ອັປໂຫລດ ('+PENDING.length+')</button>':'';
+  let h='<div class="queue-head">ລໍຖ້າສ້າງ: '+QUEUE.length+' ລາຍການ <span class="queue-head-btns">'+upBtn+'<button class="queue-refresh" onclick="manualRefresh()">🔄 ໂຫລດຄືນ</button><button class="queue-clear" onclick="clearQueue()">ລ້າງທັງໝົດ</button></span></div>';
   QUEUE.forEach((r,i)=>{
     const priceTxt = (r.price&&r.price>0) ? '<span class="q-price">'+fmt(r.price)+' ກີບ</span>' : '<span class="q-noprice">ໃສ່ລາຄາ</span>';
     const noteTxt = (r.note&&r.note.trim()) ? '<span class="q-note">📝 '+escapeHtml(r.note)+'</span>' : '<span class="q-nonote">ໃສ່ໝາຍເຫດ</span>';
     const by = r.addedBy ? ' <span class="q-by">· ໂດຍ '+escapeHtml(r.addedBy)+'</span>' : '';
-    const chkBadge = r.checked ? '<span class="q-badge on">✅ ກວດແລ້ວ</span>' : (syncOn()?'<span class="q-badge">⏳ ລໍກວດ</span>':'');
+    const pend = r._pending ? ' <span class="q-badge" style="background:#fff4d6;color:#92600a">⏳ ຄ້າງ</span>' : '';
     const mvBtns = syncOn() ? '' : ('<button class="q-mv" title="ເລື່ອນຂຶ້ນ" onclick="moveQueue('+i+',-1)"'+(i===0?' disabled':'')+'>▲</button><button class="q-mv" title="ເລື່ອນລົງ" onclick="moveQueue('+i+',1)"'+(i===QUEUE.length-1?' disabled':'')+'>▼</button>');
-    h+='<div class="queue-item'+(r.checked?' q-checked':'')+'"><span><b class="qnum">'+(i+1)+'</b> '+escapeHtml(r.shop)+' · '+escapeHtml(r.item)+' · '+fmt(r.qty)+' '+escapeHtml(r.unit||'ຫິ້ວ')+' · <button class="q-pricebtn" onclick="showPricePopup('+i+')">'+priceTxt+'</button> <button class="q-notebtn" onclick="showNotePopup('+i+')">'+noteTxt+'</button>'+chkBadge+by+'</span><span class="q-actions"><button class="q-chk'+(r.checked?' on':'')+'" title="ໝາຍວ່າກວດແລ້ວ" onclick="toggleCheck('+i+')">✓</button>'+mvBtns+'<button class="q-del" title="ລົບ" onclick="rmQueue('+i+')">×</button></span></div>';
+    h+='<div class="queue-item"><span><b class="qnum">'+(i+1)+'</b> '+escapeHtml(r.shop)+' · '+escapeHtml(r.item)+' · '+fmt(r.qty)+' '+escapeHtml(r.unit||'ຫິ້ວ')+' · <button class="q-pricebtn" onclick="showPricePopup('+i+')">'+priceTxt+'</button> <button class="q-notebtn" onclick="showNotePopup('+i+')">'+noteTxt+'</button>'+pend+by+'</span><span class="q-actions">'+mvBtns+'<button class="q-del" title="ລົບ" onclick="rmQueue('+i+')">×</button></span></div>';
   });
   h+='<button class="queue-copy" onclick="copyQueueImage()">🖼️ ກັອບປີ້ລາຍການເປັນຮູບ</button>';
   box.innerHTML=h;
@@ -3654,7 +3754,7 @@ async function copyQueueImage(){
   }catch(e){ toast('ສ້າງຮູບບໍ່ສຳເລັດ'); }
   finally{ document.body.removeChild(wrap); }
 }
-function rmQueue(i){ if(syncOn()){ const r=QUEUE[i]; if(r&&r.id) cloudDo({action:'delete',id:r.id}); return; } QUEUE.splice(i,1); saveQueue(); renderQueue(); }
+function rmQueue(i){ const it=QUEUE[i]; if(it&&it._pending){ PENDING=PENDING.filter(function(p){return p._puid!==it._puid;}); savePending(); renderMerged(); return; } if(syncOn()){ const r=QUEUE[i]; if(r&&r.id) cloudDo({action:'delete',id:r.id}); return; } QUEUE.splice(i,1); saveQueue(); renderQueue(); }
 function moveQueue(i,dir){ if(syncOn()){ toast('ໂໝດອອນລາຍ: ຈັດລຳดับได้เฉพาะโหมดในเครื่อง'); return; } const j=i+dir; if(j<0||j>=QUEUE.length) return; const t=QUEUE[i]; QUEUE[i]=QUEUE[j]; QUEUE[j]=t; saveQueue(); renderQueue(); }
 function clearQueue(){ if(syncOn()){ if(confirm('ລ້າງລາຍการທັງໝົດ (ອອນລາຍ ทุกเครื่อง)?')) cloudDo({action:'clear'}); return; } QUEUE=[]; saveQueue(); renderQueue(); }
 
