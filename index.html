@@ -3571,7 +3571,7 @@ async function cloudRefresh(silent){
   catch(e){ syncStatus('ຕໍ່ບໍ່ໄດ້ — ເຊັກລິ້ງ/ເນັດ','#b91c1c'); }
   finally{ _syncBusy=false; }
 }
-function cloudDo(body){ return cloudPost(body).then(function(){ setTimeout(function(){cloudRefresh(true);},700); }).catch(function(){ queueOp(body); toast('ບໍ່ມີເນັດ — ເກັບການປ່ຽນແປງໄວ້ ຈະອັປເดตເມື່ອມີເນັດ'); }); }
+function cloudDo(body){ showAdding(true,'ກຳລັງບັນທຶກ...'); return cloudPost(body).then(function(){ setTimeout(function(){ cloudRefresh(true); showAdding(false); },700); }).catch(function(){ showAdding(false); queueOp(body); toast('ບໍ່ມີເນັດ — ເກັບການປ່ຽນແປງໄວ້ ຈະອັປເดตເມື່ອມີເນັດ'); }); }
 function manualRefresh(){
   if(syncOn()){
     showAdding(true,'ກຳລັງໂຫລດ...');
@@ -3785,7 +3785,18 @@ async function copyQueueImage(){
 }
 function rmQueue(i){ const it=QUEUE[i]; if(it&&it._pending){ PENDING=PENDING.filter(function(p){return p._puid!==it._puid;}); savePending(); renderMerged(); return; } if(syncOn()){ const r=QUEUE[i]; if(r&&r.id){ CLOUD_ITEMS=CLOUD_ITEMS.filter(function(x){return x.id!==r.id;}); renderMerged(); cloudDo({action:'delete',id:r.id}); } return; } QUEUE.splice(i,1); saveQueue(); renderQueue(); }
 function moveQueue(i,dir){ if(syncOn()){ toast('ໂໝດອອນລາຍ: ຈັດລຳดับได้เฉพาะโหมดในเครื่อง'); return; } const j=i+dir; if(j<0||j>=QUEUE.length) return; const t=QUEUE[i]; QUEUE[i]=QUEUE[j]; QUEUE[j]=t; saveQueue(); renderQueue(); }
-function clearQueue(){ if(syncOn()){ if(confirm('ລ້າງລາຍการທັງໝົດ (ອອນລາຍ ทุกเครื่อง)?')) cloudDo({action:'clear'}); return; } QUEUE=[]; saveQueue(); renderQueue(); }
+function clearQueue(){
+  if(syncOn()){
+    if(!confirm('ລ້າງລາຍການທັງໝົດ (ອອນລາຍ ທຸກເຄື່ອງ)?')) return;
+    showAdding(true,'ກຳລັງລົບທັງໝົດ...');
+    PENDING=[]; savePending(); PENDING_OPS=[]; saveOps();   // ລ້າງຄ້າງໃນເຄື່ອງນຳ
+    cloudPost({action:'clear'})
+      .then(function(){ CLOUD_ITEMS=[]; renderMerged(); setTimeout(function(){ cloudRefresh(true); showAdding(false); toast('ລ້າງໝົດແລ້ວ ✓'); },900); })
+      .catch(function(){ showAdding(false); toast('ບໍ່ມີເນັດ — ລ້າງບໍ່ໄດ້ ລອງໃໝ່'); });
+    return;
+  }
+  QUEUE=[]; saveQueue(); renderQueue();
+}
 
 function buildBulk(){
   const rows=QUEUE.slice().concat(parseBulk(document.getElementById('bulk-input').value));
