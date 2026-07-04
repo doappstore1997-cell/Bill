@@ -2715,7 +2715,8 @@ var qrcode = function() {
       <select id="qa-shop" class="ap-in" onchange="onQaShopChange()"></select>
       <input id="qa-shop-custom" class="ap-in" style="display:none;margin-top:6px" placeholder="ພິມຊື່ຮ້ານເອງ...">
       <label class="ap-label">2. ເລືອກ ຫຼື ພິມ ລາຍການ</label>
-      <input id="qa-item" class="ap-in" list="product-list" placeholder="ເລືອກ ຫຼື ພິມ ລາຍການ">
+      <select id="qa-item" class="ap-in" onchange="onQaItemChange()"></select>
+      <input id="qa-item-custom" class="ap-in" style="display:none;margin-top:6px" placeholder="ພິມຊື່ລາຍການເອງ...">
       <div class="ap-two">
         <div>
           <label class="ap-label">3. ຈຳນວນ</label>
@@ -2786,6 +2787,10 @@ var qrcode = function() {
       <span style="font-weight:700;font-size:14px;width:100%">QR ຊຳລະ:</span>
       <button data-q="0" onclick="setQrAmount(false)" style="flex:1;min-width:64px;border:none;border-radius:8px;padding:11px 4px;font-weight:800;font-family:inherit;font-size:13.5px;background:#cbd5e1;color:#111">QR One Pay</button>
       <button data-q="1" onclick="setQrAmount(true)" style="flex:1;min-width:64px;border:none;border-radius:8px;padding:11px 4px;font-weight:800;font-family:inherit;font-size:13.5px;background:#4b5320;color:#fff">QR One Pay + ຍອດເງິນ</button>
+    </div>
+    <div id="bags-pick" style="display:flex;gap:8px;margin:6px 0;align-items:center">
+      <span style="font-weight:700;font-size:14px;white-space:nowrap">ຈຳນວນເປົາ (ຖົງ):</span>
+      <input id="bags-in" type="number" inputmode="numeric" min="1" value="1" onchange="setBags(this.value)" oninput="setBags(this.value)" style="flex:1;min-width:0;font-family:inherit;font-size:17px;font-weight:800;text-align:center;border:2px solid #cbd5e1;border-radius:8px;padding:9px">
     </div>
     <button class="pm-save" onclick="doPrint()">🖨️ ພິມຜ່ານ Bluetooth (ໂດຍກົງ)</button>
     <button class="pm-save" style="background:#0a7d4d;margin-top:8px" onclick="shareBillImage()">📲 ພິມຜ່ານແອັບ (Thermer)</button>
@@ -3331,6 +3336,14 @@ function populateProductList(){
       dl.appendChild(o);
     });
   }
+  const qi=document.getElementById('qa-item');
+  if(qi){
+    const prev=qi.value;
+    qi.innerHTML='<option value="" disabled selected>— ເລືອກລາຍການ —</option>';
+    PRODUCTS.forEach(p=>{ const o=document.createElement('option'); o.value=p.name; o.textContent=p.name; qi.appendChild(o); });
+    const oc=document.createElement('option'); oc.value='__custom__'; oc.textContent='✏️ ຂຽນເອງ (ພິມຊື່ລາຍການ)'; qi.appendChild(oc);
+    if(prev && (PRODUCTS.some(p=>p.name===prev)||prev==='__custom__')) qi.value=prev;
+  }
   const sel=document.getElementById('prod-del-select');
   if(sel){
     sel.innerHTML='';
@@ -3687,6 +3700,13 @@ function waitForNewItem(beforeIds, shop, item, cb){
     }).catch(function(){ if(tries>=6) cb(-1); else setTimeout(attempt,800); });
   })();
 }
+function onQaItemChange(){
+  const sel=document.getElementById('qa-item');
+  const ci=document.getElementById('qa-item-custom');
+  if(!sel||!ci) return;
+  if(sel.value==='__custom__'){ ci.style.display='block'; ci.focus(); }
+  else{ ci.style.display='none'; }
+}
 function onQaShopChange(){
   const sel=document.getElementById('qa-shop');
   const ci=document.getElementById('qa-shop-custom');
@@ -3697,7 +3717,9 @@ function onQaShopChange(){
 function addQueue(){
   let shop=document.getElementById('qa-shop').value;
   if(shop==='__custom__'){ shop=(document.getElementById('qa-shop-custom').value||'').trim(); }
-  const item=document.getElementById('qa-item').value.trim();
+  let item=document.getElementById('qa-item').value;
+  if(item==='__custom__'){ item=(document.getElementById('qa-item-custom').value||'').trim(); }
+  item=(item||'').trim();
   const qty=parseFloat((document.getElementById('qa-qty').value||'').replace(/[^\d.]/g,''))||0;
   if(!shop){ toast('ເລືອກຮ້ານກ່ອນ'); return; }
   if(!item){ toast('ເລືອກ ຫຼື ພິມ ລາຍການ'); return; }
@@ -3705,7 +3727,7 @@ function addQueue(){
   const unit=document.getElementById('qa-unit').value||'ຫິ້ວ';
   const noteEl=document.getElementById('qa-note');
   const note=noteEl?noteEl.value.trim():'';
-  const clearInputs=()=>{ document.getElementById('qa-item').value=''; document.getElementById('qa-qty').value=''; if(noteEl) noteEl.value=''; document.getElementById('qa-item').focus(); };
+  const clearInputs=()=>{ const qi=document.getElementById('qa-item'); if(qi) qi.value=''; const qic=document.getElementById('qa-item-custom'); if(qic){ qic.value=''; qic.style.display='none'; } document.getElementById('qa-qty').value=''; if(noteEl) noteEl.value=''; };
   if(syncOn()){
     showAdding(true,'ກຳລັງເພີ່ມ...');
     const beforeIds={}; QUEUE.forEach(function(q){ if(q&&q.id) beforeIds[q.id]=1; });
@@ -4181,14 +4203,19 @@ function stackCanvases(cvs){
 }
 function buildThermalCanvas(){
   const bill=(BULK.length && BULK[BULK_IDX])?BULK[BULK_IDX]:null;
-  if(bill && bill.branches && bill.branches.length){
-    // ໃບລວມ (ໂຕໝູ/ໝູນ້ອຍ) → ພິມແຍກແຕ່ລະສາຂາ ຕໍ່ກັນ ມີເສັ້ນຕັດ
-    const cvs=bill.branches.map(b=>buildReceiptCanvas(b.shop, b.items));
-    return stackCanvases(cvs);
+  const bags=Math.max(1, parseInt(BAGS,10)||1);
+  function makeSet(label){
+    if(bill && bill.branches && bill.branches.length){
+      return bill.branches.map(function(b){ return buildReceiptCanvas(b.shop, b.items, label); });
+    }
+    return [ buildReceiptCanvas(document.getElementById('f-cust').value||'', items, label) ];
   }
-  return buildReceiptCanvas(document.getElementById('f-cust').value||'', items);
+  if(bags<=1){ const cvs=makeSet(''); return cvs.length>1? stackCanvases(cvs) : cvs[0]; }
+  let all=[];
+  for(let b=1;b<=bags;b++){ all=all.concat(makeSet('ເປົາທີ '+b+'/'+bags)); }  // ພິມ N ໃບ ຕິດປ້າຍເປົາ
+  return stackCanvases(all);
 }
-function buildReceiptCanvas(custArg, listArg){
+function buildReceiptCanvas(custArg, listArg, bagLabel){
   const W=384, pad=4, s=(PAPER_W||384)/384;
   const tall=document.createElement('canvas'); tall.width=Math.round(W*s); tall.height=Math.round(6000*s);
   const ctx=tall.getContext('2d');
@@ -4203,6 +4230,7 @@ function buildReceiptCanvas(custArg, listArg){
   const cust=(custArg!=null)?custArg:(document.getElementById('f-cust').value||'');
   ctx.font="bold 27px 'Noto Sans Lao',sans-serif";
   y=thWrap(ctx,'ຮ້ານ: '+cust,center,y,W-2*pad,33,'center')+6;
+  if(bagLabel){ ctx.font="bold 27px 'Noto Sans Lao',sans-serif"; const _tw=ctx.measureText(bagLabel).width; ctx.lineWidth=2.5; ctx.strokeRect(pad+8, y, W-2*pad-16, 40); ctx.fillText(bagLabel, center-_tw/2, y+8); y+=48; }
   ctx.fillRect(pad,y,W-2*pad,2); y+=12;
   // ວັນທີ — ໃຫຍ່ຂຶ້ນ + ໜາເຂັ້ມ
   ctx.font="bold 24px 'Noto Sans Lao',sans-serif";
@@ -4434,7 +4462,7 @@ function thermalPrintFallback(canvas){
   w.document.write(doc);
   w.document.close();
 }
-let _printCanvas=null, _rebuildFn=null, PAPER_W=384, SHOW_MONEY=true, QR_WITH_AMOUNT=true;
+let _printCanvas=null, _rebuildFn=null, PAPER_W=384, SHOW_MONEY=true, QR_WITH_AMOUNT=true, BAGS=1;
 function refreshPrint(){
   if(!_rebuildFn) return;
   try{ _printCanvas=_rebuildFn(); }
@@ -4456,9 +4484,11 @@ function refreshPrint(){
     b.style.background=on?'#4b5320':'#cbd5e1';
     b.style.color=on?'#fff':'#111';
   });
+  { const bi=document.getElementById('bags-in'); if(bi && document.activeElement!==bi) bi.value=BAGS; }
 }
 function setMoney(on){ SHOW_MONEY=!!on; refreshPrint(); }   // ເລືອກສະແດງເງິນ ຫຼື ບໍ່
 function setQrAmount(on){ QR_WITH_AMOUNT=!!on; if(typeof render==='function') render(); refreshPrint(); }  // QR ໃສ່ຍອດ ຫຼື ທຳມະดา
+function setBags(v){ BAGS=Math.max(1, parseInt(v,10)||1); refreshPrint(); }
 function setPaper(w){ PAPER_W=w; refreshPrint(); }   // rebuild native ຕາມຂະໜາດໃໝ່
 async function ensureLaoFont(){
   try{ if(document.fonts && document.fonts.load){ await document.fonts.load("bold 24px 'Noto Sans Lao'"); await document.fonts.load("20px 'Noto Sans Lao'"); await document.fonts.ready; } }catch(e){}
@@ -4499,19 +4529,14 @@ function shareBillImage(){
   const name='ໃບບິນ-'+((document.getElementById('f-cust')||{}).value||'DL')+'.png';
   canvas.toBlob(async (blob)=>{
     if(!blob){ toast('ສ້າງຮູບບໍ່ສຳເລັດ'); return; }
-    try{
-      const file=new File([blob], name, {type:'image/png'});
-      if(navigator.canShare && navigator.canShare({files:[file]})){
-        await navigator.share({files:[file], title:'ໃບບິນ D&L'});
-        return; // ຜູ້ໃຊ້ເລືອກແອັບເຄື່ອງພິມເອງ
-      }
-    }catch(e){ if(e && e.name==='AbortError') return; }
-    // ສຳຮອງ: ດາວໂຫລດຮູບ ໃຫ້ໄປເປີດໃນແອັບເຄື່ອງພິມ/ແກລເລີ
-    try{
-      const a=document.createElement('a');
-      a.download=name; a.href=canvas.toDataURL('image/png'); a.click();
-      toast('ບັນທຶກຮູບແລ້ວ — ເປີດໃນແອັບເຄື່ອງພິມ ຫຼື ແກລເລີ ເພື່ອສັ່ງພິມ');
-    }catch(e2){ toast('ບັນທຶກຮູບບໍ່ສຳເລັດ'); }
+    const file=new File([blob], name, {type:'image/png'});
+    if(navigator.share && (!navigator.canShare || navigator.canShare({files:[file]}))){
+      try{
+        await navigator.share({files:[file], title:'ໃບບິນ D&L'});   // ​ໄປ​ແອັບ​ເຄື່ອງ​ພິມ​ໂດຍກົງ — ບໍ່ດາວໂຫລດ
+      }catch(e){ if(e && e.name!=='AbortError') toast('ແຊร์ບໍ່ສຳເລັດ — ລອງໃໝ່ ຫຼື ໃຊ້ພິມ Bluetooth'); }
+      return;
+    }
+    toast('ອຸປະກອນນີ້ແຊร์ຮູບບໍ່ໄດ້ — ໃຫ້ໃຊ້ “ພິມ Bluetooth” ແທນ');
   }, 'image/png');
 }
 async function doPrint(){
