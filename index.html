@@ -2697,11 +2697,11 @@ var qrcode = function() {
   </div>
   <div class="ap-body">
     <div class="ap-card">
+      <div id="sy-status" style="font-size:13.5px;font-weight:800;margin:0 0 8px;color:#555">ໂໝດ: ໃນເຄື່ອງ (localStorage)</div>
       <button class="ap-lockbtn" onclick="openSyncConfig()">🔒 ຕັ້ງຄ່າອອນລາຍ (ໃສ່ລະຫັດ)</button>
       <div id="sync-panel" style="display:none;margin-top:8px">
         <label class="ap-label">🔗 ອອນລາຍ (ແຊร์หลายเครื่อง)</label>
         <input id="sy-user" class="ap-in" onchange="setSyncUser(this.value)" placeholder="ຊື່ຜູ້ໃຊ້ (ເช่น ຕາເຫຼັກ)">
-        <div id="sy-status" style="font-size:13px;font-weight:700;margin:8px 0;color:#555">ໂໝດ: ໃນເຄື່ອງ (localStorage)</div>
         <input id="sy-url" class="ap-in" placeholder="ວາງລິ້ງ Apps Script (…/exec)">
         <input id="sy-token" class="ap-in" placeholder="ລະຫັດລັບ TOKEN (ຄ່າเริ่มต้น DL2026)">
         <div class="ap-two">
@@ -2754,12 +2754,12 @@ var qrcode = function() {
 </div>
 <div id="price-modal" class="price-modal" style="display:none">
   <div class="pm-card">
-    <button class="pm-x" onclick="closePriceModal()" aria-label="ປິດ">✕</button>
+    <button class="pm-x" onclick="skipPriceModal()" aria-label="ປິດ">✕</button>
     <div class="pm-title">💰 ໃສ່ລາຄາ</div>
     <div class="pm-name" id="pm-name"></div>
     <div class="pm-shop" id="pm-shop"></div>
     <div id="pm-hist" class="pm-hist" style="display:none"></div>
-    <input id="pm-price" class="pm-input" type="number" inputmode="numeric" placeholder="ລາຄາ (ກີບ)" onkeydown="if(event.key==='Enter')savePriceModal()">
+    <input id="pm-price" class="pm-input" type="text" inputmode="numeric" placeholder="ລາຄາ (ກີບ)" oninput="priceInputFmt(this)" onkeydown="if(event.key==='Enter')savePriceModal()">
     <button class="pm-save" onclick="savePriceModal()">ບັນທຶກລາຄາ</button>
     <div class="pm-hint">ບໍ່ໃສ່ກໍໄດ້ — ກົດ ✕ ແລ້ວໄປພິມລາຄາໃນໃບບິນກໍໄດ້</div>
   </div>
@@ -3450,14 +3450,9 @@ function pushPriceHist(shop,item,price){
 let CLOUD_PRICES={};
 function getPriceHist(shop,item){
   const seen={}, out=[];
-  // ລາຄາຈາກ Google Sheet ກ່ອນ (sync ທຸກເครื่อง): ปัจจุบัน + ก่อนหน้า 2
-  [pmKey(shop,item), pmKey('',item)].forEach(k=>{
-    (CLOUD_PRICES[k]||[]).forEach(p=>{ p=Number(p); if(p>0 && !seen[p]){ seen[p]=1; out.push(p); } });
-  });
-  // เสริมด้วยประวัติในเครื่อง (offline)
-  [pmKey(shop,item), pmKey('',item)].forEach(k=>{
-    (PRICE_HIST[k]||[]).forEach(p=>{ if(p>0 && !seen[p]){ seen[p]=1; out.push(p); } });
-  });
+  const k=pmKey(shop,item);   // ສະເພາະ ຮ້ານ + ລາຍການ ນີ້ເທົ່ານັ້ນ (ລາຄາแຕ່ລະຮ້ານບໍ່ຄືกัน)
+  (CLOUD_PRICES[k]||[]).forEach(p=>{ p=Number(p); if(p>0 && !seen[p]){ seen[p]=1; out.push(p); } });   // ຈາກ Google Sheet
+  (PRICE_HIST[k]||[]).forEach(p=>{ if(p>0 && !seen[p]){ seen[p]=1; out.push(p); } });                    // ໃນເครื่อง (fallback)
   return out.slice(0,3);
 }
 // seed history ຈາກລາຄາเก่าที่จำไว้ (ເທື່ອດຽວ) ໃຫ້ໂຊทันที
@@ -3489,7 +3484,7 @@ function savePending(){ try{ localStorage.setItem(PENDING_KEY, JSON.stringify(PE
 function pendingItems(){ return PENDING.map(function(p){ return {shop:p.shop,item:p.item,qty:p.qty,unit:p.unit,price:p.price,note:p.note,addedBy:p.addedBy,_pending:true,_puid:p._puid}; }); }
 function addPending(row){ row._puid='p'+Date.now()+Math.floor(Math.random()*1000); PENDING.push(row); savePending(); }
 function renderMerged(){ QUEUE = CLOUD_ITEMS.concat(pendingItems()); try{saveQueue();}catch(e){} renderQueue(); }
-function setCloudItems(items){ CLOUD_ITEMS = items||[]; renderMerged(); if(PENDING.length) flushPending(true); }
+function setCloudItems(items){ CLOUD_ITEMS = items||[]; renderMerged(); if(PENDING.length) flushPending(true); else if(PENDING_OPS.length) flushOps(); }
 function flushPending(auto){
   if(!syncOn() || !PENDING.length) return;
   showAdding(true,'ກຳລັງອັປໂຫລດ '+PENDING.length+' ລາຍການ...');
@@ -3501,7 +3496,24 @@ function flushPending(auto){
       .catch(function(){ showAdding(false); if(!auto) toast('ຍັງບໍ່ມີເນັດ — ອັປໂຫລດບໍ່ໄດ້'); });
   })();
 }
-if(typeof window!=='undefined'){ window.addEventListener('online', function(){ if(syncOn() && PENDING.length) flushPending(true); }); }
+const OPS_KEY='dl_ops_v1';
+let PENDING_OPS=loadOps(); let _opsBusy=false;
+function loadOps(){ try{ const r=localStorage.getItem(OPS_KEY); if(r){ const a=JSON.parse(r); if(Array.isArray(a)) return a; } }catch(e){} return []; }
+function saveOps(){ try{ localStorage.setItem(OPS_KEY, JSON.stringify(PENDING_OPS)); }catch(e){} }
+function queueOp(op){ PENDING_OPS.push(op); saveOps(); try{renderQueue();}catch(e){} }
+function flushOps(){
+  if(!syncOn()||_opsBusy||!PENDING_OPS.length) return;
+  _opsBusy=true;
+  (function next(){
+    if(!PENDING_OPS.length){ _opsBusy=false; setTimeout(function(){cloudRefresh(true);},400); return; }
+    const op=PENDING_OPS[0];
+    cloudPost(op).then(function(){ PENDING_OPS.shift(); saveOps(); setTimeout(next,350); })
+      .catch(function(){ _opsBusy=false; });   // ຍັງ offline → ຄ້າງໄວ້
+  })();
+}
+function flushAll(){ if(!syncOn()) return; if(PENDING.length) flushPending(true); if(PENDING_OPS.length) flushOps(); }
+function updateCloudItemLocal(id, fields){ for(let i=0;i<CLOUD_ITEMS.length;i++){ if(CLOUD_ITEMS[i].id===id){ for(const k in fields) CLOUD_ITEMS[i][k]=fields[k]; break; } } renderMerged(); }
+if(typeof window!=='undefined'){ window.addEventListener('online', function(){ if(syncOn()){ flushPending(true); flushOps(); } }); }
 CLOUD_ITEMS = QUEUE.filter(function(q){ return !q._pending; });
 QUEUE = CLOUD_ITEMS.concat(pendingItems());
 /* ================= ONLINE SYNC (Google Sheets) ================= */
@@ -3559,7 +3571,7 @@ async function cloudRefresh(silent){
   catch(e){ syncStatus('ຕໍ່ບໍ່ໄດ້ — ເຊັກລິ້ງ/ເນັດ','#b91c1c'); }
   finally{ _syncBusy=false; }
 }
-function cloudDo(body){ return cloudPost(body).then(function(){ setTimeout(function(){cloudRefresh(true);},700); }).catch(function(){ toast('ອອນລາຍຜິດພາດ — ລອງໃໝ່'); }); }
+function cloudDo(body){ return cloudPost(body).then(function(){ setTimeout(function(){cloudRefresh(true);},700); }).catch(function(){ queueOp(body); toast('ບໍ່ມີເນັດ — ເກັບການປ່ຽນແປງໄວ້ ຈະອັປເดตເມື່ອມີເນັດ'); }); }
 function manualRefresh(){
   if(syncOn()){
     showAdding(true,'ກຳລັງໂຫລດ...');
@@ -3607,7 +3619,7 @@ function showPricePopup(idx){
   document.getElementById('pm-shop').textContent='ຮ້ານ: '+r.shop;
   const cur = (r.price && r.price>0) ? r.price
     : (recallPrice(r.shop,r.item) || getPriceHist(r.shop,r.item)[0] || (priceOf(r.item)>0 ? priceOf(r.item) : ''));
-  document.getElementById('pm-price').value = cur;
+  document.getElementById('pm-price').value = (cur && Number(cur)>0) ? Number(cur).toLocaleString('en-US') : '';
   const hbox=document.getElementById('pm-hist');
   if(hbox){
     const hist=getPriceHist(r.shop, r.item);
@@ -3620,7 +3632,8 @@ function showPricePopup(idx){
   setTimeout(()=>{ const p=document.getElementById('pm-price'); p.focus(); p.select && p.select(); },60);
 }
 function closePriceModal(){ document.getElementById('price-modal').style.display='none'; _pmIdx=-1; }
-function pmPick(p){ const el=document.getElementById('pm-price'); if(el){ el.value=p; el.focus(); } }
+function priceInputFmt(el){ const d=(el.value||'').replace(/[^\d]/g,''); el.value = d? Number(d).toLocaleString('en-US') : ''; }
+function pmPick(p){ const el=document.getElementById('pm-price'); if(el){ el.value=Number(p).toLocaleString('en-US'); el.focus(); } }
 let _nmIdx=-1;
 function showNotePopup(idx){
   const r=QUEUE[idx]; if(!r) return;
@@ -3637,7 +3650,7 @@ function saveNoteModal(){
     const val=document.getElementById('nm-note').value.trim();
     const r=QUEUE[_nmIdx];
     if(r._pending){ const p=PENDING.filter(function(x){return x._puid===r._puid;})[0]; if(p){ p.note=val; savePending(); } renderMerged(); }
-    else if(syncOn()&&r.id){ cloudDo({action:'update',id:r.id,fields:{note:val}}); }
+    else if(syncOn()&&r.id){ updateCloudItemLocal(r.id,{note:val}); cloudDo({action:'update',id:r.id,fields:{note:val}}); }
     else { r.note=val; saveQueue(); renderQueue(); }
   }
   closeNoteModal();
@@ -3648,12 +3661,14 @@ function savePriceModal(){
     const r=QUEUE[_pmIdx];
     if(pr>0) rememberPrice(r.shop, r.item, pr);
     if(r._pending){ const p=PENDING.filter(function(x){return x._puid===r._puid;})[0]; if(p){ p.price=pr>0?pr:0; savePending(); } renderMerged(); }
-    else if(syncOn()&&r.id){ cloudDo({action:'update',id:r.id,fields:{price:pr>0?pr:0}}); }
+    else if(syncOn()&&r.id){ updateCloudItemLocal(r.id,{price:pr>0?pr:0}); cloudDo({action:'update',id:r.id,fields:{price:pr>0?pr:0}}); }
     else { r.price = pr>0?pr:0; saveQueue(); renderQueue(); }
-    if(pr>0) toast('ໃສ່ລາຄາ '+fmt(pr)+' ກີບ ສຳລັບ '+r.shop);
+    if(pr>0) toast('✅ ສຳເລັດ — ໃສ່ລາຄາ '+fmt(pr)+' ກີບ');
+    else toast('⏳ ຍັງບໍ່ທັນຮູ້ລາຄາ — ຈະໃສ່ນຳຫຼັງກໍໄດ້');
   }
   closePriceModal();
 }
+function skipPriceModal(){ toast('⏳ ຍັງບໍ່ທັນຮູ້ລາຄາ — ຈະໃສ່ນຳຫຼັງກໍໄດ້'); closePriceModal(); }
 function showAdding(on,txt){
   const o=document.getElementById('adding-overlay'); if(!o) return;
   if(txt){ const t=document.getElementById('adding-text'); if(t) t.textContent=txt; }
@@ -3717,7 +3732,8 @@ function addQueue(){
 function renderQueue(){
   const box=document.getElementById('queue-list');
   if(!QUEUE.length){ box.innerHTML=''; return; }
-  let upBtn=(syncOn()&&PENDING.length)?'<button class="queue-refresh" style="background:#fff4d6;color:#92600a" onclick="flushPending()">⬆️ ອັປໂຫລດ ('+PENDING.length+')</button>':'';
+  let pendCount=(syncOn()? (PENDING.length + PENDING_OPS.length) : 0);
+  let upBtn=pendCount?'<button class="queue-refresh" style="background:#fff4d6;color:#92600a" onclick="flushAll()">⬆️ ອັປໂຫລດ ('+pendCount+')</button>':'';
   let h='<div class="queue-head">ລໍຖ້າສ້າງ: '+QUEUE.length+' ລາຍການ <span class="queue-head-btns">'+upBtn+'<button class="queue-refresh" onclick="manualRefresh()">🔄 ໂຫລດຄືນ</button><button class="queue-clear" onclick="clearQueue()">ລ້າງທັງໝົດ</button></span></div>';
   QUEUE.forEach((r,i)=>{
     const priceTxt = (r.price&&r.price>0) ? '<span class="q-price">'+fmt(r.price)+' ກີບ</span>' : '<span class="q-noprice">ໃສ່ລາຄາ</span>';
@@ -3767,7 +3783,7 @@ async function copyQueueImage(){
   }catch(e){ toast('ສ້າງຮູບບໍ່ສຳເລັດ'); }
   finally{ document.body.removeChild(wrap); }
 }
-function rmQueue(i){ const it=QUEUE[i]; if(it&&it._pending){ PENDING=PENDING.filter(function(p){return p._puid!==it._puid;}); savePending(); renderMerged(); return; } if(syncOn()){ const r=QUEUE[i]; if(r&&r.id) cloudDo({action:'delete',id:r.id}); return; } QUEUE.splice(i,1); saveQueue(); renderQueue(); }
+function rmQueue(i){ const it=QUEUE[i]; if(it&&it._pending){ PENDING=PENDING.filter(function(p){return p._puid!==it._puid;}); savePending(); renderMerged(); return; } if(syncOn()){ const r=QUEUE[i]; if(r&&r.id){ CLOUD_ITEMS=CLOUD_ITEMS.filter(function(x){return x.id!==r.id;}); renderMerged(); cloudDo({action:'delete',id:r.id}); } return; } QUEUE.splice(i,1); saveQueue(); renderQueue(); }
 function moveQueue(i,dir){ if(syncOn()){ toast('ໂໝດອອນລາຍ: ຈັດລຳดับได้เฉพาะโหมดในเครื่อง'); return; } const j=i+dir; if(j<0||j>=QUEUE.length) return; const t=QUEUE[i]; QUEUE[i]=QUEUE[j]; QUEUE[j]=t; saveQueue(); renderQueue(); }
 function clearQueue(){ if(syncOn()){ if(confirm('ລ້າງລາຍการທັງໝົດ (ອອນລາຍ ทุกเครื่อง)?')) cloudDo({action:'clear'}); return; } QUEUE=[]; saveQueue(); renderQueue(); }
 
