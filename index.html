@@ -3133,6 +3133,7 @@ function addShop(){
   if(!n||!c){ toast('ກະລຸນາໃສ່ຊື່ຮ້ານ ແລະ ລະຫັດ'); return; }
   if(SHOPS.some(s=>s.name===n)){ toast('ມີຮ້ານຊື່ນີ້ແລ້ວ'); return; }
   SHOPS.push({name:n,code:c}); saveShops();
+  if(syncOn()) cloudPost({action:'shop', name:n, code:c});
   document.getElementById('new-shop-name').value='';
   document.getElementById('new-shop-code').value='';
   populateShops(n); render();
@@ -3144,6 +3145,7 @@ function delShop(){
   if(SHOPS.length<=1){ toast('ຕ້ອງມີຢ່າງໜ້ອຍ 1 ຮ້ານ'); return; }
   if(!confirm('ລົບຮ້ານ “'+name+'” ອອກຈາກລະບົບ?')) return;
   SHOPS=SHOPS.filter(s=>s.name!==name); saveShops();
+  if(syncOn()) cloudPost({action:'shopdel', name:name});
   populateShops(); render();
   toast('ລົບຮ້ານ “'+name+'” ແລ້ວ');
 }
@@ -3583,8 +3585,19 @@ function syncInitUI(){
 function _applyItems(j){ if(j&&j.items){ setCloudItems(j.items); } return j; }
 async function cloudGet(){
   const j=await _jsonp(SYNC_URL+'?token='+encodeURIComponent(SYNC_TOKEN));
-  if(j&&j.ok&&Array.isArray(j.rows)){ if(j.prices && typeof j.prices==='object') CLOUD_PRICES=j.prices; return {items:j.rows.map(rowToItem)}; }
+  if(j&&j.ok&&Array.isArray(j.rows)){ if(j.prices && typeof j.prices==='object') CLOUD_PRICES=j.prices; if(Array.isArray(j.shops)) applyCloudShops(j.shops); return {items:j.rows.map(rowToItem)}; }
   throw new Error((j&&j.error)||'err');
+}
+function applyCloudShops(list){
+  if(!Array.isArray(list)) return;
+  let changed=false;
+  list.forEach(function(cs){
+    if(!cs || !cs.name) return;
+    const ex=SHOPS.filter(function(s){return s.name===cs.name;})[0];
+    if(!ex){ SHOPS.push({name:cs.name, code:cs.code||''}); changed=true; }
+    else if((ex.code||'')!==(cs.code||'')){ ex.code=cs.code||''; changed=true; }
+  });
+  if(changed){ saveShops(); const keep=(document.getElementById('f-cust')||{}).value; populateShops(keep); }
 }
 function recordCloudPrice(shop,item,price){ if(syncOn() && price>0){ cloudPost({action:'price', shop:shop, item:item, price:price}); } }
 function cloudPost(body){
