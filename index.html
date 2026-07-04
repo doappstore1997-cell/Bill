@@ -2558,8 +2558,8 @@ var qrcode = function() {
     background:var(--topbar);color:#fff;border-radius:10px;padding:8px 10px;box-shadow:0 3px 10px rgba(0,0,0,.18);
   }
   .bill-nav button{
-    font-family:inherit;font-size:20px;font-weight:800;border:none;border-radius:10px;
-    padding:11px 20px;cursor:pointer;background:rgba(255,255,255,.24);color:#fff;
+    font-family:inherit;font-size:50px;font-weight:900;line-height:1;border:none;border-radius:12px;
+    padding:12px 26px;cursor:pointer;background:rgba(255,255,255,.24);color:#fff;
   }
   .bill-nav button:hover{background:rgba(255,255,255,.34)}
   .bill-nav button:disabled{opacity:.4;cursor:default}
@@ -2724,7 +2724,7 @@ var qrcode = function() {
         </div>
         <div>
           <label class="ap-label">4. ຫົວໜ່ວຍ</label>
-          <select id="qa-unit" class="ap-in"><option>ຫິ້ວ</option><option>Kg</option></select>
+          <select id="qa-unit" class="ap-in"><option>ຫິ້ວ</option><option>Kg</option><option>ແກັດ</option><option>ຕໍ່ຖ້ຽວ</option><option>ກີບ</option><option>ຖົງ</option><option>ອັນ</option></select>
         </div>
       </div>
       <label class="ap-label">5. ໃສ່ໝາຍເຫດ (ຖ້າມີ)</label>
@@ -2785,11 +2785,16 @@ var qrcode = function() {
     </div>
     <div id="qr-pick" style="display:flex;gap:6px;margin:6px 0;align-items:center;flex-wrap:wrap">
       <span style="font-weight:700;font-size:14px;width:100%">QR ຊຳລະ:</span>
-      <button data-q="0" onclick="setQrAmount(false)" style="flex:1;min-width:64px;border:none;border-radius:8px;padding:11px 4px;font-weight:800;font-family:inherit;font-size:13.5px;background:#cbd5e1;color:#111">QR One Pay</button>
-      <button data-q="1" onclick="setQrAmount(true)" style="flex:1;min-width:64px;border:none;border-radius:8px;padding:11px 4px;font-weight:800;font-family:inherit;font-size:13.5px;background:#4b5320;color:#fff">QR One Pay + ຍອດເງິນ</button>
+      <button data-q="0" onclick="setQrAmount(false)" style="flex:1;min-width:64px;border:none;border-radius:8px;padding:11px 4px;font-weight:800;font-family:inherit;font-size:13.5px;background:#4b5320;color:#fff">QR One Pay</button>
+      <button data-q="1" onclick="setQrAmount(true)" style="flex:1;min-width:64px;border:none;border-radius:8px;padding:11px 4px;font-weight:800;font-family:inherit;font-size:13.5px;background:#cbd5e1;color:#111">QR One Pay + ຍອດເງິນ</button>
     </div>
-    <div id="bags-pick" style="display:flex;gap:8px;margin:6px 0;align-items:center">
-      <span style="font-weight:700;font-size:14px;white-space:nowrap">ຈຳນວນເປົາ (ຖົງ):</span>
+    <div id="delivery-pick" style="display:flex;gap:6px;margin:6px 0;align-items:center;flex-wrap:wrap">
+      <span style="font-weight:700;font-size:14px;width:100%">ເອົາໄປຝາກລົດຂົນສົ່ງ?</span>
+      <button data-d="0" onclick="setDelivery(false)" style="flex:1;min-width:64px;border:none;border-radius:8px;padding:11px 4px;font-weight:800;font-family:inherit;font-size:13px;background:#4b5320;color:#fff"><span style="font-size:22px;vertical-align:middle">🏪</span> ບໍ່ໄດ້ຝາກລົດ</button>
+      <button data-d="1" onclick="setDelivery(true)" style="flex:1;min-width:64px;border:none;border-radius:8px;padding:11px 4px;font-weight:800;font-family:inherit;font-size:13px;background:#cbd5e1;color:#111"><span style="font-size:22px;vertical-align:middle">🚚</span> ເອົາໄປຝາກລົດ</button>
+    </div>
+    <div id="bags-pick" style="display:none;gap:8px;margin:6px 0;align-items:center">
+      <span style="font-weight:700;font-size:14px;white-space:nowrap">ຈຳນວນເປົາ (ກະສອບ):</span>
       <input id="bags-in" type="number" inputmode="numeric" min="1" value="1" onchange="setBags(this.value)" oninput="setBags(this.value)" style="flex:1;min-width:0;font-family:inherit;font-size:17px;font-weight:800;text-align:center;border:2px solid #cbd5e1;border-radius:8px;padding:9px">
     </div>
     <button class="pm-save" onclick="doPrint()">🖨️ ພິມຜ່ານ Bluetooth (ໂດຍກົງ)</button>
@@ -3461,6 +3466,7 @@ function pushPriceHist(shop,item,price){
   savePriceHist();
 }
 let CLOUD_PRICES={};
+let _qrCache={total:-1, src:''};
 function getPriceHist(shop,item){
   const seen={}, out=[];
   const k=pmKey(shop,item);   // ສະເພາະ ຮ້ານ + ລາຍການ ນີ້ເທົ່ານັ້ນ (ລາຄາแຕ່ລະຮ້ານບໍ່ຄືกัน)
@@ -3491,13 +3497,21 @@ function saveQueue(){ try{ localStorage.setItem(QUEUE_KEY, JSON.stringify(QUEUE)
 /* ---------- Pending: ບັນທຶກຄ້າງຕອນ offline → upload ຕອນມີເນັດ ---------- */
 const PENDING_KEY='dl_pending_v1';
 let PENDING=loadPending();
-let CLOUD_ITEMS=[];
+let CLOUD_ITEMS=[]; let _lastCloudJson='';
 function loadPending(){ try{ const r=localStorage.getItem(PENDING_KEY); if(r){ const a=JSON.parse(r); if(Array.isArray(a)) return a; } }catch(e){} return []; }
 function savePending(){ try{ localStorage.setItem(PENDING_KEY, JSON.stringify(PENDING)); }catch(e){} }
 function pendingItems(){ return PENDING.map(function(p){ return {shop:p.shop,item:p.item,qty:p.qty,unit:p.unit,price:p.price,note:p.note,addedBy:p.addedBy,_pending:true,_puid:p._puid}; }); }
 function addPending(row){ row._puid='p'+Date.now()+Math.floor(Math.random()*1000); PENDING.push(row); savePending(); }
-function renderMerged(){ QUEUE = CLOUD_ITEMS.concat(pendingItems()); try{saveQueue();}catch(e){} renderQueue(); }
-function setCloudItems(items){ CLOUD_ITEMS = items||[]; renderMerged(); if(PENDING.length) flushPending(true); else if(PENDING_OPS.length) flushOps(); }
+let _lastRenderJson='';
+function renderMerged(){
+  QUEUE = CLOUD_ITEMS.concat(pendingItems());
+  const js=JSON.stringify(QUEUE);
+  if(js===_lastRenderJson) return;         // ບໍ່​ປ່ຽນ → ບໍ່​ວາດ​ໃໝ່ (ໄວຂຶ້ນ ບໍ່​ກະພິບ)
+  _lastRenderJson=js;
+  try{saveQueue();}catch(e){}
+  renderQueue();
+}
+function setCloudItems(items){ const js=JSON.stringify(items||[]); const changed=(js!==_lastCloudJson); _lastCloudJson=js; CLOUD_ITEMS = items||[]; if(changed) renderMerged(); if(PENDING.length) flushPending(true); else if(PENDING_OPS.length) flushOps(); }
 function flushPending(auto){
   if(!syncOn() || !PENDING.length) return;
   showAdding(true,'ກຳລັງອັປໂຫລດ '+PENDING.length+' ລາຍການ...');
@@ -3617,7 +3631,7 @@ function syncDisconnect(){
   SYNC_URL=''; try{ localStorage.removeItem('dl_sync_url'); }catch(e){}
   syncStopPoll(); syncInitUI(); toast('ຢຸດອອນລາຍ — ກັບໃຊ້ໃນເຄື່ອງ');
 }
-function syncStartPoll(){ syncStopPoll(); if(syncOn()) _syncTimer=setInterval(()=>cloudRefresh(true),6000); }
+function syncStartPoll(){ syncStopPoll(); if(syncOn()) _syncTimer=setInterval(()=>cloudRefresh(true),10000); }
 function syncStopPoll(){ if(_syncTimer){ clearInterval(_syncTimer); _syncTimer=null; } }
 function toggleCheck(i){
   const r=QUEUE[i]; if(!r) return;
@@ -3703,9 +3717,12 @@ function waitForNewItem(beforeIds, shop, item, cb){
 function onQaItemChange(){
   const sel=document.getElementById('qa-item');
   const ci=document.getElementById('qa-item-custom');
-  if(!sel||!ci) return;
-  if(sel.value==='__custom__'){ ci.style.display='block'; ci.focus(); }
-  else{ ci.style.display='none'; }
+  if(!sel) return;
+  const v=sel.value;
+  if(v==='__custom__'){ if(ci){ ci.style.display='block'; ci.focus(); } return; }
+  if(ci) ci.style.display='none';
+  const u=document.getElementById('qa-unit');
+  if(u && v){ const map={'ສະໃບນາງຊອຍ':'Kg','ແກັດໂຟມ':'ແກັດ','ຄ່າຂົນສົ່ງ':'ຕໍ່ຖ້ຽວ'}; u.value = map[v] || 'ຫິ້ວ'; }
 }
 function onQaShopChange(){
   const sel=document.getElementById('qa-shop');
@@ -3890,16 +3907,14 @@ function loadBulkBill(idx){
   renderItemsEditor(); render();
   const sel=document.getElementById('bill-select');
   if(sel){ fillBillSelect(); sel.value=idx; }
-  document.querySelectorAll('#bill-nav > button').forEach(btn=>{
-    const t=btn.textContent;
-    if(t.indexOf('◀')>=0) btn.disabled = idx<=0;
-    else if(t.indexOf('▶')>=0) btn.disabled = idx>=BULK.length-1;
-  });
+  document.querySelectorAll('#bill-nav > button').forEach(btn=>{ btn.disabled=false; });
 }
 function bulkGo(dir){
-  const n=BULK_IDX+dir;
-  if(n<0||n>=BULK.length) return;
-  bulkSync();            // ບັນທຶກລາຄາ/ການແກ້ໄຂຂອງໃບປັດຈຸບັນກ່ອນ
+  if(!BULK.length) return;
+  let n=BULK_IDX+dir;
+  if(n<0) n=BULK.length-1;          // ໃບທີ 1 ກົດ ◀ → ໄປໃບສຸດທ້າຍ
+  else if(n>=BULK.length) n=0;       // ໃບສຸດທ້າຍ ກົດ ▶ → ໄປໃບທີ 1
+  bulkSync();
   BULK_IDX=n; loadBulkBill(n);
 }
 
@@ -3971,14 +3986,22 @@ function render(){
      +'<label><input type="radio" name="qrmode"'+(QR_WITH_AMOUNT?'':' checked')+' onchange="setQrAmount(false)"> QR One Pay</label>'
      +'<label><input type="radio" name="qrmode"'+(QR_WITH_AMOUNT?' checked':'')+' onchange="setQrAmount(true)"> QR One Pay + ຍອດເງິນ</label>'
      +'</div>') : '';
-  let dynMtx=null;
-  if(qrDataUrl===DEFAULT_QR && total>0 && QR_WITH_AMOUNT){ dynMtx=makeQrMatrix(laoQrWithAmount(total)); }
-  if(dynMtx){
-    const mod=8, size=dynMtx.n*mod;
-    const cv=document.createElement('canvas'); cv.width=size; cv.height=size;
-    const cx=cv.getContext('2d'); cx.fillStyle='#fff'; cx.fillRect(0,0,size,size);
-    drawQRMatrix(cx, dynMtx.bits, dynMtx.n, 0,0, mod);
-    qrBox.innerHTML=qrToggle+'<div style="text-align:center;font-weight:800;font-size:17px;margin:2px 0 1px">ສະແກນ QR ເພື່ອຊຳລະ</div><div style="text-align:center;font-weight:800;font-size:15.5px;margin:0 0 6px;padding:0 8px">ຂາຍອາຫານທະເລ (ນາງ ຕາເຫຼັກ ພົມມະວົງ)</div><img class="qr-full" alt="QR ການຊຳລະ" src="'+cv.toDataURL('image/png')+'"><div style="text-align:center;font-weight:700;font-size:14px;margin-top:2px">(ຍອດ '+fmt(total)+' ກີບ ຢູ່ໃນ QR)</div>';
+  let qrSrc='';
+  if(qrDataUrl===DEFAULT_QR && total>0 && QR_WITH_AMOUNT){
+    if(_qrCache.total===total && _qrCache.src){ qrSrc=_qrCache.src; }
+    else {
+      const mtx=makeQrMatrix(laoQrWithAmount(total));
+      if(mtx){
+        const mod=8, size=mtx.n*mod;
+        const cv=document.createElement('canvas'); cv.width=size; cv.height=size;
+        const cx=cv.getContext('2d'); cx.fillStyle='#fff'; cx.fillRect(0,0,size,size);
+        drawQRMatrix(cx, mtx.bits, mtx.n, 0,0, mod);
+        qrSrc=cv.toDataURL('image/png'); _qrCache={total:total, src:qrSrc};
+      }
+    }
+  }
+  if(qrSrc){
+    qrBox.innerHTML=qrToggle+'<div style="text-align:center;font-weight:800;font-size:17px;margin:2px 0 1px">ສະແກນ QR ເພື່ອຊຳລະ</div><div style="text-align:center;font-weight:800;font-size:15.5px;margin:0 0 6px;padding:0 8px">ຂາຍອາຫານທະເລ (ນາງ ຕາເຫຼັກ ພົມມະວົງ)</div><img class="qr-full" alt="QR ການຊຳລະ" src="'+qrSrc+'"><div style="text-align:center;font-weight:700;font-size:14px;margin-top:2px">(ຍອດ '+fmt(total)+' ກີບ ຢູ່ໃນ QR)</div>';
     if(qrPrintImg.src!==qrDataUrl) qrPrintImg.src=qrDataUrl;
   }else if(qrDataUrl){
     qrBox.innerHTML=qrToggle+'<img class="qr-full" src="'+qrDataUrl+'" alt="QR ການຊຳລະ">';
@@ -4462,7 +4485,7 @@ function thermalPrintFallback(canvas){
   w.document.write(doc);
   w.document.close();
 }
-let _printCanvas=null, _rebuildFn=null, PAPER_W=384, SHOW_MONEY=true, QR_WITH_AMOUNT=true, BAGS=1;
+let _printCanvas=null, _rebuildFn=null, PAPER_W=384, SHOW_MONEY=true, QR_WITH_AMOUNT=false, BAGS=1, DELIVERY=false;
 function refreshPrint(){
   if(!_rebuildFn) return;
   try{ _printCanvas=_rebuildFn(); }
@@ -4485,10 +4508,16 @@ function refreshPrint(){
     b.style.color=on?'#fff':'#111';
   });
   { const bi=document.getElementById('bags-in'); if(bi && document.activeElement!==bi) bi.value=BAGS; }
+  document.querySelectorAll('#delivery-pick button').forEach(b=>{
+    const on=(b.getAttribute('data-d')==='1')===(DELIVERY===true);
+    b.style.background=on?'#4b5320':'#cbd5e1'; b.style.color=on?'#fff':'#111';
+  });
+  { const bp=document.getElementById('bags-pick'); if(bp) bp.style.display = DELIVERY?'flex':'none'; }
 }
 function setMoney(on){ SHOW_MONEY=!!on; refreshPrint(); }   // ເລືອກສະແດງເງິນ ຫຼື ບໍ່
 function setQrAmount(on){ QR_WITH_AMOUNT=!!on; if(typeof render==='function') render(); refreshPrint(); }  // QR ໃສ່ຍອດ ຫຼື ທຳມະดา
 function setBags(v){ BAGS=Math.max(1, parseInt(v,10)||1); refreshPrint(); }
+function setDelivery(on){ DELIVERY=!!on; if(!on) BAGS=1; const bp=document.getElementById('bags-pick'); if(bp) bp.style.display = on?'flex':'none'; refreshPrint(); }
 function setPaper(w){ PAPER_W=w; refreshPrint(); }   // rebuild native ຕາມຂະໜາດໃໝ່
 async function ensureLaoFont(){
   try{ if(document.fonts && document.fonts.load){ await document.fonts.load("bold 24px 'Noto Sans Lao'"); await document.fonts.load("20px 'Noto Sans Lao'"); await document.fonts.ready; } }catch(e){}
