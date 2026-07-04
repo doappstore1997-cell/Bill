@@ -2465,6 +2465,7 @@ var qrcode = function() {
   .queue-clear{font-family:inherit;font-size:11.5px;border:none;background:#fde7ea;color:var(--brand);border-radius:6px;padding:4px 9px;cursor:pointer}
   .queue-head-btns{display:inline-flex;gap:6px;flex-shrink:0}
   .queue-refresh{font-family:inherit;font-size:11.5px;font-weight:700;border:none;background:#e0ecff;color:#1d4ed8;border-radius:6px;padding:4px 9px;cursor:pointer}
+  .ap-lockbtn{width:100%;font-family:inherit;font-size:13.5px;font-weight:700;border:1.5px dashed #9aa4b2;background:#f4f6f8;color:#444;border-radius:9px;padding:10px;cursor:pointer}
   .ap-queue .queue-refresh,.ap-queue .queue-clear{font-size:13.5px;padding:7px 12px}
   .queue-clear:hover{background:var(--brand);color:#fff}
   .queue-item{display:flex;align-items:center;justify-content:space-between;gap:8px;background:#f4f6f8;border:1px solid var(--panel-line);border-radius:7px;padding:6px 9px;margin-bottom:5px;font-size:13px}
@@ -2696,15 +2697,18 @@ var qrcode = function() {
   </div>
   <div class="ap-body">
     <div class="ap-card">
-      <label class="ap-label">🔗 ອອນລາຍ (ແຊร์หลายเครื่อง + มีคนตรวจ)</label>
-      <input id="sy-url" class="ap-in" placeholder="ວາງລິ້ງ Apps Script (…/exec)">
-      <input id="sy-user" class="ap-in" placeholder="ຊື່ຜູ້ໃຊ້ (ເช่น ຕາເຫຼັກ)">
-      <input id="sy-token" class="ap-in" placeholder="ລະຫັດລັບ TOKEN (ຄ່າเริ่มต้น DL2026)">
-      <div class="ap-two">
-        <button class="ap-add" style="background:#2563eb" onclick="syncConnect()">ເຊື່ອມຕໍ່</button>
-        <button class="ap-add" style="background:#6b7280" onclick="syncDisconnect()">ຢຸດ</button>
+      <button class="ap-lockbtn" onclick="openSyncConfig()">🔒 ຕັ້ງຄ່າອອນລາຍ (ໃສ່ລະຫັດ)</button>
+      <div id="sync-panel" style="display:none;margin-top:8px">
+        <label class="ap-label">🔗 ອອນລາຍ (ແຊร์หลายเครื่อง)</label>
+        <input id="sy-user" class="ap-in" onchange="setSyncUser(this.value)" placeholder="ຊື່ຜູ້ໃຊ້ (ເช่น ຕາເຫຼັກ)">
+        <div id="sy-status" style="font-size:13px;font-weight:700;margin:8px 0;color:#555">ໂໝດ: ໃນເຄື່ອງ (localStorage)</div>
+        <input id="sy-url" class="ap-in" placeholder="ວາງລິ້ງ Apps Script (…/exec)">
+        <input id="sy-token" class="ap-in" placeholder="ລະຫັດລັບ TOKEN (ຄ່າเริ่มต้น DL2026)">
+        <div class="ap-two">
+          <button class="ap-add" style="background:#2563eb" onclick="syncConnect()">ເຊື່ອມຕໍ່</button>
+          <button class="ap-add" style="background:#6b7280" onclick="syncDisconnect()">ຢຸດ</button>
+        </div>
       </div>
-      <div id="sy-status" style="font-size:13px;font-weight:700;margin-top:8px;color:#555">ໂໝດ: ໃນເຄື່ອງ (localStorage)</div>
     </div>
     <div class="ap-card">
       <label class="ap-label">1. ເລືອກຮ້ານ</label>
@@ -3564,6 +3568,15 @@ function manualRefresh(){
   }else{
     QUEUE=loadQueue(); renderQueue(); toast('ໂຫລດຄືນແລ້ວ');
   }
+}
+function setSyncUser(v){ SYNC_USER=(v||'').trim(); try{ localStorage.setItem('dl_sync_user', SYNC_USER); }catch(e){} }
+function openSyncConfig(){
+  const cfg=document.getElementById('sync-panel'); if(!cfg) return;
+  if(cfg.style.display!=='none'){ cfg.style.display='none'; return; }   // ກົດຊ້ຳ = ປິດ
+  const pw=prompt('ໃສ່ລະຫັດເພື່ອເປີດຕັ້ງຄ່າອອນລາຍ:');
+  if(pw===null) return;
+  if(pw==='68786878'){ cfg.style.display='block'; }
+  else { toast('ລະຫັດບໍ່ຖືກ'); }
 }
 function syncConnect(){
   let u=(document.getElementById('sy-url').value||'').trim();
