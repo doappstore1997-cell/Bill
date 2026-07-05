@@ -2566,8 +2566,8 @@ var qrcode = function() {
   #bill-pos{text-align:center;font-size:13.5px;font-weight:700}
   .bill-select{
     flex:1 1 0;min-width:0;max-width:100%;
-    font-family:inherit;font-size:14px;font-weight:700;color:#111;
-    background:#fff;border:none;border-radius:9px;padding:10px 8px;cursor:pointer;
+    font-family:inherit;font-size:17.5px;font-weight:900;color:#111;
+    background:#fff;border:none;border-radius:9px;padding:12px 8px;cursor:pointer;
     text-align:center;text-align-last:center;
   }
   .bill-select:focus{outline:2px solid #ffd166}
@@ -2727,9 +2727,11 @@ var qrcode = function() {
           <select id="qa-unit" class="ap-in"><option>ຫິ້ວ</option><option>Kg</option><option>ແກັດ</option><option>ຕໍ່ຖ້ຽວ</option><option>ກີບ</option><option>ຖົງ</option><option>ອັນ</option></select>
         </div>
       </div>
+      <div id="qa-extra-rows"></div>
+      <button class="ap-add" style="background:#0a7d4d;margin-top:8px" onclick="addQaRow()">+ ເພີ່ມແຖວລາຍການ (ຮ້ານດຽວກັນ)</button>
       <label class="ap-label">5. ໃສ່ໝາຍເຫດ (ຖ້າມີ)</label>
       <input id="qa-note" class="ap-in" placeholder="ໝາຍເຫດ (ບໍ່ບັງຄັບ) — ຈະຕິດนำລາຍການนี้">
-      <button class="ap-add" onclick="addQueue()">+ ເພີ່ມລາຍການ</button>
+      <button class="ap-add" style="margin-top:8px" onclick="addQueueAll()">✅ ບັນທຶກລາຍການເຂົ້າຄິວ</button>
     </div>
 
     <div id="queue-list" class="queue-list ap-queue"></div>
@@ -3471,9 +3473,8 @@ let CLOUD_PRICES={};
 let _qrCache={total:-1, src:''};
 function getPriceHist(shop,item){
   const seen={}, out=[];
-  const k=pmKey(shop,item);   // ສະເພາະ ຮ້ານ + ລາຍການ ນີ້ເທົ່ານັ້ນ (ລາຄາแຕ່ລະຮ້ານບໍ່ຄືกัน)
-  (CLOUD_PRICES[k]||[]).forEach(p=>{ p=Number(p); if(p>0 && !seen[p]){ seen[p]=1; out.push(p); } });   // ຈາກ Google Sheet
-  (PRICE_HIST[k]||[]).forEach(p=>{ if(p>0 && !seen[p]){ seen[p]=1; out.push(p); } });                    // ໃນເครื่อง (fallback)
+  const k=pmKey(shop,item);   // ​ເອົາ​ແຕ່​ຈາກ Google Sheet (CLOUD_PRICES) — ບໍ່​ເອົາ​ຂອງ​ໃນ​ເຄື່ອງ
+  (CLOUD_PRICES[k]||[]).forEach(p=>{ p=Number(p); if(p>0 && !seen[p]){ seen[p]=1; out.push(p); } });
   return out.slice(0,3);
 }
 // seed history ຈາກລາຄາเก่าที่จำไว้ (ເທື່ອດຽວ) ໃຫ້ໂຊทันที
@@ -3657,8 +3658,7 @@ function showPricePopup(idx){
   _pmIdx=idx;
   document.getElementById('pm-name').textContent=r.item;
   document.getElementById('pm-shop').textContent='ຮ້ານ: '+r.shop;
-  const cur = (r.price && r.price>0) ? r.price
-    : (recallPrice(r.shop,r.item) || getPriceHist(r.shop,r.item)[0] || (priceOf(r.item)>0 ? priceOf(r.item) : ''));
+  const cur = (r.price && r.price>0) ? r.price : (getPriceHist(r.shop,r.item)[0] || '');
   document.getElementById('pm-price').value = (cur && Number(cur)>0) ? Number(cur).toLocaleString('en-US') : '';
   const hbox=document.getElementById('pm-hist');
   if(hbox){
@@ -3737,6 +3737,72 @@ function onQaItemChange(){
   const u=document.getElementById('qa-unit');
   if(u && v){ const map={'ສະໃບນາງຊອຍ':'Kg','ແກັດໂຟມ':'ແກັດ','ຄ່າຂົນສົ່ງ':'ຕໍ່ຖ້ຽວ'}; u.value = map[v] || 'ຫິ້ວ'; }
 }
+function _qaUnitOpts(){ return '<option>ຫິ້ວ</option><option>Kg</option><option>ແກັດ</option><option>ຕໍ່ຖ້ຽວ</option><option>ກີບ</option><option>ຖົງ</option><option>ອັນ</option>'; }
+function _qaProdOpts(){ let h='<option value="" disabled selected>— ເລືອກລາຍການ —</option>'; PRODUCTS.forEach(function(p){ h+='<option value="'+escapeAttr(p.name)+'">'+escapeHtml(p.name)+'</option>'; }); h+='<option value="__custom__">✏️ ຂຽນເອງ (ພິມຊື່ລາຍການ)</option>'; return h; }
+let _qaRowSeq=0;
+function addQaRow(){
+  const box=document.getElementById('qa-extra-rows'); if(!box) return;
+  const id='qar'+(++_qaRowSeq);
+  const div=document.createElement('div'); div.className='qa-xrow'; div.id=id;
+  div.style.cssText='border-top:1px dashed #cbd5e1;margin-top:10px;padding-top:10px';
+  div.innerHTML='<select class="ap-in qar-item" onchange="onXRowItem(this)">'+_qaProdOpts()+'</select>'
+    +'<input class="ap-in qar-custom" style="display:none;margin-top:6px" placeholder="ພິມຊື່ລາຍການ...">'
+    +'<div class="ap-two" style="margin-top:6px"><input class="ap-in qar-qty" type="number" inputmode="numeric" placeholder="ຈຳນວນ"><select class="ap-in qar-unit">'+_qaUnitOpts()+'</select></div>'
+    +'<button class="ap-add" style="background:#c8102e;margin-top:6px;font-size:13px" onclick="rmQaRow(\''+id+'\')">✕ ລົບແຖວນີ້</button>';
+  box.appendChild(div);
+}
+function rmQaRow(id){ const el=document.getElementById(id); if(el) el.remove(); }
+function onXRowItem(sel){
+  const ci=sel.parentNode.querySelector('.qar-custom');
+  if(ci){ if(sel.value==='__custom__'){ ci.style.display='block'; ci.focus(); } else ci.style.display='none'; }
+  const u=sel.parentNode.querySelector('.qar-unit');
+  if(u && sel.value && sel.value!=='__custom__'){ const map={'ສະໃບນາງຊອຍ':'Kg','ແກັດໂຟມ':'ແກັດ','ຄ່າຂົນສົ່ງ':'ຕໍ່ຖ້ຽວ'}; u.value=map[sel.value]||'ຫິ້ວ'; }
+}
+function _collectQaRows(){
+  const rows=[];
+  let mi=document.getElementById('qa-item').value;
+  if(mi==='__custom__') mi=(document.getElementById('qa-item-custom').value||'').trim();
+  mi=(mi||'').trim();
+  const mq=parseFloat((document.getElementById('qa-qty').value||'').replace(/[^\d.]/g,''))||0;
+  if(mi&&mq) rows.push({item:mi, qty:mq, unit:document.getElementById('qa-unit').value||'ຫິ້ວ', note:((document.getElementById('qa-note')||{}).value||'').trim()});
+  document.querySelectorAll('#qa-extra-rows .qa-xrow').forEach(function(d){
+    let it=d.querySelector('.qar-item').value;
+    if(it==='__custom__') it=(d.querySelector('.qar-custom').value||'').trim();
+    it=(it||'').trim();
+    const q=parseFloat((d.querySelector('.qar-qty').value||'').replace(/[^\d.]/g,''))||0;
+    if(it&&q) rows.push({item:it, qty:q, unit:d.querySelector('.qar-unit').value||'ຫິ້ວ', note:''});
+  });
+  return rows;
+}
+function _clearQaAll(){
+  const qi=document.getElementById('qa-item'); if(qi) qi.value='';
+  const qic=document.getElementById('qa-item-custom'); if(qic){ qic.value=''; qic.style.display='none'; }
+  document.getElementById('qa-qty').value='';
+  const qn=document.getElementById('qa-note'); if(qn) qn.value='';
+  const box=document.getElementById('qa-extra-rows'); if(box) box.innerHTML='';
+}
+function addQueueAll(){
+  let shop=document.getElementById('qa-shop').value;
+  if(shop==='__custom__') shop=(document.getElementById('qa-shop-custom').value||'').trim();
+  shop=(shop||'').trim();
+  if(!shop){ toast('ເລືອກຮ້ານກ່ອນ'); return; }
+  const rows=_collectQaRows();
+  if(!rows.length){ toast('ໃສ່ ລາຍການ + ຈຳນວນ ຢ່າງໜ້ອຍ 1 ແຖວ'); return; }
+  if(syncOn()){
+    showAdding(true,'ກຳລັງເພີ່ມ '+rows.length+' ລາຍການ...');
+    let i=0;
+    (function next(){
+      if(i>=rows.length){ setTimeout(function(){ cloudRefresh(true); showAdding(false); toast('ເພີ່ມ '+rows.length+' ລາຍການແລ້ວ'); _clearQaAll(); },600); return; }
+      const r=rows[i++];
+      cloudPost({action:'add', row:{shop:shop, item:r.item, qty:r.qty, unit:r.unit, price:0, note:r.note, addedBy:SYNC_USER}})
+        .then(function(){ setTimeout(next,400); })
+        .catch(function(){ showAdding(false); for(let k=i-1;k<rows.length;k++){ const rr=rows[k]; addPending({shop:shop,item:rr.item,qty:rr.qty,unit:rr.unit,price:0,note:rr.note,addedBy:SYNC_USER}); } renderMerged(); toast('ບໍ່ມີເນັດ — ເກັບຄ້າງໄວ້'); _clearQaAll(); });
+    })();
+    return;
+  }
+  rows.forEach(function(r){ QUEUE.push({shop:shop, item:r.item, qty:r.qty, unit:r.unit, price:0, note:r.note}); });
+  saveQueue(); renderQueue(); toast('ເພີ່ມ '+rows.length+' ລາຍການແລ້ວ'); _clearQaAll();
+}
 function onQaShopChange(){
   const sel=document.getElementById('qa-shop');
   const ci=document.getElementById('qa-shop-custom');
@@ -3744,7 +3810,7 @@ function onQaShopChange(){
   if(sel.value==='__custom__'){ ci.style.display='block'; ci.focus(); }
   else{ ci.style.display='none'; }
 }
-function addQueue(){
+function addQueue(skipPrice){
   let shop=document.getElementById('qa-shop').value;
   if(shop==='__custom__'){ shop=(document.getElementById('qa-shop-custom').value||'').trim(); }
   let item=document.getElementById('qa-item').value;
@@ -3767,11 +3833,11 @@ function addQueue(){
         clearInputs();
         waitForNewItem(beforeIds, shop, item, function(idx){
           showAdding(false);
-          if(idx>=0){ toast('ເພີ່ມແລ້ວ (ອອນລາຍ)'); showPricePopup(idx); }
+          if(idx>=0){ toast('ເພີ່ມແລ້ວ (ອອນລາຍ)'); if(!skipPrice) showPricePopup(idx); }
           else { toast('ເພີ່ມແລ້ວ — ກຳລັງໂຫລດລາຍການ'); }
         });
       })
-      .catch(function(){ showAdding(false); clearInputs(); addPending(row); renderMerged(); toast('ບໍ່ມີເນັດ — ບັນທຶກຄ້າງໃນເຄື່ອງ ຈະອັປໂຫລດເມື່ອມີເນັດ'); showPricePopup(QUEUE.length-1); });
+      .catch(function(){ showAdding(false); clearInputs(); addPending(row); renderMerged(); toast('ບໍ່ມີເນັດ — ບັນທຶກຄ້າງໃນເຄື່ອງ ຈະອັປໂຫລດເມື່ອມີເນັດ'); if(!skipPrice) showPricePopup(QUEUE.length-1); });
     return;
   }
   QUEUE.push({shop,item,qty,unit,price:recallPrice(shop,item),note:note});
@@ -3779,7 +3845,7 @@ function addQueue(){
   clearInputs();
   renderQueue();
   toast('ເພີ່ມແລ້ວ ('+QUEUE.length+' ລາຍການລໍຖ້າ)');
-  showPricePopup(QUEUE.length-1);
+  if(!skipPrice) showPricePopup(QUEUE.length-1);
 }
 function renderQueue(){
   const box=document.getElementById('queue-list');
