@@ -2771,6 +2771,17 @@ var qrcode = function() {
   </div>
 </div>
 
+<div id="rprice-modal" class="price-modal" style="display:none">
+  <div class="pm-card">
+    <button class="pm-x" onclick="closeRPrice()" aria-label="ປິດ">✕</button>
+    <div class="pm-title">💰 ລາຄາເກົ່າທີ່ເຄີຍໃສ່</div>
+    <div class="pm-shop" id="rp-title"></div>
+    <div id="rp-chips" class="pm-hist"></div>
+    <button class="pm-save" style="background:#ff9800;color:#fff" onclick="closeRPrice()">ພິມເອງ (ບໍ່ເລືອກ)</button>
+    <div class="pm-hint">ຕິກເລືອກລາຄາ ຫຼື ກົດ “ພິມເອງ” ແລ້ວພິມໃສ່ໃນໃບບິນ</div>
+  </div>
+</div>
+
 <div id="print-modal" class="price-modal" style="display:none">
   <div class="pm-card" style="max-width:430px">
     <button class="pm-x" onclick="closePrintModal()" aria-label="ປິດ">✕</button>
@@ -3246,21 +3257,59 @@ function qtyBlur(el){
 }
 function priceInput(el){
   const i=+el.dataset.i; ensureItem(i);
-  items[i].price=parseFloat((el.value||'').replace(/[^\d.]/g,''))||0;
+  const d=(el.value||'').replace(/[^\d]/g,'');
+  el.value = d ? Number(d).toLocaleString('en-US') : '';   // ໃສ່ , ອັດຕະໂນມัด
+  items[i].price = d ? Number(d) : 0;
   const ut=el.parentNode.querySelector('.punit-txt');
   if(ut) ut.textContent = items[i].price ? (' ຕໍ່'+(items[i].unit||'ຫິ້ວ')) : '';
   recalcRow(i, el.closest('tr'));
 }
+let _rpIdx=-1, _rpJustClosed=false;
+let _rpHist=[];
+function openRPricePopup(i){
+  const shop=(document.getElementById('r-cust')||{}).value||'';
+  const name=items[i]?items[i].name:'';
+  if(!shop || !name || name.indexOf(' · ')>=0) return;
+  const hist=getPriceHistFull(shop, name);
+  if(!hist.length) return;                       // ​ບໍ່​ມີ​ລາຄາ​ເກົ່າ → ​ບໍ່​ເດ້ງ
+  _rpIdx=i; _rpHist=hist;
+  document.getElementById('rp-title').textContent=shop+' · '+name;
+  document.getElementById('rp-chips').innerHTML='<div class="pm-hist-lbl">ຕິກເລືອກລາຄາ:</div><div class="pm-chips">'+hist.map(function(o,hi){ const lbl=fmt(o.p)+(o.n?(' · '+escapeHtml(o.n)):''); return '<button type="button" class="pm-chip" style="text-align:left" onclick="rpPick('+hi+')">'+lbl+'</button>'; }).join('')+'</div>';
+  document.getElementById('rprice-modal').style.display='flex';
+}
+function rpPick(hi){
+  const o=_rpHist[hi];
+  if(o && _rpIdx>=0 && items[_rpIdx]){
+    const p=Number(o.p), note=o.n||'';
+    items[_rpIdx].price=p;
+    if(note) items[_rpIdx].note=note;
+    const el=document.querySelector('#receipt .price-in[data-i="'+_rpIdx+'"]');
+    if(el){ el.value=fmt(p); const ut=el.parentNode.querySelector('.punit-txt'); if(ut) ut.textContent=' ຕໍ່'+(items[_rpIdx].unit||'ຫິ້ວ'); recalcRow(_rpIdx, el.closest('tr')); }
+    if(note){ const nc=document.querySelector('#receipt .note-cell[data-i="'+_rpIdx+'"]'); if(nc) nc.textContent=note; }
+    if(!el){ if(typeof render==='function') render(); }
+    const shop=(document.getElementById('r-cust')||{}).value||'';
+    if(shop && items[_rpIdx].name){ rememberPrice(shop, items[_rpIdx].name, p); recordCloudPrice(shop, items[_rpIdx].name, p, note); }
+  }
+  closeRPrice(true);
+}
+function closeRPrice(picked){
+  document.getElementById('rprice-modal').style.display='none';
+  const idx=_rpIdx; _rpIdx=-1; _rpJustClosed=true;
+  setTimeout(function(){ _rpJustClosed=false; }, 400);
+  if(!picked && idx>=0){ const el=document.querySelector('#receipt .price-in[data-i="'+idx+'"]'); if(el){ try{ el.focus(); }catch(e){} } }
+}
 function priceFocus(el){
   const i=+el.dataset.i; const v=items[i]?items[i].price:0;
-  el.value = v ? String(v) : '';
+  el.value = v ? Number(v).toLocaleString('en-US') : '';
+  if(_rpJustClosed){ _rpJustClosed=false; return; }
+  openRPricePopup(i);
 }
 function priceBlur(el){
   const i=+el.dataset.i; const v=items[i]?items[i].price:0;
   el.value = v ? fmt(v) : '';
   if(items[i] && items[i].name && v>0 && items[i].name.indexOf(' · ')<0){
     const shop=(document.getElementById('r-cust')||{}).value||'';
-    if(shop){ rememberPrice(shop, items[i].name, v); recordCloudPrice(shop, items[i].name, v); }  // ​ບັນທຶກ​ລົງ Google Sheet
+    if(shop){ rememberPrice(shop, items[i].name, v); recordCloudPrice(shop, items[i].name, v, items[i].note||''); }  // ​ບັນທຶກ​ລົງ Google Sheet ​ພ້ອມ​ໝາຍເຫด
   }
   trimItems(); renderItemsEditor(); bulkSync();
 }
@@ -3479,12 +3528,20 @@ function pushPriceHist(shop,item,price){
 }
 let CLOUD_PRICES={};
 let _qrCache={total:-1, src:''};
+function _rawPrices(shop,item){
+  const a=CLOUD_PRICES[pmKey(shop,item)]||[];
+  return a.map(function(x){ if(x&&typeof x==='object') return {p:Number(x.p)||0, n:String(x.n||'')}; return {p:Number(x)||0, n:''}; }).filter(function(o){ return o.p>0 && o.p<1e9; });
+}
 function getPriceHist(shop,item){
   const seen={}, out=[];
-  const k=pmKey(shop,item);   // ​ເອົາ​ແຕ່​ຈາກ Google Sheet (CLOUD_PRICES) — ບໍ່​ເອົາ​ຂອງ​ໃນ​ເຄື່ອງ
-  (CLOUD_PRICES[k]||[]).forEach(p=>{ p=Number(p); if(p>0 && p<1e9 && !seen[p]){ seen[p]=1; out.push(p); } });   // ​ຂ້າມ​ຄ່າ​ເສຍ​ໃຫຍ່​ຜິດ​ປກติ (​ຊ້ອນ​ກັນ)
-  if(!out.length){ const lv=Number(recallPrice(shop,item)); if(lv>0 && lv<1e9) out.push(lv); }   // ​ຖ້າ Sheet ​ຍັງ​ບໍ່​ມี → ​ໃຊ້​ລາຄາ​ລ່າ​ສຸດ​ໃນ​ເຄື່ອງ
-  return out.slice(0,1);   // ​ເອົາ​ແຕ່​ລາຄາ​ລ່າ​ສຸດ (ບໍ່​ເອົາ​ກ່ອນ​ໜ້າ)
+  _rawPrices(shop,item).forEach(function(o){ if(!seen[o.p]){ seen[o.p]=1; out.push(o.p); } });
+  if(!out.length){ const lv=Number(recallPrice(shop,item)); if(lv>0 && lv<1e9) out.push(lv); }
+  return out.slice(0,3);
+}
+function getPriceHistFull(shop,item){
+  const seen={}, out=[];
+  _rawPrices(shop,item).forEach(function(o){ if(!seen[o.p]){ seen[o.p]=1; out.push(o); } });
+  return out.slice(0,3);
 }
 // seed history ຈາກລາຄາเก่าที่จำไว้ (ເທື່ອດຽວ) ໃຫ້ໂຊทันที
 try{
@@ -3660,11 +3717,11 @@ function applyCloudShops(list){
     const keep=(document.getElementById('f-cust')||{}).value; populateShops(keep);
   }
 }
-function recordCloudPrice(shop,item,price){
+function recordCloudPrice(shop,item,price,note){
   if(!syncOn() || !(price>0)) return;
-  const cur=Number((CLOUD_PRICES[pmKey(shop,item)]||[])[0]||0);
-  if(cur===Number(price)) return;   // ​ບໍ່​ປ່ຽນ → ​ບໍ່​ບັນທຶກ​ຊ້ຳ (​ໄວ)
-  cloudPost({action:'price', shop:shop, item:item, price:price});
+  const raw=_rawPrices(shop,item);
+  if(raw.length && raw[0].p===Number(price) && (raw[0].n||'')===String(note||'').trim()) return;   // ​ຄື​ລ່າ​ສຸດ → ​ບໍ່​ຂຽນ​ຊ້ຳ
+  cloudPost({action:'price', shop:shop, item:item, price:price, note:(note||'')});
 }
 function cloudPost(body){
   body.token=SYNC_TOKEN;
@@ -3727,9 +3784,9 @@ function showPricePopup(idx){
   document.getElementById('pm-price').value = (cur && Number(cur)>0) ? Number(cur).toLocaleString('en-US') : '';
   const hbox=document.getElementById('pm-hist');
   if(hbox){
-    const hist=getPriceHist(r.shop, r.item);
+    const hist=getPriceHistFull(r.shop, r.item);
     if(hist.length){
-      hbox.innerHTML='<div class="pm-hist-lbl">ລາຄາທີ່ເຄີຍໃສ່ (ຕິກເລືອກ):</div><div class="pm-chips">'+hist.map(p=>'<button type="button" class="pm-chip" onclick="pmPick('+p+')">'+fmt(p)+'</button>').join('')+'</div>';
+      hbox.innerHTML='<div class="pm-hist-lbl">ລາຄາທີ່ເຄີຍໃສ່ (ຕິກເລືອກ):</div><div class="pm-chips">'+hist.map(function(o){ const lbl=fmt(o.p)+(o.n?(' · '+escapeHtml(o.n)):''); return '<button type="button" class="pm-chip" style="text-align:left" onclick="pmPick('+o.p+')">'+lbl+'</button>'; }).join('')+'</div>';
       hbox.style.display='block';
     }else{ hbox.innerHTML=''; hbox.style.display='none'; }
   }
@@ -3984,7 +4041,7 @@ function buildBulk(){
     const key=g?g.name:r.shop;
     if(!map.has(key)) map.set(key,{group:!!g, gcode:g?g.code:'', items:[], branches:new Map()});
     const e=map.get(key);
-    let _lp=getPriceHist(r.shop,r.item)[0]; if(!(_lp>0)){ const _rc=recallPrice(r.shop,r.item); if(_rc>0&&_rc<1e9) _lp=_rc; } if(!(_lp>0) && r.price>0 && r.price<1e9) _lp=r.price;
+    let _lp=(r.price>0&&r.price<1e9)?r.price:getPriceHist(r.shop,r.item)[0]; if(!(_lp>0)){ const _rc=recallPrice(r.shop,r.item); if(_rc>0&&_rc<1e9) _lp=_rc; }
     const it={name:r.item, qty:r.qty, price:(_lp||0), unit:r.unit||'ຫິ້ວ'};
     if(g){
       const branch=(r.shop.startsWith(g.pre)?r.shop.slice(g.pre.length):r.shop).trim();
@@ -4037,7 +4094,7 @@ function bulkJump(v){
 function loadBulkBill(idx){
   const b=BULK[idx]; if(!b) return;
   populateShops(b.shop);          // ເລືອກຮ້ານ + ລະຫັດຂຶ້ນເອງ
-  items=b.items.map(x=>{ const latest=getPriceHist(b.shop, x.name)[0]; return {name:x.name, qty:x.qty, price:(latest||x.price||0), unit:x.unit||'ຫິ້ວ'}; });   // ​ໂຊ​ລາຄາ​ລ່າ​ສຸດ​ຂອງ ຮ້ານ+ລາຍการ
+  items=b.items.map(x=>({name:x.name, qty:x.qty, price:((x.price>0&&x.price<1e9)?x.price:(getPriceHist(b.shop,x.name)[0]||0)), unit:x.unit||'ຫິ້ວ'}));   // ​ຮັກສາ​ລາຄາ​ຂອງ​ແຕ່ລະ​ແຖວ (​ນ້ຳໜັກ​ຕ່າง)
   renderItemsEditor(); render();
   const sel=document.getElementById('bill-select');
   if(sel){ fillBillSelect(); sel.value=idx; }
