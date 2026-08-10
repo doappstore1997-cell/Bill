@@ -2264,6 +2264,19 @@ var qrcode = function() {
     </div>
   </div>
 </div>
+<div id="botmu-modal" class="price-modal" style="display:none">
+  <div class="pm-card" style="max-width:380px;text-align:left">
+    <button class="pm-x" onclick="closeBotmuSummary()" aria-label="ປິດ">✕</button>
+    <div class="pm-title" style="text-align:center">🐷 ສະຫຼຸບຮ້ານໂຕໝູ (ລາຍອາທິດ)</div>
+    <div style="font-size:12.5px;color:var(--muted);margin-bottom:12px;text-align:center;line-height:1.5">ລວມຈຳນວນ+ເງິນຂອງ ໂຕໝູ 3 ສາຂາ ຕາມຊ່ວງວັນທີທີ່ເລືອກ ໃຫ້ເປັນໃບບິນດຽວ (ຂໍ້ມູນດຶງມາຈາກ Google Sheet ທີ່ບັນທຶກໄວ້ອັດຕະໂນມັດທຸກຄັ້ງທີ່ອອກບິນໂຕໝູ)</div>
+    <label class="ap-label">ຈາກວັນທີ</label>
+    <input id="botmu-from" type="date" class="ap-in">
+    <label class="ap-label">ຫາວັນທີ</label>
+    <input id="botmu-to" type="date" class="ap-in">
+    <button class="pm-save" style="margin-top:10px" onclick="runBotmuSummary()">📊 ສະຫຼຸບ ແລະ ອອກບິນ</button>
+    <div id="botmu-status" style="font-size:12.5px;color:var(--muted);margin-top:10px;text-align:center;line-height:1.5"></div>
+  </div>
+</div>
 <div id="adding-overlay" style="display:none;position:fixed;inset:0;z-index:99999;background:rgba(0,0,0,.45);align-items:center;justify-content:center">
   <div style="background:#fff;border-radius:16px;padding:24px 30px;text-align:center;box-shadow:0 8px 30px rgba(0,0,0,.3)">
     <div class="dl-spin"></div>
@@ -2346,6 +2359,7 @@ var qrcode = function() {
   <div class="panel">
     <button class="auto-launch" onclick="openAuto()">⚡ ອອກໃບບິນຫຼາຍຮ້ານ (Auto)<span class="al-sub">ເລືອກຮ້ານ · ລາຍການ · ຈຳນວນ ແລ້ວສ້າງທີດຽວ</span></button>
     <button class="auto-launch" style="background:var(--army);margin-top:-8px" onclick="openGrid()">📊 ຕາຕະລາງໃສ່ຈຳນວນ (ຫຼາຍຮ້ານ x ຫຼາຍລາຍການ)<span class="al-sub">ຮ້ານເປັນແຖວ · ລາຍການເປັນຖັນ · ໃສ່ຈຳນວນແລ້ວອອກບິນທັງໝົດ</span></button>
+    <button class="auto-launch" style="background:#7c3aed;margin-top:-8px" onclick="openBotmuSummary()">🐷 ສະຫຼຸບຮ້ານໂຕໝູ (ລາຍອາທິດ)<span class="al-sub">ເລືອກຊ່ວງວັນທີ ລວມຈຳນວນ+ເງິນ ອອກເປັນໃບບິນດຽວ</span></button>
     <h2>ຂໍ້ມູນຮ້ານ</h2>
     <div class="field">
       <label>ຊື່ຮ້ານ</label>
@@ -3579,11 +3593,92 @@ function buildBulkFromRows(rows){
     if(!SHOPS.some(s=>s.name===b.shop)){ SHOPS.push({name:b.shop, code:b.gcode||''}); added=true; }
   });
   if(added){ saveShops(); populateShops(); }
+  logBotmuIfNeeded(BULK);   // ບັນທຶກປະຫວັດຮ້ານໂຕໝູ 3 ສາຂາ ໃສ່ Google Sheet ອັດຕະໂນມັດ (ຖ້າອອນລາຍ)
   BULK_IDX=0;
   saveBulk();
   const bn=document.getElementById('bill-nav'); if(bn) bn.style.display='flex'; { const pb=document.getElementById('bulk-print-bar'); if(pb) pb.style.display='flex'; }
   loadBulkBill(0);
   return true;
+}
+/* ---------- ບັນທຶກປະຫວັດຮ້ານໂຕໝູ 3 ສາຂາ ໃສ່ Google Sheet (ອັດຕະໂນມັດ ທຸກຄັ້ງທີ່ອອກບິນ) ---------- */
+const BOTMU_GROUP_NAME='ໂຕໝູ 3 ສາຂາ';
+function todayISO(){ const t=new Date(); return t.getFullYear()+'-'+String(t.getMonth()+1).padStart(2,'0')+'-'+String(t.getDate()).padStart(2,'0'); }
+function logBotmuIfNeeded(bulk){
+  if(!syncOn() || !Array.isArray(bulk)) return;
+  const fd=document.getElementById('f-date');
+  const logDate=(fd&&fd.value)?fd.value:todayISO();
+  bulk.forEach(b=>{
+    if(b.shop===BOTMU_GROUP_NAME && b.branches && b.branches.length){
+      const rows=[];
+      b.branches.forEach(br=>{
+        (br.items||[]).forEach(it=>{
+          if(!it || !((it.qty||0)>0)) return;
+          rows.push({date:logDate, branch:br.shop, item:it.name, qty:it.qty, unit:it.unit||'ຫິ້ວ', price:it.price||0});
+        });
+      });
+      if(rows.length) cloudPost({action:'botmulog_add', rows:rows});
+    }
+  });
+}
+/* ---------- ສະຫຼຸບຮ້ານໂຕໝູ ຕາມຊ່ວງວັນທີ (ຈາກປະຫວັດທີ່ບັນທຶກໄວ້ໃນ Google Sheet) ---------- */
+function shortDate(iso){
+  if(!iso) return '';
+  const d=new Date(iso+'T00:00:00');
+  if(isNaN(d)) return iso;
+  return d.getDate()+'/'+(d.getMonth()+1);
+}
+function openBotmuSummary(){
+  const fEl=document.getElementById('botmu-from'), tEl=document.getElementById('botmu-to');
+  if(tEl && !tEl.value) tEl.value=todayISO();
+  if(fEl && !fEl.value){
+    const d=new Date(); d.setDate(d.getDate()-6);
+    fEl.value=d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');
+  }
+  const st=document.getElementById('botmu-status'); if(st) st.textContent = syncOn() ? '' : 'ຕ້ອງເປີດໂໝດອອນລາຍກ່ອນ (ຂໍ້ມູນປະຫວັດຢູ່ໃນ Google Sheet)';
+  const m=document.getElementById('botmu-modal'); if(m) m.style.display='flex';
+}
+function closeBotmuSummary(){ const m=document.getElementById('botmu-modal'); if(m) m.style.display='none'; }
+function cloudGetBotmuRange(from,to){
+  return _jsonp(SYNC_URL+'?token='+encodeURIComponent(SYNC_TOKEN)+'&botmuFrom='+encodeURIComponent(from)+'&botmuTo='+encodeURIComponent(to));
+}
+async function runBotmuSummary(){
+  const st=document.getElementById('botmu-status');
+  const from=(document.getElementById('botmu-from')||{}).value;
+  const to=(document.getElementById('botmu-to')||{}).value;
+  if(!from || !to){ if(st) st.textContent='ກະລຸນາເລືອກຊ່ວງວັນທີໃຫ້ຄົບ'; return; }
+  if(from>to){ if(st) st.textContent='"ຈາກວັນທີ" ຕ້ອງມາກ່ອນ "ຫາວັນທີ"'; return; }
+  if(!syncOn()){ if(st) st.textContent='ຕ້ອງເປີດໂໝດອອນລາຍກ່ອນ (ຂໍ້ມູນປະຫວັດຢູ່ໃນ Google Sheet)'; return; }
+  if(st) st.textContent='ກຳລັງດຶງຂໍ້ມູນ...';
+  try{
+    const j=await cloudGetBotmuRange(from,to);
+    if(!j || j.ok===false) throw new Error((j&&j.error)||'err');
+    const rows=Array.isArray(j.botmuRows)? j.botmuRows : [];
+    if(!rows.length){ if(st) st.textContent='ບໍ່ພົບຂໍ້ມູນໃນຊ່ວງວັນທີນີ້'; return; }
+    // ລວມຕາມຊື່ລາຍການ (ລວມທຸກສາຂາ ທຸກວັນ ໃນຊ່ວງທີ່ເລືອກ)
+    const agg=new Map();
+    rows.forEach(r=>{
+      const name=(r.item||'').trim(); if(!name) return;
+      const qty=Number(r.qty)||0; const price=Number(r.price)||0;
+      if(!agg.has(name)) agg.set(name,{qty:0, money:0, unit:r.unit||'ຫິ້ວ'});
+      const a=agg.get(name); a.qty+=qty; a.money+=qty*price;
+    });
+    const items=[...agg.entries()].map(([name,a])=>({
+      name, qty:a.qty, unit:a.unit,
+      price: a.qty>0 ? Math.round(a.money/a.qty) : 0
+    }));
+    const label=BOTMU_GROUP_NAME+' ('+shortDate(from)+' - '+shortDate(to)+')';
+    if(!SHOPS.some(s=>s.name===label)){ SHOPS.push({name:label, code:'D5,D6,D7'}); saveShops(); populateShops(); }
+    BULK=[{shop:label, items}];
+    BULK_IDX=0;
+    saveBulk();
+    const bn=document.getElementById('bill-nav'); if(bn) bn.style.display='flex';
+    { const pb=document.getElementById('bulk-print-bar'); if(pb) pb.style.display='flex'; }
+    loadBulkBill(0);
+    closeBotmuSummary();
+    toast('ສະຫຼຸບ '+items.length+' ລາຍການ ('+rows.length+' ແຖວ) ວັນທີ '+from+' ຫາ '+to+' ແລ້ວ');
+  }catch(e){
+    if(st) st.textContent='ດຶງຂໍ້ມູນບໍ່ໄດ້ — ເຊັກລິ້ງ/ເນັດ (ຫຼື Apps Script ຍັງບໍ່ຮອງຮັບຟີເຈີນີ້, ເບິ່ງຄຳແນະນຳການຕິດຕັ້ງ)';
+  }
 }
 async function buildBulk(){
   // ດຶງຄິວລ່າສຸດຈາກ Google Sheet ກ່ອນສ້າງ — ກັນກໍລະນີຄິວຍັງໂຫລດບໍ່ທັນ (ຄົນອື່ນຫາກໍ່ເພີ່ມຮ້ານ/ລາຍການ) ເຮັດໃຫ້ໃບບິນຂາດ ຫຼື ຊື່ຮ້ານບໍ່ຖືກຕ້ອງ
