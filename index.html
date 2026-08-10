@@ -4321,19 +4321,27 @@ async function printAllBills(){
 }
 async function downloadAllBillImages(){
   if(!BULK.length){ toast('ບໍ່ມີໃບບິນຫຼາຍຮ້ານ — ໃຊ້ Auto ສ້າງກ່ອນ'); return; }
+  if(typeof html2canvas==='undefined'){ toast('ດາວໂຫລດຮູບຕ້ອງຕໍ່ອິນເຕີເນັດ. ລອງໃຊ້ “ພິມທັງໝົດ” ແທນກໍໄດ້.'); return; }
   bulkSync();
-  await ensureLaoFont();
-  if(!BULK.length){ toast('ບໍ່ມີໃບບິນ'); return; }
+  const node=document.getElementById('receipt');
+  const savedIdx=BULK_IDX;   // ຈື່ໃບປັດຈຸບັນ ໄວ້ໂຫລດຄືນຫຼັງດາວໂຫລດຄົບແລ້ວ
+  let done=0;
   try{
-    BULK.forEach((b,i)=>{
-      const canvas=buildReceiptCanvas(b.shop, b.items);
+    for(let i=0;i<BULK.length;i++){
+      loadBulkBill(i);
+      await new Promise(res=>setTimeout(res,30));   // ລໍ DOM ອັບເດດກ່ອນຖ່າຍຮູບ
+      const canvas=await html2canvas(node,{scale:2,backgroundColor:"#ffffff",useCORS:true,onclone:cloneFix,width:node.offsetWidth,height:node.offsetHeight,windowWidth:node.offsetWidth});
       const a=document.createElement('a');
-      a.download='ໃບບິນ-'+(i+1)+'-'+(b.shop||'D&L')+'.png';
+      a.download='ໃບບິນ-'+(i+1)+'-'+(BULK[i].shop||'D&L')+'.png';
       a.href=canvas.toDataURL('image/png'); a.click();
-    });
-    toast('ດາວໂຫລດຮູບໃບຮັບເງິນທັງໝົດ ('+BULK.length+' ໃບ) ແລ້ວ — ເລືອກຫຼາຍຮູບຈາກ Downloads ເພື່ອສົ່ງພ້ອມກັນໄດ້');
+      done++;
+      await new Promise(res=>setTimeout(res,120));   // ໃຫ້ browser ຈັດການ download ທີລະໄຟລ໌ ບໍ່ໃຫ້ຄ້າງ
+    }
+    toast('ດາວໂຫລດຮູບໃບຮັບເງິນທັງໝົດ ('+done+' ໃບ) ແລ້ວ — ເລືອກຫຼາຍຮູບຈາກ Downloads ເພື່ອສົ່ງພ້ອມກັນໄດ້');
   }catch(e){
     toast('ດາວໂຫລດບໍ່ສຳເລັດ — ລອງໃຊ້ “ພິມທັງໝົດ” ແທນ');
+  }finally{
+    loadBulkBill(savedIdx);   // ກັບຄືນໃບເດີມທີ່ກຳລັງເບິ່ງຢູ່
   }
 }
 function closePrintModal(){ document.getElementById('print-modal').style.display='none'; }
