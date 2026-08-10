@@ -3621,6 +3621,11 @@ function logBotmuIfNeeded(bulk){
   });
 }
 /* ---------- ສະຫຼຸບຮ້ານໂຕໝູ ຕາມຊ່ວງວັນທີ (ຈາກປະຫວັດທີ່ບັນທຶກໄວ້ໃນ Google Sheet) ---------- */
+function botmuBranchShort(branch){
+  const pre='ໂຕໝູ';
+  const b=String(branch||'').trim();
+  return b.startsWith(pre) ? b.slice(pre.length).trim() : b;
+}
 function shortDate(iso){
   if(!iso) return '';
   const d=new Date(iso+'T00:00:00');
@@ -3654,18 +3659,23 @@ async function runBotmuSummary(){
     if(!j || j.ok===false) throw new Error((j&&j.error)||'err');
     const rows=Array.isArray(j.botmuRows)? j.botmuRows : [];
     if(!rows.length){ if(st) st.textContent='ບໍ່ພົບຂໍ້ມູນໃນຊ່ວງວັນທີນີ້'; return; }
-    // ລວມຕາມຊື່ລາຍການ (ລວມທຸກສາຂາ ທຸກວັນ ໃນຊ່ວງທີ່ເລືອກ)
+    // ລວມແຍກຕາມ ລາຍການ+ສາຂາ (ບໍ່ລວມຂ້າມສາຂາ) — ໃຫ້ຮູ້ວ່າແຕ່ລະສາຂາເອົາໄປເທົ່າໃດ ງ່າຍຕໍ່ການທຽບບັນຊີ
     const agg=new Map();
     rows.forEach(r=>{
-      const name=(r.item||'').trim(); if(!name) return;
+      const item=(r.item||'').trim(); if(!item) return;
+      const branch=botmuBranchShort(r.branch);
+      const key=item+'␟'+branch;
       const qty=Number(r.qty)||0; const price=Number(r.price)||0;
-      if(!agg.has(name)) agg.set(name,{qty:0, money:0, unit:r.unit||'ຫິ້ວ'});
-      const a=agg.get(name); a.qty+=qty; a.money+=qty*price;
+      if(!agg.has(key)) agg.set(key,{item, branch, qty:0, money:0, unit:r.unit||'ຫິ້ວ'});
+      const a=agg.get(key); a.qty+=qty; a.money+=qty*price;
     });
-    const items=[...agg.entries()].map(([name,a])=>({
-      name, qty:a.qty, unit:a.unit,
-      price: a.qty>0 ? Math.round(a.money/a.qty) : 0
-    }));
+    const items=[...agg.values()]
+      .sort((a,b)=>{ if(a.item!==b.item) return a.item<b.item?-1:1; return a.branch<b.branch?-1:(a.branch>b.branch?1:0); })
+      .map(a=>({
+        name: a.item+' ('+a.branch+')',
+        qty:a.qty, unit:a.unit,
+        price: a.qty>0 ? Math.round(a.money/a.qty) : 0
+      }));
     const label=BOTMU_GROUP_NAME+' ('+shortDate(from)+' - '+shortDate(to)+')';
     if(!SHOPS.some(s=>s.name===label)){ SHOPS.push({name:label, code:'D5,D6,D7'}); saveShops(); populateShops(); }
     BULK=[{shop:label, items}];
