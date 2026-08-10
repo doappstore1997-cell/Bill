@@ -2440,6 +2440,9 @@ var qrcode = function() {
       <button onclick="bulkGo(1)" aria-label="ໃບຕໍ່ໄປ">▶</button>
       <button class="bill-close" onclick="clearBulk()" aria-label="ປິດໂໝດຫຼາຍຮ້ານ" title="ປິດ">✕</button>
     </div>
+    <div id="bulk-print-bar" style="display:none;gap:6px;width:100%;max-width:680px;margin:6px 0 0">
+      <button class="act" onclick="downloadAllBillImages()" style="background:#b45cf0;flex:1;padding:14px 8px;font-size:14.5px;border:none;border-radius:9px;color:#fff;font-weight:700;cursor:pointer">📷 ດາວໂຫລດຮູບໃບຮັບເງິນທັງໝົດ</button>
+    </div>
     <div class="scaler">
       <div id="receipt">
         <div class="pad">
@@ -4293,22 +4296,45 @@ async function printBill(){
   if(!_printCanvas) return;
   document.getElementById('print-modal').style.display='flex';
 }
+function buildAllBillsCanvas(){
+  if(!BULK.length) return null;
+  const cvs=[];
+  BULK.forEach(b=>{
+    if(b.branches && b.branches.length){ b.branches.forEach(br=>cvs.push(buildReceiptCanvas(br.shop, br.items))); }
+    else cvs.push(buildReceiptCanvas(b.shop, b.items));
+  });
+  if(!cvs.length) return null;
+  return stackCanvases(cvs);
+}
 async function printAllBills(){
   if(!BULK.length){ toast('ບໍ່ມີໃບບິນຫຼາຍຮ້ານ — ໃຊ້ Auto ສ້າງກ່ອນ'); return; }
   bulkSync();
   await ensureLaoFont();
   _rebuildFn=()=>{
-    const cvs=[];
-    BULK.forEach(b=>{
-      if(b.branches && b.branches.length){ b.branches.forEach(br=>cvs.push(buildReceiptCanvas(br.shop, br.items))); }
-      else cvs.push(buildReceiptCanvas(b.shop, b.items));
-    });
-    if(!cvs.length) throw new Error('empty');
-    return stackCanvases(cvs);
+    const c=buildAllBillsCanvas();
+    if(!c) throw new Error('empty');
+    return c;
   };
   refreshPrint();
   if(!_printCanvas) return;
   document.getElementById('print-modal').style.display='flex';
+}
+async function downloadAllBillImages(){
+  if(!BULK.length){ toast('ບໍ່ມີໃບບິນຫຼາຍຮ້ານ — ໃຊ້ Auto ສ້າງກ່ອນ'); return; }
+  bulkSync();
+  await ensureLaoFont();
+  if(!BULK.length){ toast('ບໍ່ມີໃບບິນ'); return; }
+  try{
+    BULK.forEach((b,i)=>{
+      const canvas=buildReceiptCanvas(b.shop, b.items);
+      const a=document.createElement('a');
+      a.download='ໃບບິນ-'+(i+1)+'-'+(b.shop||'D&L')+'.png';
+      a.href=canvas.toDataURL('image/png'); a.click();
+    });
+    toast('ດາວໂຫລດຮູບໃບຮັບເງິນທັງໝົດ ('+BULK.length+' ໃບ) ແລ້ວ — ເລືອກຫຼາຍຮູບຈາກ Downloads ເພື່ອສົ່ງພ້ອມກັນໄດ້');
+  }catch(e){
+    toast('ດາວໂຫລດບໍ່ສຳເລັດ — ລອງໃຊ້ “ພິມທັງໝົດ” ແທນ');
+  }
 }
 function closePrintModal(){ document.getElementById('print-modal').style.display='none'; }
 function printPng(){
