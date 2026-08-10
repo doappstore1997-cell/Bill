@@ -3748,8 +3748,15 @@ function buildGridTable(){
 function gridCellInput(el){
   el.classList.toggle('has-val', !!((el.value||'').trim()));
 }
-function gridGenerate(){
-  const rows=[];
+async function gridGenerate(){
+  // ດຶງຄິວລ່າສຸດຈາກ Google Sheet ກ່ອນອອກບິນ — ໃຫ້ດຶງລາຍການທີ່ລໍຖ້າ (ຈາກ Auto/ຄິວ) ມາລວມນຳ ຄືປຸ່ມ "ອອກໃບບິນຫຼາຍຮ້ານ auto"
+  if(syncOn()){
+    showAdding(true,'ກຳລັງໂຫລດຂໍ້ມູນລ່າສຸດ...');
+    try{ const j=await cloudGet(); if(j&&j.items){ setCloudItems(j.items); } }
+    catch(e){ toast('ໂຫລດຂໍ້ມູນລ່າສຸດບໍ່ໄດ້ — ຈະໃຊ້ຂໍ້ມູນທີ່ມີຢູ່ໃນເຄື່ອງແທນ'); }
+    finally{ showAdding(false); }
+  }
+  const rows=QUEUE.slice();   // ລວມລາຍການທີ່ລໍຖ້າ (ຄິວ/Auto) ເຂົ້ານຳ
   document.querySelectorAll('#grid-body .grid-qty-in').forEach(inp=>{
     const qty=parseFloat((inp.value||'').replace(/[^\d.]/g,''))||0;
     if(qty>0){
