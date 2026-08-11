@@ -2142,9 +2142,9 @@ var qrcode = function() {
   table.r-tab .total-row td{font-weight:800;font-size:20px}
   table.r-tab .total-lbl{text-align:left;font-weight:800}
   .total-wm{
-    position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;
-    font-size:7.5px;font-weight:700;line-height:1.2;letter-spacing:.2px;
-    color:rgba(200,16,46,.32);pointer-events:none;z-index:0;white-space:nowrap;overflow:hidden;
+    position:absolute;left:56%;top:50%;transform:translateY(-50%);
+    font-size:8px;font-weight:700;letter-spacing:.3px;
+    color:rgba(200,16,46,.32);pointer-events:none;z-index:0;white-space:nowrap;overflow:visible;
   }
   .r-words{text-align:center;font-size:17px;font-weight:600;margin:12px 0 6px}
   .r-words .paren{font-weight:700}
@@ -2492,11 +2492,11 @@ var qrcode = function() {
             <tbody id="p-rows"></tbody>
             <tfoot>
               <tr class="total-row">
-                <td class="total-lbl" colspan="4">ລວມເງິນ</td>
-                <td class="num" colspan="2" style="text-align:left;position:relative">
-                  <span class="total-wm"><span>ນ້ຳໜັກເຕັມ</span><span>ລູກຄ້າຍິ້ມ</span></span>
-                  <span id="p-total" style="position:relative;z-index:1"></span>
+                <td class="total-lbl" colspan="4" style="position:relative">
+                  ລວມເງິນ
+                  <span class="total-wm">ນ້ຳໜັກເຕັມ ລູກຄ້າຍິ້ມ</span>
                 </td>
+                <td class="num" id="p-total" colspan="2" style="text-align:left"></td>
               </tr>
             </tfoot>
           </table>
