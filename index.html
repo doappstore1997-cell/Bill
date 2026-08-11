@@ -2083,8 +2083,8 @@ var qrcode = function() {
   .tab-wrap{position:relative;overflow:hidden}
   .watermark{
     position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;
-    pointer-events:none;z-index:3;user-select:none;font-weight:800;line-height:1.05;
-    color:rgba(200,16,46,.13);transform:rotate(-16deg);white-space:nowrap;
+    pointer-events:none;z-index:5;user-select:none;font-weight:800;line-height:1.05;
+    color:rgba(200,16,46,.16);transform:rotate(-16deg);white-space:nowrap;
   }
   .wm-big{font-size:60px;letter-spacing:10px}
   .wm-small{font-size:22px;letter-spacing:2px;font-weight:700}
@@ -2112,7 +2112,7 @@ var qrcode = function() {
   .r-date-input{position:absolute;left:0;top:0;width:100%;height:100%;opacity:0;cursor:pointer;border:0;padding:0;margin:0}
   .r-pick{border-bottom:1px dashed var(--topbar);cursor:pointer;padding-bottom:1px;color:#000;font-weight:700}
   .r-cust b{font-weight:700}
-  table.r-tab{width:100%;border-collapse:collapse;margin-top:6px;font-size:18px;table-layout:fixed}
+  table.r-tab{width:100%;border-collapse:collapse;margin-top:6px;font-size:18px;table-layout:fixed;position:relative;z-index:1}
   table.r-tab td, table.r-tab th{overflow-wrap:anywhere;word-break:break-word}
   table.r-tab th, table.r-tab td{border:1.5px solid var(--line);padding:8px 9px;text-align:center;color:#000}
   table.r-tab th{font-weight:800;background:#e6e6e6;font-size:15.5px;color:#000;border-bottom-width:2.5px;white-space:nowrap}
@@ -2141,6 +2141,11 @@ var qrcode = function() {
   table.r-tab .ord{padding-left:2px;padding-right:2px}
   table.r-tab .total-row td{font-weight:800;font-size:20px}
   table.r-tab .total-lbl{text-align:left;font-weight:800}
+  .total-wm{
+    position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;
+    font-size:7.5px;font-weight:700;line-height:1.2;letter-spacing:.2px;
+    color:rgba(200,16,46,.32);pointer-events:none;z-index:0;white-space:nowrap;overflow:hidden;
+  }
   .r-words{text-align:center;font-size:17px;font-weight:600;margin:12px 0 6px}
   .r-words .paren{font-weight:700}
   .qr-block{display:flex;flex-direction:column;align-items:center;margin:6px 0 2px}
@@ -2216,6 +2221,7 @@ var qrcode = function() {
     </div>
     <div class="ap-card">
       <label class="ap-label">1. ເລືອກຮ້ານ</label>
+      <input id="qa-shop-search" class="ap-in" placeholder="🔍 ພິມຄົ້ນຫາຊື່/ລະຫັດຮ້ານ..." oninput="filterShopSelect(this,'qa-shop',true)" style="margin-bottom:6px">
       <select id="qa-shop" class="ap-in" onchange="onQaShopChange()"></select>
       <input id="qa-shop-custom" class="ap-in" style="display:none;margin-top:6px" placeholder="ພິມຊື່ຮ້ານເອງ...">
       <label class="ap-label">2. ເລືອກ ຫຼື ພິມ ລາຍການ</label>
@@ -2259,6 +2265,7 @@ var qrcode = function() {
     <div class="ap-card">
       <div class="auto-title">ວິທີໃຊ້</div>
       <div class="auto-hint">ແຖວ = ຊື່ຮ້ານ (ທຸກຮ້ານໃນລະບົບ), ຖັນ = ລາຍການສິນຄ້າ (ຈາກບັນຊີລາຍການ). ພິມ “ຈຳນວນ” ໃສ່ຊ່ອງທີ່ຕັດກັນລະຫວ່າງຮ້ານ ແລະ ລາຍການ ແລ້ວກົດ “ອອກບິນ →” — ລະບົບຈະສ້າງໃບບິນແຕ່ລະຮ້ານໃຫ້ອັດຕະໂນມັດ (ຊ່ອງໃດບໍ່ໃສ່ ຈະຂ້າມ).</div>
+      <input id="grid-shop-search" class="ap-in" placeholder="🔍 ພິມຄົ້ນຫາຊື່ຮ້ານ ເພື່ອກອງແຖວ..." oninput="filterGridRows(this)" style="margin-bottom:10px">
       <div class="grid-wrap"><div id="grid-table-wrap"></div></div>
       <button class="ap-gen-big" onclick="gridGenerate()">⚡ ອອກບິນທັງໝົດ</button>
     </div>
@@ -2385,6 +2392,7 @@ var qrcode = function() {
     <div class="row2">
       <div class="field">
         <label>ເລືອກຮ້ານ</label>
+        <input id="f-cust-search" placeholder="🔍 ພິມຄົ້ນຫາຊື່/ລະຫັດຮ້ານ..." oninput="filterShopSelect(this,'f-cust',false)" style="margin-bottom:4px">
         <select id="f-cust" onchange="onShopChange()"></select>
       </div>
       <div class="field">
@@ -2485,7 +2493,10 @@ var qrcode = function() {
             <tfoot>
               <tr class="total-row">
                 <td class="total-lbl" colspan="4">ລວມເງິນ</td>
-                <td class="num" id="p-total" colspan="2" style="text-align:left"></td>
+                <td class="num" colspan="2" style="text-align:left;position:relative">
+                  <span class="total-wm"><span>ນ້ຳໜັກເຕັມ</span><span>ລູກຄ້າຍິ້ມ</span></span>
+                  <span id="p-total" style="position:relative;z-index:1"></span>
+                </td>
               </tr>
             </tfoot>
           </table>
@@ -2612,10 +2623,22 @@ function loadShops(){
   return DEFAULT_SHOPS.slice();
 }
 function saveShops(){ try{ localStorage.setItem(SHOP_KEY, JSON.stringify(SHOPS)); }catch(e){} }
-function fillShopSelect(sel, keep, withCustom){
+function sortedShopsList(){
+  // ຈັດລຽງຕາມລະຫັດ D (ໂຕເລກ) ກ່ອນ — ຮ້ານທີ່ບໍ່ມີລະຫັດ D ມາດຕະຖານ (ເຊັ່ນ ໂຕໝູ 3 ສາຂາ) ຈັດຕາມຊື່ຫຼັງສຸດ
+  return SHOPS.slice().sort((a,b)=>{
+    const na=/^D(\d+)/.exec(a.code||''), nb=/^D(\d+)/.exec(b.code||'');
+    if(na && nb) return parseInt(na[1],10)-parseInt(nb[1],10);
+    if(na && !nb) return -1;
+    if(!na && nb) return 1;
+    return String(a.name||'').localeCompare(String(b.name||''),'lo');
+  });
+}
+function fillShopSelect(sel, keep, withCustom, filterText){
   if(!sel) return;
   sel.innerHTML='';
-  SHOPS.forEach(s=>{
+  const ft=(filterText||'').trim().toLowerCase();
+  const list=sortedShopsList().filter(s=> !ft || (s.name||'').toLowerCase().includes(ft) || (s.code||'').toLowerCase().includes(ft));
+  list.forEach(s=>{
     const o=document.createElement('option');
     o.value=s.name; o.dataset.code=s.code;
     o.textContent=s.name;
@@ -2626,7 +2649,13 @@ function fillShopSelect(sel, keep, withCustom){
     o.value='__custom__'; o.textContent='✏️ ຂຽນເອງ (ພິມຊື່ຮ້ານ)';
     sel.appendChild(o);
   }
-  if(keep && SHOPS.some(s=>s.name===keep)) sel.value=keep;
+  if(keep && list.some(s=>s.name===keep)) sel.value=keep;
+}
+// ພິມຄົ້ນຫາ 1 ຕົວອັກສອນຂຶ້ນໄປ → filter ລາຍຊື່ຮ້ານໃນ select ໃຫ້ທັນທີ (ສະດວກເວລາມີຫຼາຍຮ້ານ)
+function filterShopSelect(searchEl, selectId, withCustom){
+  const sel=document.getElementById(selectId); if(!sel) return;
+  const keep=sel.value;
+  fillShopSelect(sel, keep, !!withCustom, searchEl.value);
 }
 function nextShopCode(){
   let maxN=0;
@@ -2640,10 +2669,12 @@ function updateShopCodeHints(){
 function populateShops(selectName){
   const f=document.getElementById('f-cust');
   const keep = (selectName!=null) ? selectName : f.value;
-  fillShopSelect(f, keep);
+  const fFilter=(document.getElementById('f-cust-search')||{}).value||'';
+  const qaFilter=(document.getElementById('qa-shop-search')||{}).value||'';
+  fillShopSelect(f, keep, false, fFilter);
   fillShopSelect(document.getElementById('r-cust'), keep);
   const qa=document.getElementById('qa-shop');
-  if(qa){ const prev=qa.value; fillShopSelect(qa, qa.value || keep, true); if(prev==='__custom__') qa.value='__custom__'; }
+  if(qa){ const prev=qa.value; fillShopSelect(qa, qa.value || keep, true, qaFilter); if(prev==='__custom__') qa.value='__custom__'; }
   syncCode();
   updateShopCodeHints();
 }
@@ -3759,7 +3790,7 @@ function buildGridTable(){
   let h='<table class="grid-tab"><thead><tr><th class="gt-shop">ຮ້ານ</th>';
   PRODUCTS.forEach(p=>{ h+='<th>'+escapeHtml(p.name)+'</th>'; });
   h+='</tr></thead><tbody id="grid-body">';
-  SHOPS.forEach(s=>{
+  sortedShopsList().forEach(s=>{
     h+='<tr><td class="gt-shop">'+escapeHtml(s.name)+'</td>';
     PRODUCTS.forEach(p=>{
       const key=s.name+'␟'+p.name;
@@ -3773,6 +3804,17 @@ function buildGridTable(){
   });
   h+='</tbody></table>';
   box.innerHTML=h;
+  const gs=document.getElementById('grid-shop-search');
+  if(gs && gs.value) filterGridRows(gs);   // ຮັກສາການກອງແຖວໄວ້ ຫຼັງສ້າງຕາຕະລາງໃໝ່ (ເຊັ່ນ ຕອນເພີ່ມຮ້ານ)
+}
+// ພິມຄົ້ນຫາຊື່ຮ້ານ → ເຫຼືອແຕ່ແຖວທີ່ກົງກັນ ບໍ່ໃຫ້ຫຼາຍຮ້ານລຽງກັນສັບສົນ
+function filterGridRows(searchEl){
+  const ft=(searchEl.value||'').trim().toLowerCase();
+  document.querySelectorAll('#grid-body tr').forEach(tr=>{
+    const cell=tr.querySelector('.gt-shop');
+    const name=cell ? cell.textContent.toLowerCase() : '';
+    tr.style.display = (!ft || name.includes(ft)) ? '' : 'none';
+  });
 }
 function gridCellInput(el){
   el.classList.toggle('has-val', !!((el.value||'').trim()));
