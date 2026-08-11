@@ -2265,7 +2265,12 @@ var qrcode = function() {
     <div class="ap-card">
       <div class="auto-title">ວິທີໃຊ້</div>
       <div class="auto-hint">ແຖວ = ຊື່ຮ້ານ (ທຸກຮ້ານໃນລະບົບ), ຖັນ = ລາຍການສິນຄ້າ (ຈາກບັນຊີລາຍການ). ພິມ “ຈຳນວນ” ໃສ່ຊ່ອງທີ່ຕັດກັນລະຫວ່າງຮ້ານ ແລະ ລາຍການ ແລ້ວກົດ “ອອກບິນ →” — ລະບົບຈະສ້າງໃບບິນແຕ່ລະຮ້ານໃຫ້ອັດຕະໂນມັດ (ຊ່ອງໃດບໍ່ໃສ່ ຈະຂ້າມ).</div>
-      <input id="grid-shop-search" class="ap-in" placeholder="🔍 ພິມຄົ້ນຫາຊື່ຮ້ານ ເພື່ອກອງແຖວ..." oninput="filterGridRows(this)" style="margin-bottom:10px">
+      <input id="grid-shop-search" class="ap-in" placeholder="🔍 ພິມຄົ້ນຫາຊື່ຮ້ານ ເພື່ອກອງແຖວ..." oninput="applyGridFilter()" style="margin-bottom:10px">
+      <label style="display:flex;align-items:center;gap:7px;font-size:13px;color:var(--muted);margin:-2px 0 10px;cursor:pointer">
+        <input id="grid-only-items" type="checkbox" onchange="applyGridFilter()" style="width:16px;height:16px">
+        ສະແດງແຕ່ຮ້ານທີ່ມີລາຍການ
+        <span id="grid-item-count" style="color:var(--brand);font-weight:600"></span>
+      </label>
       <div class="grid-wrap"><div id="grid-table-wrap"></div></div>
       <button class="ap-gen-big" onclick="gridGenerate()">⚡ ອອກບິນທັງໝົດ</button>
     </div>
@@ -2624,14 +2629,8 @@ function loadShops(){
 }
 function saveShops(){ try{ localStorage.setItem(SHOP_KEY, JSON.stringify(SHOPS)); }catch(e){} }
 function sortedShopsList(){
-  // ຈັດລຽງຕາມລະຫັດ D (ໂຕເລກ) ກ່ອນ — ຮ້ານທີ່ບໍ່ມີລະຫັດ D ມາດຕະຖານ (ເຊັ່ນ ໂຕໝູ 3 ສາຂາ) ຈັດຕາມຊື່ຫຼັງສຸດ
-  return SHOPS.slice().sort((a,b)=>{
-    const na=/^D(\d+)/.exec(a.code||''), nb=/^D(\d+)/.exec(b.code||'');
-    if(na && nb) return parseInt(na[1],10)-parseInt(nb[1],10);
-    if(na && !nb) return -1;
-    if(!na && nb) return 1;
-    return String(a.name||'').localeCompare(String(b.name||''),'lo');
-  });
+  // ຈັດລຽງຕາມຊື່ຮ້ານ (ຕົວອັກສອນ ກ-ຮ)
+  return SHOPS.slice().sort((a,b)=> String(a.name||'').localeCompare(String(b.name||''),'lo'));
 }
 function fillShopSelect(sel, keep, withCustom, filterText){
   if(!sel) return;
@@ -3520,12 +3519,23 @@ function addQueue(skipPrice){
   toast('ເພີ່ມແລ້ວ ('+QUEUE.length+' ລາຍການລໍຖ້າ)');
   if(!skipPrice) showPricePopup(QUEUE.length-1);
 }
+// ນັບຈຳນວນຮ້ານທີ່ຕ່າງກັນໃນລາຍການລໍຖ້າສ້າງ (ໂຕໝູ 3 ສາຂາ / ໝູນ້ອຍ 2 ສາຂາ ລວມບິນດຽວ ຈຶ່ງນັບເປັນ 1 ຮ້ານ ຄືກັນກັບຕອນອອກໃບບິນ)
+function countQueueShops(rows){
+  const GROUPS=[{pre:'ໂຕໝູ'},{pre:'ໝູນ້ອຍ'}];
+  const set=new Set();
+  rows.forEach(r=>{
+    const shopName=r.shop||'';
+    const g=GROUPS.find(gr=>shopName.startsWith(gr.pre));
+    set.add(g?g.pre:shopName);
+  });
+  return set.size;
+}
 function renderQueue(){
   const box=document.getElementById('queue-list');
   if(!QUEUE.length){ box.innerHTML=''; return; }
   let pendCount=(syncOn()? (PENDING.length + PENDING_OPS.length) : 0);
   let upBtn=pendCount?'<button class="queue-refresh" style="background:#fff4d6;color:#92600a" onclick="flushAll()">⬆️ ອັປໂຫລດ ('+pendCount+')</button>':'';
-  let h='<div class="queue-head">ລໍຖ້າສ້າງ: '+QUEUE.length+' ລາຍການ <span class="queue-head-btns">'+upBtn+'<button class="queue-refresh" onclick="manualRefresh()">🔄 ໂຫລດຄືນ</button><button class="queue-clear" onclick="clearQueue()">ລ້າງທັງໝົດ</button></span></div>';
+  let h='<div class="queue-head">ລໍຖ້າສ້າງ: '+countQueueShops(QUEUE)+' ຮ້ານ, '+QUEUE.length+' ລາຍການ <span class="queue-head-btns">'+upBtn+'<button class="queue-refresh" onclick="manualRefresh()">🔄 ໂຫລດຄືນ</button><button class="queue-clear" onclick="clearQueue()">ລ້າງທັງໝົດ</button></span></div>';
   QUEUE.forEach((r,i)=>{
     const priceTxt = (r.price&&r.price>0) ? '<span class="q-price">'+fmt(r.price)+' ກີບ</span>' : '<span class="q-noprice">ໃສ່ລາຄາ</span>';
     const noteTxt = (r.note&&r.note.trim()) ? '<span class="q-note">📝 '+escapeHtml(r.note)+'</span>' : '<span class="q-nonote">ໃສ່ໝາຍເຫດ</span>';
@@ -3804,20 +3814,45 @@ function buildGridTable(){
   });
   h+='</tbody></table>';
   box.innerHTML=h;
-  const gs=document.getElementById('grid-shop-search');
-  if(gs && gs.value) filterGridRows(gs);   // ຮັກສາການກອງແຖວໄວ້ ຫຼັງສ້າງຕາຕະລາງໃໝ່ (ເຊັ່ນ ຕອນເພີ່ມຮ້ານ)
+  applyGridFilter();   // ຮັກສາການກອງແຖວ/ຕົວກຣອງ "ມີລາຍການ" ໄວ້ ຫຼັງສ້າງຕາຕະລາງໃໝ່ (ເຊັ່ນ ຕອນເພີ່ມຮ້ານ)
 }
-// ພິມຄົ້ນຫາຊື່ຮ້ານ → ເຫຼືອແຕ່ແຖວທີ່ກົງກັນ ບໍ່ໃຫ້ຫຼາຍຮ້ານລຽງກັນສັບສົນ
-function filterGridRows(searchEl){
-  const ft=(searchEl.value||'').trim().toLowerCase();
+// ພິມຄົ້ນຫາຊື່ຮ້ານ + ຕົວກຣອງ "ສະແດງແຕ່ຮ້ານທີ່ມີລາຍການ" → ເຫຼືອແຕ່ແຖວທີ່ກົງກັນ ບໍ່ໃຫ້ຫຼາຍຮ້ານລຽງກັນສັບສົນ
+function applyGridFilter(){
+  const gs=document.getElementById('grid-shop-search');
+  const ft=(gs && gs.value || '').trim().toLowerCase();
+  const oi=document.getElementById('grid-only-items');
+  const onlyItems=!!(oi && oi.checked);
   document.querySelectorAll('#grid-body tr').forEach(tr=>{
     const cell=tr.querySelector('.gt-shop');
     const name=cell ? cell.textContent.toLowerCase() : '';
-    tr.style.display = (!ft || name.includes(ft)) ? '' : 'none';
+    const matchText = !ft || name.includes(ft);
+    const matchItems = !onlyItems || Array.from(tr.querySelectorAll('.grid-qty-in')).some(inp=>(inp.value||'').trim()!=='');
+    tr.style.display = (matchText && matchItems) ? '' : 'none';
   });
+  updateGridItemCount();
+}
+// ນັບຈຳນວນຮ້ານທີ່ມີລາຍການ ແລະ ຈຳນວນລາຍການລວມທັງໝົດ (ຊ່ອງທີ່ໃສ່ຈຳນວນແລ້ວ) ໃນຕາຕະລາງທັງໝົດ (ບໍ່ຂຶ້ນກັບການກອງແຖວ)
+// ໝາຍເຫດ: ໂຕໝູ 3 ສາຂາ ແລະ ໝູນ້ອຍ 2 ສາຂາ ລວມບິນດຽວ ຈຶ່ງນັບເປັນ 1 ຮ້ານ (ຄືກັນກັບຕອນອອກໃບບິນ)
+function updateGridItemCount(){
+  const out=document.getElementById('grid-item-count'); if(!out) return;
+  const GRID_MERGE_GROUPS=[{pre:'ໂຕໝູ'},{pre:'ໝູນ້ອຍ'}];
+  let itemCount=0;
+  const shopsWithItems=new Set();
+  document.querySelectorAll('#grid-body tr').forEach(tr=>{
+    const filled=Array.from(tr.querySelectorAll('.grid-qty-in')).filter(inp=>(inp.value||'').trim()!=='');
+    if(!filled.length) return;
+    itemCount+=filled.length;
+    const shopCell=tr.querySelector('.gt-shop');
+    const shopName=shopCell ? shopCell.textContent : '';
+    const g=GRID_MERGE_GROUPS.find(gr=>shopName.startsWith(gr.pre));
+    shopsWithItems.add(g ? g.pre : shopName);
+  });
+  const shopCount=shopsWithItems.size;
+  out.textContent = itemCount ? ('('+shopCount+' ຮ້ານ, '+itemCount+' ລາຍການ)') : '';
 }
 function gridCellInput(el){
   el.classList.toggle('has-val', !!((el.value||'').trim()));
+  applyGridFilter();
   if(!syncOn()) return;
   const shop=el.dataset.shop, item=el.dataset.prod;
   const key=shop+'␟'+item;
