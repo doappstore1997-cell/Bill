@@ -3138,6 +3138,7 @@ function renderMerged(){
   let list = CLOUD_ITEMS.concat(pendingItems());
   if(syncOn()) list = sortByQOrder(list);
   QUEUE = list;
+  syncGridRowIds();   // ອັບເດດ mapping ຮ້ານ+ລາຍການ→id ໃຫ້ທັນທຸກຄັ້ງ QUEUE ປ່ຽນ (ກັນຕາຕະລາງເພີ່ມຊ້ຳ ຫຼັງ pending ອັບໂຫລດສຳເລັດ)
   const js=JSON.stringify(QUEUE);
   if(js===_lastRenderJson) return;         // ບໍ່ປ່ຽນ → ບໍ່ວາດໃໝ່ (ໄວຂຶ້ນ ບໍ່ກະພິບ)
   _lastRenderJson=js;
@@ -3726,6 +3727,20 @@ function closeGrid(){
   document.getElementById('grid-page').style.display='none';
   document.body.style.overflow='';
 }
+let GRID_ROW_ID={};   // shop␟item -> id ຂອງແຖວໃນຄິວ (ຄລາວ) — ໃຊ້ອັບເດດແທນທີ່ຈະເພີ່ມຊ້ຳ ຕອນພິມໃນຕາຕະລາງ
+let _gridSyncTimers={};
+// ຄິດໄລ່ GRID_ROW_ID ຄືນຈາກ QUEUE ປັດຈຸບັນ (ຮ້ານ+ລາຍການທີ່ມີແຖວດຽວເທົ່ານັ້ນ ຈຶ່ງ sync ອັບເດດແທນເພີ່ມໃໝ່ໄດ້ຢ່າງແນ່ນອນ)
+function syncGridRowIds(){
+  const idCount={};
+  GRID_ROW_ID={};
+  QUEUE.forEach(r=>{
+    if(r._pending || !r.id) return;
+    const key=(r.shop||'')+'␟'+(r.item||'');
+    idCount[key]=(idCount[key]||0)+1;
+    if(idCount[key]===1) GRID_ROW_ID[key]=r.id;
+  });
+  Object.keys(idCount).forEach(k=>{ if(idCount[k]>1) delete GRID_ROW_ID[k]; });
+}
 function buildGridTable(){
   const box=document.getElementById('grid-table-wrap'); if(!box) return;
   // ຮັກສາຄ່າທີ່ພິມໄວ້ແລ້ວ ກ່ອນສ້າງຕາຕະລາງໃໝ່ (ເຊັ່ນ ຕອນເພີ່ມຮ້ານໃໝ່ ບໍ່ໃຫ້ຂໍ້ມູນເກົ່າຫາຍ)
@@ -3740,6 +3755,7 @@ function buildGridTable(){
     const key=(r.shop||'')+'␟'+(r.item||'');
     queued[key]=(queued[key]||0)+(Number(r.qty)||0);
   });
+  syncGridRowIds();
   let h='<table class="grid-tab"><thead><tr><th class="gt-shop">ຮ້ານ</th>';
   PRODUCTS.forEach(p=>{ h+='<th>'+escapeHtml(p.name)+'</th>'; });
   h+='</tr></thead><tbody id="grid-body">';
@@ -3760,6 +3776,38 @@ function buildGridTable(){
 }
 function gridCellInput(el){
   el.classList.toggle('has-val', !!((el.value||'').trim()));
+  if(!syncOn()) return;
+  const shop=el.dataset.shop, item=el.dataset.prod;
+  const key=shop+'␟'+item;
+  clearTimeout(_gridSyncTimers[key]);
+  _gridSyncTimers[key]=setTimeout(()=>syncGridCellToQueue(shop,item,el.value), 700);
+}
+// ພິມໃນຕາຕະລາງແລ້ວ sync ເຂົ້າຄິວທັນທີ (ຫຼັງພິມພັກ 0.7 ວິນາທີ) — ໃຫ້ໜ້າ "ອອກໃບບິນຫຼາຍຮ້ານ" (Auto) ເຫັນລາຍການດຽວກັນ ບໍ່ຊ້ຳກັນ
+function syncGridCellToQueue(shop,item,rawVal){
+  const qty=parseFloat((rawVal||'').replace(/[^\d.]/g,''))||0;
+  const key=shop+'␟'+item;
+  const existingId=GRID_ROW_ID[key];
+  const pendingRow=PENDING.find(p=>p.shop===shop && p.item===item);
+  if(qty<=0){
+    if(existingId){ CLOUD_ITEMS=CLOUD_ITEMS.filter(x=>x.id!==existingId); renderMerged(); cloudDo({action:'delete', id:existingId}); delete GRID_ROW_ID[key]; }
+    if(pendingRow){ PENDING=PENDING.filter(p=>p!==pendingRow); savePending(); renderMerged(); }
+    return;
+  }
+  if(existingId){
+    updateCloudItemLocal(existingId, {qty:qty});
+    cloudDo({action:'update', id:existingId, fields:{qty:qty}});
+    return;
+  }
+  if(pendingRow){
+    pendingRow.qty=qty; savePending(); renderMerged();
+    return;
+  }
+  const unit=defaultUnitFor(item);
+  const price=(getPriceHist(shop,item)[0]||0);
+  const row={shop:shop, item:item, qty:qty, unit:unit, price:price, addedBy:SYNC_USER};
+  addPending(row);
+  renderMerged();
+  flushPending(true);
 }
 async function gridGenerate(){
   // ດຶງຄິວລ່າສຸດຈາກ Google Sheet ກ່ອນອອກບິນ — ໃຫ້ດຶງລາຍການທີ່ລໍຖ້າ (ຈາກ Auto/ຄິວ) ມາລວມນຳ ຄືປຸ່ມ "ອອກໃບບິນຫຼາຍຮ້ານ auto"
