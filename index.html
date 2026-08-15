@@ -2177,6 +2177,12 @@ var qrcode = function() {
   table.grid-tab thead th{position:sticky;top:0;background:#f4f5f7;z-index:2;font-weight:700;font-size:12.5px}
   table.grid-tab td.gt-shop,table.grid-tab th.gt-shop{position:sticky;left:0;background:#fff;z-index:1;text-align:left;font-weight:700;min-width:150px;max-width:150px;white-space:normal}
   table.grid-tab thead th.gt-shop{z-index:3;background:#f4f5f7}
+  /* ຄລິກ/ພິມໃສ່ຊ່ອງໃນຮ້ານໃດ → ຮ້ານນັ້ນມີສີພື້ນຫຼັງໃຫ້ສະດວກສັງເກດ */
+  table.grid-tab tr.gt-row:focus-within,
+  table.grid-tab tr.gt-row:has(+ tr.gt-extra-row:focus-within){background:#ffedd9}
+  table.grid-tab tr.gt-row:focus-within td.gt-shop,
+  table.grid-tab tr.gt-row:has(+ tr.gt-extra-row:focus-within) td.gt-shop{background:#ffcd85}
+  table.grid-tab tr.gt-extra-row:focus-within{background:#ffedd9}
   .grid-qty-in{width:52px;text-align:center;font-family:inherit;font-size:14px;font-weight:600;border:1px solid var(--field-line);border-radius:6px;padding:6px 2px}
   .grid-qty-in:focus{outline:2px solid var(--topbar);border-color:var(--topbar)}
   .grid-qty-in.has-val{background:#fff6ef;border-color:var(--brand)}
@@ -2853,12 +2859,25 @@ function recalcRow(i, tr){
   document.getElementById('p-total').textContent=fmt(total);
   document.getElementById('p-words').textContent=laoWords(total)+' ກີບ';
 }
+/* ຫົວໜ່ວຍທີ່ເລືອກໄດ້ — ຮັກສາຫົວໜ່ວຍທີ່ພິມເອງ (ບໍ່ຢູ່ໃນລາຍການມາດຕະຖານ) ບໍ່ໃຫ້ຫາຍ */
+function unitOptionsHtml(current){
+  const list=['ຫິ້ວ','Kg','ແກັດ','ຕໍ່ຖ້ຽວ','ກີບ','ຖົງ','ອັນ'];
+  if(current && !list.includes(current)) list.unshift(current);
+  return list.map(u=>'<option'+(u===current?' selected':'')+'>'+escapeHtml(u)+'</option>').join('');
+}
+function unitSelChange(el){
+  const i=+el.dataset.i; ensureItem(i);
+  items[i].unit=el.value;
+  const tr=el.closest('tr');
+  if(tr){ const put=tr.querySelector('.punit-txt'); if(put && items[i].price) put.textContent=' ຕໍ່'+el.value; }
+  bulkSync();
+}
 /* ຊ່ອງຈຳນວນ + ໜ່ວຍ ໃນຕາຕະລາງ */
 function qtyInput(el){
   const i=+el.dataset.i; ensureItem(i);
   items[i].qty=parseFloat((el.value||'').replace(/[^\d.]/g,''))||0;
-  const ut=el.parentNode.querySelector('.unit-txt');
-  if(ut) ut.textContent = items[i].qty ? (items[i].unit||'ຫິ້ວ') : '';
+  const us=el.parentNode.querySelector('.unit-sel');
+  if(us) us.style.display = items[i].qty ? '' : 'none';
   recalcRow(i, el.closest('tr'));
 }
 function qtyFocus(el){
@@ -4208,7 +4227,7 @@ function render(){
     html+=`<tr>
       <td class="ord">${i+1}</td>
       <td class="it" contenteditable="true" data-i="${i}" oninput="rowNameInput(this)" onblur="rowNameBlur(this)" onkeydown="cellKey(event,this)">${escapeHtml(it.name)}</td>
-      <td class="num"><span class="qtywrap"><input class="qty-in" type="text" inputmode="decimal" value="${it.qty?fmt(it.qty):''}" data-i="${i}" oninput="qtyInput(this)" onfocus="qtyFocus(this)" onblur="qtyBlur(this)"><span class="unit-txt">${it.qty?escapeHtml(it.unit||'ຫິ້ວ'):''}</span></span></td>
+      <td class="num"><span class="qtywrap"><input class="qty-in" type="text" inputmode="decimal" value="${it.qty?fmt(it.qty):''}" data-i="${i}" oninput="qtyInput(this)" onfocus="qtyFocus(this)" onblur="qtyBlur(this)"><select class="unit-sel" data-i="${i}" onchange="unitSelChange(this)" style="${it.qty?'':'display:none'}">${unitOptionsHtml(it.unit||'ຫິ້ວ')}</select></span></td>
       <td class="num"><span class="pricewrap"><input class="price-in" type="text" inputmode="decimal" value="${it.price?fmt(it.price):''}" data-i="${i}" oninput="priceInput(this)" onfocus="priceFocus(this)" onblur="priceBlur(this)"><span class="punit-txt">${it.price?(' ຕໍ່'+(it.unit||'ຫິ້ວ')):''}</span></span></td>
       <td class="num" data-amt="${i}">${amt?fmt(amt):''}</td>
       <td class="note-cell" contenteditable="true" data-i="${i}" oninput="noteInput(this)" onblur="noteBlur(this)">${escapeHtml(it.note||'')}</td></tr>`;
