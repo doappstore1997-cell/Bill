@@ -2204,6 +2204,23 @@ var qrcode = function() {
   .gx-in.gx-note{flex:2;min-width:120px}
   .gx-del{border:none;background:#fde2e2;color:#b42318;border-radius:6px;width:28px;height:28px;font-size:15px;cursor:pointer;flex:0 0 auto}
   .gx-plus{border:1px dashed var(--brand);background:#fff;color:var(--brand);border-radius:7px;padding:7px 12px;font-size:12.5px;font-weight:600;cursor:pointer}
+  /* ---------- ອອກບິນແບບ AI (ອ່ານຂໍ້ຄວາມປະຈຳວັນ) ---------- */
+  #ai-input{width:100%;box-sizing:border-box;font-family:inherit;font-size:14px;border:1.5px solid var(--field-line);border-radius:10px;padding:11px;margin-bottom:10px;line-height:1.6;resize:vertical}
+  #ai-preview-list{max-height:50vh;overflow:auto;border:1px solid var(--panel-line);border-radius:10px;padding:8px;background:#fff}
+  .ai-row{border-bottom:1px dashed var(--panel-line);padding:9px 3px}
+  .ai-row:last-child{border-bottom:none}
+  .ai-row-orig{font-size:11.5px;color:var(--muted);margin-bottom:5px;line-height:1.4}
+  .ai-row-fields{display:flex;gap:6px;flex-wrap:wrap;align-items:center}
+  .ai-shop-sel{flex:2;min-width:130px;font-family:inherit;font-size:13px;border:1px solid var(--field-line);border-radius:6px;padding:6px 7px}
+  .ai-item-sel,.ai-note-in{flex:1;min-width:90px;font-family:inherit;font-size:13px;border:1px solid var(--field-line);border-radius:6px;padding:6px 7px}
+  .ai-item-custom{flex:1 1 100%;font-family:inherit;font-size:13px;border:1px solid var(--field-line);border-radius:6px;padding:6px 7px}
+  .ai-qty-txt{flex:0 0 auto;font-weight:700;font-size:13.5px;white-space:nowrap}
+  .ai-unit-sel{flex:0 0 76px;font-family:inherit;font-size:13px;border:1px solid var(--field-line);border-radius:6px;padding:6px 5px}
+  .ai-badge{display:inline-block;font-size:10.5px;font-weight:700;border-radius:5px;padding:1px 6px;margin-right:4px}
+  .ai-badge-ok{background:#d9f2e3;color:#0a7d4d}
+  .ai-badge-warn{background:#fff4d6;color:#92600a}
+  .ai-badge-new{background:#e0ecff;color:#1d4ed8}
+  .ai-badge-alias{background:#ede9fe;color:#6d28d9}
   /* ---------- Print ---------- */
   @media print{
     body{background:#fff}
@@ -2319,6 +2336,33 @@ var qrcode = function() {
     <div id="botmu-status" style="font-size:12.5px;color:var(--muted);margin-top:10px;text-align:center;line-height:1.5"></div>
   </div>
 </div>
+<div id="ai-page" class="auto-page" style="display:none">
+  <div class="ap-bar">
+    <button class="ap-back" onclick="closeAiImport()">←</button>
+    <div class="ap-title">🤖 ອອກບິນແບບ AI (ຂຽນປະຈຳວັນ)</div>
+    <div style="width:34px"></div>
+  </div>
+  <div class="ap-body" style="max-width:100%">
+    <div class="ap-card">
+      <div class="auto-hint">ວາງຂໍ້ຄວາມປະຈຳວັນ (ຊື່ຮ້ານ + ຈຳນວນ) ຄືທີ່ສົ່ງລາຍງານ ແລ້ວກົດ “ວິເຄາະຂໍ້ຄວາມ” — ລະບົບຈະພະຍາຍາມອ່ານ ຈັບຄູ່ຊື່ຮ້ານແບບຫຍໍ້ກັບຮ້ານທີ່ມີໃນລະບົບໃຫ້ອັດຕະໂນມັດ (ອ່ານໃນເຄື່ອງ ບໍ່ໄດ້ຕໍ່ AI ພາຍນອກ — ຖ້າຈັບຄູ່ຜິດ ແກ້ໄຂໄດ້ກ່ອນຕື່ມເຂົ້າຄິວ)</div>
+      <textarea id="ai-input" rows="12" placeholder="1. ແຄມຂອງ 40 ໂລ&#10;2. ຈອມມະນີ 10 ໂລ&#10;3. ໂພນຕ້ອງ 30 ໂລ&#10;..."></textarea>
+      <button class="ap-gen-big" style="background:#0891b2" onclick="aiParseText()">🔍 ວິເຄາະຂໍ້ຄວາມ</button>
+      <div id="ai-preview-wrap" style="display:none;margin-top:14px">
+        <div id="ai-preview-summary" style="font-size:13px;font-weight:700;color:var(--brand-dark);margin-bottom:8px"></div>
+        <label style="display:flex;align-items:center;gap:6px;font-size:12.5px;color:#b45309;font-weight:700;margin-bottom:8px;cursor:pointer">
+          <input type="checkbox" id="ai-only-review" onchange="aiApplyFilter()">
+          ສະແດງສະເພາະທີ່ຕ້ອງກວດ (ອ່ານບໍ່ໄດ້ / ຮ້ານບໍ່ແນ່ໃຈ / ຮ້ານໃໝ່)
+        </label>
+        <div id="ai-preview-list"></div>
+        <div id="ai-unparsed-wrap" style="display:none;margin-top:10px">
+          <div style="font-size:12.5px;font-weight:700;color:#b45309;margin-bottom:6px">⚠️ ແຖວທີ່ອ່ານບໍ່ໄດ້ (ກະລຸນາໃສ່ເອງ):</div>
+          <div id="ai-unparsed-list" style="font-size:12.5px;color:var(--muted);line-height:1.6"></div>
+        </div>
+        <button class="ap-gen-big" style="margin-top:12px" onclick="aiConfirmImport()">✅ ຕື່ມທັງໝົດເຂົ້າຄິວ</button>
+      </div>
+    </div>
+  </div>
+</div>
 <div id="adding-overlay" style="display:none;position:fixed;inset:0;z-index:99999;background:rgba(0,0,0,.45);align-items:center;justify-content:center">
   <div style="background:#fff;border-radius:16px;padding:24px 30px;text-align:center;box-shadow:0 8px 30px rgba(0,0,0,.3)">
     <div class="dl-spin"></div>
@@ -2425,6 +2469,7 @@ var qrcode = function() {
     <button class="auto-launch" onclick="openAuto()">⚡ ອອກໃບບິນຫຼາຍຮ້ານ (Auto)<span class="al-sub">ເລືອກຮ້ານ · ລາຍການ · ຈຳນວນ ແລ້ວສ້າງທີດຽວ</span></button>
     <button class="auto-launch" style="background:var(--army);margin-top:-8px" onclick="openGrid()">📊 ຕາຕະລາງໃສ່ຈຳນວນ (ຫຼາຍຮ້ານ x ຫຼາຍລາຍການ)<span class="al-sub">ຮ້ານເປັນແຖວ · ລາຍການເປັນຖັນ · ໃສ່ຈຳນວນແລ້ວອອກບິນທັງໝົດ</span></button>
     <button class="auto-launch" style="background:#7c3aed;margin-top:-8px" onclick="openBotmuSummary()">🐷 ສະຫຼຸບຮ້ານໂຕໝູ (ລາຍອາທິດ)<span class="al-sub">ເລືອກຊ່ວງວັນທີ ລວມຈຳນວນ+ເງິນ ອອກເປັນໃບບິນດຽວ</span></button>
+    <button class="auto-launch" style="background:#0891b2;margin-top:-8px" onclick="openAiImport()">🤖 ອອກບິນແບບ AI (ຂຽນປະຈຳວັນ)<span class="al-sub">ວາງຂໍ້ຄວາມປະຈຳວັນ → ອ່ານ ຈັບຄູ່ຮ້ານ ແລ້ວຕື່ມເຂົ້າຄິວໃຫ້</span></button>
     <h2>ຂໍ້ມູນຮ້ານ</h2>
     <div class="field">
       <label>ຊື່ຮ້ານ</label>
@@ -3335,7 +3380,7 @@ function syncInitUI(){
 function _applyItems(j){ if(j&&j.items){ setCloudItems(j.items); } return j; }
 async function cloudGet(){
   const j=await _jsonp(SYNC_URL+'?token='+encodeURIComponent(SYNC_TOKEN));
-  if(j&&j.ok&&Array.isArray(j.rows)){ if(j.prices && typeof j.prices==='object') CLOUD_PRICES=j.prices; if(Array.isArray(j.shops)) applyCloudShops(j.shops); if(Array.isArray(j.order) && Date.now()-_orderSetAt>3000) CLOUD_ORDER=j.order; return {items:j.rows.map(rowToItem)}; }
+  if(j&&j.ok&&Array.isArray(j.rows)){ if(j.prices && typeof j.prices==='object') CLOUD_PRICES=j.prices; if(Array.isArray(j.shops)) applyCloudShops(j.shops); if(j.aliases && typeof j.aliases==='object') applyCloudAliases(j.aliases); if(Array.isArray(j.order) && Date.now()-_orderSetAt>3000) CLOUD_ORDER=j.order; return {items:j.rows.map(rowToItem)}; }
   throw new Error((j&&j.error)||'err');
 }
 function applyCloudShops(list){
@@ -4173,6 +4218,294 @@ async function gridGenerate(){
 }
 function openAuto(){ document.getElementById('auto-page').style.display='block'; document.body.style.overflow='hidden'; syncInitUI(); if(syncOn()){ cloudRefresh(); syncStartPoll(); } }
 function closeAuto(){ document.getElementById('auto-page').style.display='none'; document.body.style.overflow=''; syncStopPoll(); }
+/* ---------- ອອກບິນແບບ AI (ອ່ານຂໍ້ຄວາມປະຈຳວັນ ໃນເຄື່ອງ — ບໍ່ຕໍ່ AI ພາຍນອກ) ---------- */
+let AI_PARSED=[];      // [{shopName,isNewShop,item,qty,unit,note,orig,method,namePart}]
+let AI_UNPARSED=[];    // ແຖວທີ່ອ່ານບໍ່ໄດ້
+// ຄຳຫຍໍ້/ຊື່ຫຍໍ້ຮ້ານທີ່ຈື່ໄວ້ (ຄຳ → ຊື່ຮ້ານຈິງ) — ບັນທຶກໄວ້ໃນເຄື່ອງ, ຮຽນຮູ້ອັດຕະໂນມັດທຸກຄັ້ງທີ່ແກ້ໄຂຮ້ານໃນໜ້າກວດກ່ອນຕື່ມ
+const AI_ALIAS_KEY='dl_ai_alias_v1';
+function loadAiAliases(){ try{ const r=localStorage.getItem(AI_ALIAS_KEY); if(r){ const o=JSON.parse(r); if(o&&typeof o==='object') return o; } }catch(e){} return {}; }
+function saveAiAliases(){ try{ localStorage.setItem(AI_ALIAS_KEY, JSON.stringify(AI_ALIASES)); }catch(e){} }
+let AI_ALIASES=loadAiAliases();
+// ຄຳຫຍໍ້ທີ່ຈື່ໄວ້ຈາກອອນລາຍ (Google Sheet) → ລວມເຂົ້າກັບໃນເຄື່ອງ ເພື່ອໃຫ້ທຸກເຄື່ອງທີ່ sync ອອນລາຍ ຮູ້ຄຳຫຍໍ້ດຽວກັນ
+function applyCloudAliases(obj){
+  if(!obj || typeof obj!=='object') return;
+  let changed=false;
+  Object.keys(obj).forEach(k=>{ if(obj[k] && AI_ALIASES[k]!==obj[k]){ AI_ALIASES[k]=obj[k]; changed=true; } });
+  if(changed) saveAiAliases();
+}
+// ຄຳຫຍໍ້ທີ່ຮູ້ຈັກໄວ້ລ່ວງໜ້າ (ໃສ່ຄັ້ງດຽວຕໍ່ຄຳ — ບໍ່ຂຽນທັບຄືນຖ້າຜູ້ໃຊ້ລຶບ/ແກ້ພາຍຫຼັງ; ຕື່ມຄຳໃໝ່ໃສ່ list ນີ້ໄດ້ໃນອະນາຄົດ ຈະໃສ່ໃຫ້ອັດຕະໂນມັດຄັ້ງດຽວ)
+const AI_ALIAS_DEFAULTS=[
+  {k:'ໜໜ', v:'ໝູນ້ອຍ ໜອງໜ້ຽວ'},
+  {k:'ມີຢູ', v:'MeU ດົງໂດກ'},
+];
+try{
+  let _seededAny=false;
+  AI_ALIAS_DEFAULTS.forEach(d=>{
+    const flag='dl_ai_alias_seeded_'+d.k;
+    if(!localStorage.getItem(flag)){
+      if(AI_ALIASES[d.k]===undefined) AI_ALIASES[d.k]=d.v;
+      localStorage.setItem(flag,'1');
+      _seededAny=true;
+    }
+  });
+  if(_seededAny) saveAiAliases();
+}catch(e){}
+function openAiImport(){
+  document.getElementById('ai-page').style.display='block';
+  document.body.style.overflow='hidden';
+  document.getElementById('ai-preview-wrap').style.display='none';
+  const cb=document.getElementById('ai-only-review'); if(cb) cb.checked=false;
+}
+function closeAiImport(){
+  document.getElementById('ai-page').style.display='none';
+  document.body.style.overflow='';
+}
+const AI_UNIT_WORDS=['ໂລ','Kg','kg','ຫິ້ວ','ຫີ້ວ','ແກັດ','ຕໍ່ຖ້ຽວ','ກີບ','ຖົງ','ອັນ'];
+function aiNormUnit(u){
+  const x=(u||'').trim();
+  if(x==='ໂລ' || x.toLowerCase()==='kg') return 'Kg';
+  if(x==='ຫີ້ວ') return 'ຫິ້ວ';   // ຮັບຄຳສະກົດຄາດເຄື່ອນທົ່ວໄປ (ວັນນະຍຸດ ິ/ີ) → ໃຫ້ເປັນມາດຕະຖານດຽວ
+  return x || 'ຫິ້ວ';
+}
+// ຄວາມຄ້າຍກັນແບບ bigram (2-ໂຕອັກສອນຕິດກັນ) — ໃຊ້ຈັບຄູ່ຊື່ຮ້ານແບບຫຍໍ້/ບໍ່ຄົບ ເມື່ອ substring ກົງກັນບໍ່ໄດ້
+function aiBigrams(s){ s=String(s||'').replace(/\s+/g,''); const out=[]; for(let i=0;i<s.length-1;i++) out.push(s.slice(i,i+2)); return out; }
+function aiBigramSim(a,b){
+  const A=aiBigrams(a), B=aiBigrams(b);
+  if(!A.length || !B.length) return 0;
+  const cnt={}; B.forEach(x=>cnt[x]=(cnt[x]||0)+1);
+  let inter=0; A.forEach(x=>{ if(cnt[x]>0){ inter++; cnt[x]--; } });
+  const union=A.length+B.length-inter;
+  return union ? inter/union : 0;
+}
+// ຕັດຄຳຂອງຊື່ຮ້ານທີ່ຈັບຄູ່ໄດ້ອອກຈາກ namePart ເພື່ອຫາລາຍການທີ່ເຫຼືອ (ຖ້າມີ)
+function aiSplitLeftover(namePart, shopName){
+  const shopWords=shopName.trim().split(/\s+/).filter(Boolean);
+  const words=namePart.trim().split(/\s+/).filter(Boolean);
+  const shopSet=new Set(shopWords);
+  let leftover=words.filter(w=>!shopSet.has(w));
+  if(leftover.length===words.length){
+    let raw=namePart;
+    shopWords.forEach(w=>{ raw=raw.split(w).join(''); });
+    return raw.trim();
+  }
+  return leftover.join(' ').trim();
+}
+// ຈັບຄູ່ namePart (ຂໍ້ຄວາມກ່ອນໂຕເລກ) ກັບຮ້ານທີ່ມີໃນລະບົບ: 0) ຄຳຫຍໍ້ທີ່ຈື່ໄວ້ 1) ກົງເປັະ 2) substring ທັງສອງທາງ 3) bigram fuzzy
+function aiMatchShop(namePart){
+  const norm=s=>String(s||'').trim().replace(/\s+/g,'');
+  const np=norm(namePart);
+  if(!np) return {shop:null, item:'', method:'none'};
+  const aliasTarget=AI_ALIASES[np];
+  if(aliasTarget){
+    const aliasHit=SHOPS.find(s=>s.name===aliasTarget);
+    if(aliasHit) return {shop:aliasHit, item:'', method:'alias'};
+  }
+  let hit=SHOPS.find(s=>norm(s.name)===np);
+  if(hit) return {shop:hit, item:'', method:'exact'};
+  let candidates=SHOPS.filter(s=>{ const sn=norm(s.name); return sn && (sn.includes(np) || np.includes(sn)); });
+  if(candidates.length){
+    candidates.sort((a,b)=>norm(b.name).length-norm(a.name).length);
+    const best=candidates[0];
+    return {shop:best, item:aiSplitLeftover(namePart, best.name), method:'substring'};
+  }
+  const words=namePart.trim().split(/\s+/).filter(Boolean);
+  let best=null, bestScore=0, bestSplit=words.length||1;
+  for(let k=1;k<=words.length;k++){
+    const prefix=norm(words.slice(0,k).join(''));
+    SHOPS.forEach(s=>{ const sc=aiBigramSim(prefix, norm(s.name)); if(sc>bestScore){ bestScore=sc; best=s; bestSplit=k; } });
+  }
+  if(best && bestScore>=0.35) return {shop:best, item: words.slice(bestSplit).join(' ').trim(), method:'fuzzy'};
+  return {shop:null, item:'', method:'none'};
+}
+// ວິເຄາະ 1 ແຖວ: ຕັດເລກລຳດັບນຳໜ້າ, ຫາຄູ່ (ຈຳນວນ+ຫົວໜ່ວຍ) ໄດ້ຫຼາຍຄູ່ຕໍ່ 1 ແຖວ, ຊື່ກ່ອນໂຕເລກ=ຮ້ານ/ລາຍການ, ຫຼັງໂຕເລກສຸດທ້າຍ=ໝາຍເຫດ
+function aiParseLine(rawLine){
+  let line=rawLine.replace(/[​⁠﻿]/g,'');
+  line=line.replace(/^\s*\d+(?:\.\d+)?[.\):]?\s*/,'').trim();
+  if(!line) return null;
+  const unitAlt=AI_UNIT_WORDS.map(u=>u.replace(/[.*+?^${}()|[\]\\]/g,'\\$&')).join('|');
+  const re=new RegExp('(\\d+(?:[.,]\\d+)?)\\s*[\\/]?\\s*('+unitAlt+')','g');
+  const matches=[]; let m;
+  while((m=re.exec(line))){ matches.push({qty:parseFloat(m[1].replace(',','.')), unit:aiNormUnit(m[2]), start:m.index, end:m.index+m[0].length}); }
+  if(!matches.length) return null;
+  const namePart=line.slice(0, matches[0].start).replace(/[-–,]+$/,'').trim();
+  let notePart=line.slice(matches[matches.length-1].end).trim();
+  notePart=notePart.replace(/^[\/,\-–]+\s*/,'').trim();
+  const {shop, item, method}=aiMatchShop(namePart);
+  return { orig: rawLine.trim(), namePart, shop, item, method, note: notePart, pairs: matches };
+}
+function aiParseText(){
+  const raw=(document.getElementById('ai-input').value||'');
+  const lines=raw.split(/\r?\n/).map(l=>l.trim()).filter(l=>l);
+  // ຮອບ 1: ວິເຄາະແຕ່ລະແຖວເອກະລາດ, ເກັບຊື່ຄຳດຽວທີ່ຈັບຄູ່ຮ້ານເກົ່າບໍ່ໄດ້ໄວ້ (ອາດເປັນຮ້ານໃໝ່ທີ່ຖືກກ່າວເຖິງຫຼາຍແຖວ)
+  const prelim=[]; const bareNewNames=new Set();
+  lines.forEach(rawLine=>{
+    const p=aiParseLine(rawLine);
+    prelim.push({rawLine, p});
+    if(p && !p.shop){
+      const words=p.namePart.trim().split(/\s+/).filter(Boolean);
+      if(words.length===1) bareNewNames.add(words[0]);
+    }
+  });
+  // ຮອບ 2: ຖ້າແຖວອື່ນຂຶ້ນຕົ້ນດ້ວຍຊື່ຄຳດຽວດຽວກັນ (ຈາກຮອບ 1) ໃຫ້ແຍກເປັນ ຮ້ານ+ລາຍການ (ຮ້ານໃໝ່ດຽວກັນ ຖືກກ່າວເຖິງຫຼາຍແຖວ)
+  AI_PARSED=[]; AI_UNPARSED=[];
+  prelim.forEach(({rawLine,p})=>{
+    if(!p){ AI_UNPARSED.push(rawLine); return; }
+    let shopName=p.shop?p.shop.name:null, item=p.item, method=p.method, aliasKey=p.namePart;
+    if(!p.shop){
+      const words=p.namePart.trim().split(/\s+/).filter(Boolean);
+      if(words.length>1 && bareNewNames.has(words[0])){
+        shopName=words[0]; item=words.slice(1).join(' '); method='batch-new'; aliasKey=words[0];
+      }
+    }
+    p.pairs.forEach(pr=>{
+      AI_PARSED.push({
+        shopName: shopName || p.namePart,
+        isNewShop: !p.shop,
+        item: item || 'ໝູ',
+        qty: pr.qty,
+        unit: pr.unit,
+        note: p.note,
+        orig: p.orig,
+        method: method,
+        aliasKey: aliasKey,
+      });
+    });
+  });
+  aiRenderPreview();
+}
+function aiShopOptionsHtml(selectedName, isNewShop){
+  let h='';
+  if(isNewShop){ h+='<option value="__new__" selected>🆕 '+escapeHtml(selectedName)+' (ຮ້ານໃໝ່)</option>'; }
+  sortedShopsList().forEach(s=>{
+    const sel=(!isNewShop && s.name===selectedName) ? ' selected' : '';
+    h+='<option value="'+escapeAttr(s.name)+'"'+sel+'>'+escapeHtml(s.name)+'</option>';
+  });
+  return h;
+}
+// ລາຍການ (ຫົວໜ່ວຍ) ໃຫ້ເລືອກຈາກລາຍການທີ່ມີໃນລະບົບ — ຖ້າລາຍການທີ່ອ່ານໄດ້ບໍ່ຢູ່ໃນລະບົບ ໃຫ້ຄ້າງໄວ້ເປັນຕົວເລືອກເລີ່ມຕົ້ນ (ບໍ່ເສຍຂໍ້ມູນ) ບວກ "ຂຽນເອງ" ໄວ້ທ້າຍສຸດ
+function aiItemOptionsHtml(current){
+  let h='';
+  const cur=(current||'').trim();
+  const has=PRODUCTS.some(p=>p.name===cur);
+  if(cur && !has){ h+='<option value="'+escapeAttr(cur)+'" selected>✏️ '+escapeHtml(cur)+' (ບໍ່ຢູ່ໃນລະບົບ)</option>'; }
+  PRODUCTS.forEach(p=>{
+    const sel=(p.name===cur)?' selected':'';
+    h+='<option value="'+escapeAttr(p.name)+'"'+sel+'>'+escapeHtml(p.name)+'</option>';
+  });
+  h+='<option value="__custom__">✏️ ຂຽນເອງ...</option>';
+  return h;
+}
+function aiItemSelChange(sel){
+  const wrap=sel.closest('.ai-row-fields');
+  const ci=wrap ? wrap.querySelector('.ai-item-custom') : null;
+  if(!ci) return;
+  if(sel.value==='__custom__'){ ci.style.display='block'; ci.focus(); }
+  else{ ci.style.display='none'; }
+}
+// ຖ້າແກ້ຮ້ານແຖວໃດແຖວໜຶ່ງ ໃຫ້ແຖວອື່ນທີ່ຄາດຄະເນຈາກຄຳຫຍໍ້ດຽວກັນ (aliasKey ດຽວກັນ) ປ່ຽນຕາມກັນອັດຕະໂນມັດ — ບໍ່ຕ້ອງແກ້ເທື່ອລະແຖວ
+function aiShopSelChange(sel){
+  const idx=+sel.dataset.idx;
+  const src=AI_PARSED[idx]; if(!src || !src.aliasKey) return;
+  const newVal=sel.value;
+  document.querySelectorAll('#ai-preview-list .ai-row').forEach(row=>{
+    const oIdx=+row.dataset.idx;
+    if(oIdx===idx) return;
+    const osrc=AI_PARSED[oIdx];
+    if(!osrc || osrc.aliasKey!==src.aliasKey) return;
+    const osel=row.querySelector('.ai-shop-sel');
+    if(!osel) return;
+    const hasOpt=Array.from(osel.options).some(o=>o.value===newVal);
+    if(hasOpt) osel.value=newVal;
+  });
+}
+function aiRenderPreview(){
+  const wrap=document.getElementById('ai-preview-wrap');
+  const list=document.getElementById('ai-preview-list');
+  const summary=document.getElementById('ai-preview-summary');
+  if(!AI_PARSED.length && !AI_UNPARSED.length){ wrap.style.display='none'; toast('ບໍ່ພົບຂໍ້ຄວາມທີ່ອ່ານໄດ້'); return; }
+  wrap.style.display='block';
+  const reviewCount=AI_PARSED.filter(r=>r.isNewShop || r.method==='fuzzy').length;
+  summary.textContent='ອ່ານໄດ້ '+AI_PARSED.length+' ລາຍການ'+(reviewCount?(' (ຕ້ອງກວດ '+reviewCount+' ອັນ)'):'')+(AI_UNPARSED.length?(', ອ່ານບໍ່ໄດ້ '+AI_UNPARSED.length+' ແຖວ'):'');
+  let h='';
+  AI_PARSED.forEach((r,i)=>{
+    const needsReview = r.isNewShop || r.method==='fuzzy';
+    const badge = r.isNewShop ? '<span class="ai-badge ai-badge-new">🆕 ຮ້ານໃໝ່</span>'
+      : r.method==='alias' ? '<span class="ai-badge ai-badge-alias">🧠 ຈື່ໄວ້ແລ້ວ</span>'
+      : (r.method==='exact'||r.method==='substring') ? '<span class="ai-badge ai-badge-ok">✅ ຈັບຄູ່ໄດ້</span>'
+      : '<span class="ai-badge ai-badge-warn">🔶 ບໍ່ແນ່ໃຈ</span>';
+    const itemHas=PRODUCTS.some(p=>p.name===(r.item||'').trim());
+    h+='<div class="ai-row" data-idx="'+i+'" data-review="'+(needsReview?'1':'0')+'">'
+      +'<div class="ai-row-orig">'+badge+' '+escapeHtml(r.orig)+'</div>'
+      +'<div class="ai-row-fields">'
+        +'<select class="ai-shop-sel" data-idx="'+i+'" onchange="aiShopSelChange(this)">'+aiShopOptionsHtml(r.shopName, r.isNewShop)+'</select>'
+        +'<select class="ai-item-sel" data-idx="'+i+'" onchange="aiItemSelChange(this)">'+aiItemOptionsHtml(r.item)+'</select>'
+        +'<input class="ai-item-custom" data-idx="'+i+'" style="display:none" value="'+(itemHas?'':escapeAttr(r.item))+'" placeholder="ພິມຊື່ລາຍການ...">'
+        +'<span class="ai-qty-txt">'+fmt(r.qty)+'</span>'
+        +'<select class="ai-unit-sel" data-idx="'+i+'">'+unitOptionsHtml(r.unit)+'</select>'
+        +'<input class="ai-note-in" data-idx="'+i+'" value="'+escapeAttr(r.note)+'" placeholder="ໝາຍເຫດ">'
+      +'</div></div>';
+  });
+  list.innerHTML=h;
+  const uwrap=document.getElementById('ai-unparsed-wrap');
+  if(AI_UNPARSED.length){
+    uwrap.style.display='block';
+    document.getElementById('ai-unparsed-list').innerHTML=AI_UNPARSED.map(l=>escapeHtml(l)).join('<br>');
+  }else{ uwrap.style.display='none'; }
+  aiApplyFilter();
+}
+// ຕິກ "ສະແດງສະເພາະທີ່ຕ້ອງກວດ" -> ເຊື່ອງແຖວທີ່ຈັບຄູ່ໝັ້ນໃຈແລ້ວ (ຈື່ໄວ້/ກົງເປະ/substring), ເຫຼືອແຕ່ ຮ້ານໃໝ່ + ບໍ່ແນ່ໃຈ (ອ່ານບໍ່ໄດ້ສະແດງຢູ່ສະເໝີ)
+function aiApplyFilter(){
+  const cb=document.getElementById('ai-only-review');
+  const onlyReview=!!(cb && cb.checked);
+  document.querySelectorAll('#ai-preview-list .ai-row').forEach(row=>{
+    const needsReview = row.dataset.review==='1';
+    row.style.display = (!onlyReview || needsReview) ? '' : 'none';
+  });
+}
+function aiConfirmImport(){
+  if(!AI_PARSED.length){ toast('ບໍ່ມີລາຍການໃຫ້ຕື່ມ'); return; }
+  const rows=[];
+  let learnedCount=0;
+  const learnedPairs=[];
+  document.querySelectorAll('#ai-preview-list .ai-row').forEach(rowEl=>{
+    const idx=+rowEl.dataset.idx;
+    const src=AI_PARSED[idx]; if(!src) return;
+    const sel=rowEl.querySelector('.ai-shop-sel');
+    let shop = (sel.value==='__new__') ? src.shopName : sel.value;
+    shop=(shop||'').trim(); if(!shop) return;
+    const itemSel=rowEl.querySelector('.ai-item-sel');
+    let item = itemSel.value==='__custom__' ? (rowEl.querySelector('.ai-item-custom').value||'').trim() : itemSel.value;
+    item=(item||'').trim() || 'ໝູ';
+    const unit=(rowEl.querySelector('.ai-unit-sel').value||src.unit||'ຫິ້ວ');
+    const note=(rowEl.querySelector('.ai-note-in').value||'').trim();
+    ensureShopRegistered(shop);
+    // ຮຽນຮູ້ຄຳຫຍໍ້ອັດຕະໂນມັດ — ຖ້າແຕ່ກ່ອນຈັບຄູ່ບໍ່ຊັດເຈນ (ໃໝ່/ບໍ່ແນ່ໃຈ) ຫຼື ຜູ້ໃຊ້ແກ້ໄຂຮ້ານເອງ ແລ້ວຢືນຢັນເປັນຮ້ານແທ້ → ຈື່ໄວ້ໃຫ້ຄັ້ງໜ້າ (ໃນເຄື່ອງ + ອອນລາຍ ຖ້າເຊື່ອມຕໍ່ຢູ່)
+    if(sel.value!=='__new__' && src.aliasKey){
+      const key=String(src.aliasKey).trim().replace(/\s+/g,'');
+      const wasUncertain = src.method==='none' || src.method==='fuzzy' || src.method==='batch-new' || (sel.value!==src.shopName);
+      if(key && wasUncertain && AI_ALIASES[key]!==shop){ AI_ALIASES[key]=shop; learnedCount++; learnedPairs.push({key:key, value:shop}); }
+    }
+    rows.push({shop:shop, item:item, qty:src.qty, unit:unit, note:note});
+  });
+  if(learnedCount){
+    saveAiAliases();
+    if(syncOn()){ learnedPairs.forEach(p=>{ cloudPost({action:'alias', key:p.key, value:p.value}); }); }
+  }
+  if(!rows.length){ toast('ບໍ່ມີລາຍການໃຫ້ຕື່ມ'); return; }
+  if(syncOn()){
+    rows.forEach(r=>{ addPending({shop:r.shop, item:r.item, qty:r.qty, unit:r.unit, price:(getPriceHist(r.shop,r.item)[0]||0), note:r.note, addedBy:SYNC_USER}); });
+    renderMerged();
+    flushPending(true);
+  }else{
+    rows.forEach(r=>{ QUEUE.push({shop:r.shop, item:r.item, qty:r.qty, unit:r.unit, price:0, note:r.note}); });
+    saveQueue(); renderQueue();
+  }
+  toast('ຕື່ມ '+rows.length+' ລາຍການເຂົ້າຄິວແລ້ວ'+(learnedCount?(' (ຈື່ຄຳຫຍໍ້ໃໝ່ '+learnedCount+' ຄຳ)'):'')+' — ໄປ Auto ຫຼື ຕາຕະລາງ ເພື່ອອອກບິນ');
+  document.getElementById('ai-input').value='';
+  document.getElementById('ai-preview-wrap').style.display='none';
+  AI_PARSED=[]; AI_UNPARSED=[];
+  closeAiImport();
+}
 function fillBillSelect(){
   const sel=document.getElementById('bill-select'); if(!sel) return;
   sel.innerHTML='';
