@@ -3881,18 +3881,25 @@ function gridClearAll(){
     QUEUE=[]; saveQueue();
   }
   GRID_EXTRA={}; GRID_EXTRA_OPEN=new Set(); GRID_CELL_NOTES={};
+  saveGridExtra(); saveGridCellNotes();
   const box=document.getElementById('grid-table-wrap'); if(box) box.innerHTML='';   // ລ້າງຄ່າຊ່ອງເກົ່າໃນ DOM ກ່ອນ ບໍ່ໃຫ້ buildGridTable() ຮັກສາຄ່າເກົ່າໄວ້
   buildGridTable();
   toast('ລ້າງໝົດແລ້ວ');
 }
 let GRID_ROW_ID={};   // shop␟item -> id ຂອງແຖວໃນຄິວ (ຄລາວ) — ໃຊ້ອັບເດດແທນທີ່ຈະເພີ່ມຊ້ຳ ຕອນພິມໃນຕາຕະລາງ
 let _gridSyncTimers={};
-// ລາຍການພິເສດ/ຊ້ຳ ຕໍ່ຮ້ານ (ນອກຕາຕະລາງຫຼັກ) — ໃຫ້ໃສ່ລາຍການດຽວກັນຫຼາຍເທື່ອ ພ້ອມໝາຍເຫດແຍກແຕ່ລະລາຍການໄດ້
-let GRID_EXTRA={};        // shopName -> [{id,item,qty,unit,note}]
+// ລາຍການພິເສດ/ຊ້ຳ ຕໍ່ຮ້ານ (ນອກຕາຕະລາງຫຼັກ) — ໃຫ້ໃສ່ລາຍການດຽວກັນຫຼາຍເທື່ອ ພ້ອມໝາຍເຫດແຍກແຕ່ລະລາຍການໄດ້ — ບັນທຶກໄວ້ໃນເຄື່ອງ ບໍ່ໃຫ້ຫາຍ ຖ້າອອກແອັບກ່ອນອອກບິນ
+const GRID_EXTRA_KEY='dl_grid_extra_v1';
+function loadGridExtra(){ try{ const r=localStorage.getItem(GRID_EXTRA_KEY); if(r){ const o=JSON.parse(r); if(o&&typeof o==='object') return o; } }catch(e){} return {}; }
+function saveGridExtra(){ try{ localStorage.setItem(GRID_EXTRA_KEY, JSON.stringify(GRID_EXTRA)); }catch(e){} }
+let GRID_EXTRA=loadGridExtra();        // shopName -> [{id,item,qty,unit,note}]
 let GRID_EXTRA_OPEN=new Set();   // ຊື່ຮ້ານທີ່ກຳລັງເປີດຊ່ອງລາຍການພິເສດຢູ່
-let GRID_EXTRA_SEQ=1;
-// ໝາຍເຫດຂອງແຕ່ລະຊ່ອງໃນຕາຕະລາງຫຼັກ (ຊ່ອງຕື່ມຈຳນວນທຳອິດ) — key = shop␟item — ຈະຕິດໄປໃນໃບບິນທີ່ອອກ
-let GRID_CELL_NOTES={};
+let GRID_EXTRA_SEQ=(function(){ let m=0; Object.keys(GRID_EXTRA).forEach(k=>(GRID_EXTRA[k]||[]).forEach(e=>{ if(e.id>m) m=e.id; })); return m+1; })();
+// ໝາຍເຫດຂອງແຕ່ລະຊ່ອງໃນຕາຕະລາງຫຼັກ (ຊ່ອງຕື່ມຈຳນວນທຳອິດ) — key = shop␟item — ຈະຕິດໄປໃນໃບບິນທີ່ອອກ — ບັນທຶກໄວ້ໃນເຄື່ອງ ບໍ່ໃຫ້ຫາຍ
+const GRID_CELL_NOTES_KEY='dl_grid_cell_notes_v1';
+function loadGridCellNotes(){ try{ const r=localStorage.getItem(GRID_CELL_NOTES_KEY); if(r){ const o=JSON.parse(r); if(o&&typeof o==='object') return o; } }catch(e){} return {}; }
+function saveGridCellNotes(){ try{ localStorage.setItem(GRID_CELL_NOTES_KEY, JSON.stringify(GRID_CELL_NOTES)); }catch(e){} }
+let GRID_CELL_NOTES=loadGridCellNotes();
 let _gcnKey='';
 // ຄິດໄລ່ GRID_ROW_ID ຄືນຈາກ QUEUE ປັດຈຸບັນ (ຮ້ານ+ລາຍການທີ່ມີແຖວດຽວເທົ່ານັ້ນ ຈຶ່ງ sync ອັບເດດແທນເພີ່ມໃໝ່ໄດ້ຢ່າງແນ່ນອນ)
 function syncGridRowIds(){
@@ -4033,6 +4040,7 @@ function gxAdd(btn){
   const shopName=gxRowShop(btn); if(!shopName) return;
   if(!GRID_EXTRA[shopName]) GRID_EXTRA[shopName]=[];
   GRID_EXTRA[shopName].push({id:GRID_EXTRA_SEQ++, item:'', qty:'', unit:'ຫິ້ວ', note:''});
+  saveGridExtra();
   renderGridExtraBox(btn.closest('.gt-extra-row'));
   updateGridItemCount();
 }
@@ -4041,6 +4049,7 @@ function gxUpdate(el,id,field){
   const list=GRID_EXTRA[shopName]||[];
   const e=list.find(x=>x.id===id); if(!e) return;
   e[field]=el.value;
+  saveGridExtra();   // ບັນທຶກໄວ້ໃນເຄື່ອງທັນທີ ບໍ່ໃຫ້ຫາຍ ຖ້າອອກແອັບກ່ອນອອກບິນ
   applyGridFilter();   // ອັບເດດ ຈຳນວນ+ຕົວກຣອງ "ມີລາຍການ" ທັນທີ (ບໍ່ແຕະ innerHTML ຂອງຊ່ອງນີ້ ບໍ່ໃຫ້ focus ຫາຍ)
 }
 function gxRemove(btn,id){
@@ -4048,17 +4057,36 @@ function gxRemove(btn,id){
   const shopName=extraRow.dataset.shop;
   GRID_EXTRA[shopName]=(GRID_EXTRA[shopName]||[]).filter(x=>x.id!==id);
   if(!GRID_EXTRA[shopName].length) delete GRID_EXTRA[shopName];
+  saveGridExtra();
   renderGridExtraBox(extraRow);
   applyGridFilter();
 }
 function gridCellInput(el){
   el.classList.toggle('has-val', !!((el.value||'').trim()));
   applyGridFilter();
-  if(!syncOn()) return;
   const shop=el.dataset.shop, item=el.dataset.prod;
   const key=shop+'␟'+item;
   clearTimeout(_gridSyncTimers[key]);
-  _gridSyncTimers[key]=setTimeout(()=>syncGridCellToQueue(shop,item,el.value), 700);
+  if(syncOn()){
+    _gridSyncTimers[key]=setTimeout(()=>syncGridCellToQueue(shop,item,el.value), 700);
+  }else{
+    // ບໍ່ໄດ້ອອນລາຍ — ບັນທຶກໃສ່ຄິວໃນເຄື່ອງ (localStorage) ໄວ້ກ່ອນ ບໍ່ໃຫ້ຫາຍ ຖ້າຫລົງກົດອອກ ຫຼື ອອກແອັບກ່ອນອອກບິນ
+    _gridSyncTimers[key]=setTimeout(()=>syncGridCellToQueueOffline(shop,item,el.value), 700);
+  }
+}
+// ບັນທຶກຈຳນວນຂອງຊ່ອງໃນຕາຕະລາງເຂົ້າຄິວທ້ອງຖິ່ນ (ໂໝດບໍ່ອອນລາຍ) — ອັບເດດແທນທີ່ຈະເພີ່ມຊ້ຳ, ລົບອອກຖ້າຈຳນວນເປັນ 0
+function syncGridCellToQueueOffline(shop,item,rawVal){
+  const qty=parseFloat((rawVal||'').replace(/[^\d.]/g,''))||0;
+  const existing=QUEUE.find(r=>r.shop===shop && r.item===item);
+  if(qty<=0){
+    if(existing){ QUEUE=QUEUE.filter(r=>r!==existing); saveQueue(); renderQueue(); }
+    return;
+  }
+  if(existing){ existing.qty=qty; saveQueue(); renderQueue(); return; }
+  const unit=defaultUnitFor(item);
+  const price=(getPriceHist(shop,item)[0]||0);
+  QUEUE.push({shop:shop, item:item, qty:qty, unit:unit, price:price});
+  saveQueue(); renderQueue();
 }
 // ພິມໃນຕາຕະລາງແລ້ວ sync ເຂົ້າຄິວທັນທີ (ຫຼັງພິມພັກ 0.7 ວິນາທີ) — ໃຫ້ໜ້າ "ອອກໃບບິນຫຼາຍຮ້ານ" (Auto) ເຫັນລາຍການດຽວກັນ ບໍ່ຊ້ຳກັນ
 function syncGridCellToQueue(shop,item,rawVal){
@@ -4102,6 +4130,7 @@ function saveGridCellNote(){
   if(!_gcnKey){ closeGridCellNote(); return; }
   const val=(document.getElementById('gcn-note').value||'').trim();
   if(val) GRID_CELL_NOTES[_gcnKey]=val; else delete GRID_CELL_NOTES[_gcnKey];
+  saveGridCellNotes();
   document.querySelectorAll('.gq-note').forEach(b=>{
     const key=b.dataset.shop+'␟'+b.dataset.prod;
     if(key===_gcnKey) b.classList.toggle('has-note', !!val);
