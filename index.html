@@ -2209,12 +2209,15 @@ var qrcode = function() {
   #ai-preview-list{max-height:50vh;overflow:auto;border:1px solid var(--panel-line);border-radius:10px;padding:8px;background:#fff}
   .ai-row{border-bottom:1px dashed var(--panel-line);padding:9px 3px}
   .ai-row:last-child{border-bottom:none}
-  .ai-row-orig{font-size:11.5px;color:var(--muted);margin-bottom:5px;line-height:1.4}
+  .ai-row-orig{display:flex;align-items:flex-start;gap:8px;font-size:11.5px;color:var(--muted);margin-bottom:5px;line-height:1.4}
+  .ai-row-orig-text{flex:1}
+  .ai-row-del{flex:0 0 auto;border:none;background:#fde2e2;color:#b42318;border-radius:6px;width:22px;height:22px;font-size:13px;line-height:1;cursor:pointer}
   .ai-row-fields{display:flex;gap:6px;flex-wrap:wrap;align-items:center}
   .ai-shop-sel{flex:2;min-width:130px;font-family:inherit;font-size:13px;border:1px solid var(--field-line);border-radius:6px;padding:6px 7px}
   .ai-item-sel,.ai-note-in{flex:1;min-width:90px;font-family:inherit;font-size:13px;border:1px solid var(--field-line);border-radius:6px;padding:6px 7px}
   .ai-item-custom{flex:1 1 100%;font-family:inherit;font-size:13px;border:1px solid var(--field-line);border-radius:6px;padding:6px 7px}
   .ai-qty-txt{flex:0 0 auto;font-weight:700;font-size:13.5px;white-space:nowrap}
+  .ai-qty-in{flex:0 0 64px;font-family:inherit;font-size:13px;font-weight:700;border:1px solid var(--field-line);border-radius:6px;padding:6px 7px}
   .ai-unit-sel{flex:0 0 76px;font-family:inherit;font-size:13px;border:1px solid var(--field-line);border-radius:6px;padding:6px 5px}
   .ai-badge{display:inline-block;font-size:10.5px;font-weight:700;border-radius:5px;padding:1px 6px;margin-right:4px}
   .ai-badge-ok{background:#d9f2e3;color:#0a7d4d}
@@ -4238,6 +4241,9 @@ const AI_ALIAS_DEFAULTS=[
   {k:'ໜໜ', v:'ໝູນ້ອຍ ໜອງໜ້ຽວ'},
   {k:'ມີຢູ', v:'MeU ດົງໂດກ'},
   {k:'ລາລິຕ່າ', v:'ລາລິຕ້າ ລາວສຳພັນ'},
+  {k:'ລາລີຕ່າ', v:'ລາລິຕ້າ ລາວສຳພັນ'},
+  {k:'ລາລີຕາ', v:'ລາລິຕ້າ ລາວສຳພັນ'},
+  {k:'ລາລິຕາ', v:'ລາລິຕ້າ ລາວສຳພັນ'},
 ];
 try{
   let _seededAny=false;
@@ -4296,8 +4302,10 @@ const AI_SHOP_ITEM_DEFAULTS=[
   {k:'ດາດເອງ', v:'ສະໃບນາງຊອຍ'},
   {k:'ຊົມດາວ', v:'ສະໃບນາງເຕັມ'},
   {k:'ລາລີຕາ', v:'ສະໃບນາງເຕັມ'},
+  {k:'ລາລິຕາ', v:'ສະໃບນາງເຕັມ'},
   {k:'ລາລີຕາສະໄບ', v:'ສະໃບນາງເຕັມ'},
   {k:'ລາລິຕ່າ', v:'ສະໃບນາງເຕັມ'},
+  {k:'ລາລີຕ່າ', v:'ສະໃບນາງເຕັມ'},
   {k:'ມີຢູ', v:'ສະໃບນາງຊອຍ'},
   {k:'ຫິວຊາບູ', v:'ສະໃບນາງເຕັມ'},
   {k:'ໂຕບົ້ງ', v:'ສະໃບນາງເຕັມ'},
@@ -4348,6 +4356,14 @@ function aiBigramSim(a,b){
   const union=A.length+B.length-inter;
   return union ? inter/union : 0;
 }
+// ຄຳຫົວໜ່ວຍທີ່ພິມຜິດ/ບໍ່ຄົບ (ບໍ່ຢູ່ໃນ AI_UNIT_WORDS ເລີຍ) — ເດົາເອົາຫົວໜ່ວຍທີ່ໃກ້ຄຽງທີ່ສຸດຈາກລາຍການທີ່ມີ (ໃຊ້ຕອນ regex ຫຼັກຫາບໍ່ພົບເລີຍ)
+function aiFuzzyUnit(word){
+  const w=String(word||'').trim();
+  if(!w) return '';
+  let best='', bestScore=0;
+  AI_UNIT_WORDS.forEach(u=>{ const sc=aiBigramSim(w,u); if(sc>bestScore){ bestScore=sc; best=u; } });
+  return bestScore>=0.5 ? aiNormUnit(best) : '';
+}
 // ຕັດຄຳຂອງຊື່ຮ້ານທີ່ຈັບຄູ່ໄດ້ອອກຈາກ namePart ເພື່ອຫາລາຍການທີ່ເຫຼືອ (ຖ້າມີ)
 function aiSplitLeftover(namePart, shopName){
   const shopWords=shopName.trim().split(/\s+/).filter(Boolean);
@@ -4373,6 +4389,22 @@ function aiMatchShop(namePart){
   }
   let hit=SHOPS.find(s=>norm(s.name)===np);
   if(hit) return {shop:hit, item:'', method:'exact'};
+  // ນັບຄຳຈາກໜ້າ (1,2,3...ຄຳ) ທຽບກັບຄຳຫຍໍ້ທີ່ຈື່ໄວ້/ຊື່ຮ້ານກົງເປະ — ຄຳໃດຫາກ່ອນ (ສັ້ນສຸດ) ຖືວ່າແມ່ນຊື່ຮ້ານ ສ່ວນທີ່ເຫຼືອຫຼັງຈາກນັ້ນ=ລາຍການ
+  // (ຕົວຢ່າງ "ລາລິຕາ ມຶກ" → "ລາລິຕາ" ຄຳດຽວຮູ້ຈັກແລ້ວ → ຮ້ານ=ລາລິຕ້າ ລາວສຳພັນ, ລາຍການ=ມຶກ ໂດຍບໍ່ຕ້ອງມີແຖວ "ລາລິຕາ" ຢູ່ໂດດໆບ່ອນອື່ນກ່ອນ)
+  const allWords=namePart.trim().split(/\s+/).filter(Boolean);
+  if(allWords.length>1){
+    for(let k=1;k<allWords.length;k++){
+      const prefix=norm(allWords.slice(0,k).join(''));
+      const leftoverItem=allWords.slice(k).join(' ').trim();
+      const pAliasTarget=AI_ALIASES[prefix];
+      if(pAliasTarget){
+        const pAliasHit=SHOPS.find(s=>s.name===pAliasTarget);
+        if(pAliasHit) return {shop:pAliasHit, item:leftoverItem, method:'alias', matchedPrefix:allWords.slice(0,k).join(' ')};
+      }
+      const pHit=SHOPS.find(s=>norm(s.name)===prefix);
+      if(pHit) return {shop:pHit, item:leftoverItem, method:'exact', matchedPrefix:allWords.slice(0,k).join(' ')};
+    }
+  }
   let candidates=SHOPS.filter(s=>{ const sn=norm(s.name); return sn && (sn.includes(np) || np.includes(sn)); });
   if(candidates.length){
     candidates.sort((a,b)=>norm(b.name).length-norm(a.name).length);
@@ -4397,34 +4429,63 @@ function aiParseLine(rawLine){
   const re=new RegExp('(\\d+(?:[.,]\\d+)?)\\s*[\\/]?\\s*('+unitAlt+')','g');
   const matches=[]; let m;
   while((m=re.exec(line))){ matches.push({qty:parseFloat(m[1].replace(',','.')), unit:aiNormUnit(m[2]), start:m.index, end:m.index+m[0].length}); }
+  if(!matches.length){
+    // ຫົວໜ່ວຍທີ່ຂຽນຜິດ/ບໍ່ຄົບ (ບໍ່ຢູ່ໃນລາຍການທີ່ຮູ້ຈັກເລີຍ) — ລອງເອົາຄຳຫຼັງໂຕເລກ ມາທຽບຫາຫົວໜ່ວຍທີ່ໃກ້ຄຽງທີ່ສຸດ
+    const looseRe=/(\d+(?:[.,]\d+)?)\s*[\/]?\s*([຀-໿A-Za-z]+)/g;
+    let lm;
+    while((lm=looseRe.exec(line))){
+      const guess=aiFuzzyUnit(lm[2]);
+      if(guess){ matches.push({qty:parseFloat(lm[1].replace(',','.')), unit:guess, start:lm.index, end:lm.index+lm[0].length}); }
+    }
+  }
   if(!matches.length) return null;
   const namePart=line.slice(0, matches[0].start).replace(/[-–,]+$/,'').trim();
   let notePart=line.slice(matches[matches.length-1].end).trim();
   notePart=notePart.replace(/^[\/,\-–]+\s*/,'').trim();
-  const {shop, item, method}=aiMatchShop(namePart);
-  return { orig: rawLine.trim(), namePart, shop, item, method, note: notePart, pairs: matches };
+  const {shop, item, method, matchedPrefix}=aiMatchShop(namePart);
+  return { orig: rawLine.trim(), namePart, shop, item, method, matchedPrefix, note: notePart, pairs: matches };
+}
+// ແຖວທີ່ບໍ່ແມ່ນລາຍການແທ້ (ວັນທີ/ເວລາ/ໂຕເລກລ້ວນໆ ບໍ່ມີໂຕໜັງສືເລີຍ) — ຂ້າມໄປ ບໍ່ຕ້ອງສະແດງເປັນແຖວແກ້ໄຂ
+function aiIsNoiseLine(line){
+  const t=String(line||'').replace(/[​⁠﻿]/g,'').trim();
+  if(!t) return true;
+  return /^[\d\s\/\-.:]+$/.test(t);   // ມີແຕ່ໂຕເລກ/ວັນທີ(16/8/2026)/ເວລາ(14:30) ບໍ່ມີໂຕໜັງສືເລີຍ = ບໍ່ແມ່ນລາຍການ
 }
 function aiParseText(){
   const raw=(document.getElementById('ai-input').value||'');
   const lines=raw.split(/\r?\n/).map(l=>l.trim()).filter(l=>l);
-  // ຮອບ 1: ວິເຄາະແຕ່ລະແຖວເອກະລາດ, ເກັບຊື່ຄຳດຽວທີ່ຈັບຄູ່ຮ້ານເກົ່າບໍ່ໄດ້ໄວ້ (ອາດເປັນຮ້ານໃໝ່ທີ່ຖືກກ່າວເຖິງຫຼາຍແຖວ)
-  const prelim=[]; const bareNewNames=new Set();
+  // ຮອບ 1: ວິເຄາະແຕ່ລະແຖວເອກະລາດ, ເກັບຊື່ຄຳດຽວ — ຖ້າຈັບຄູ່ຮ້ານໄດ້ (ຈື່ໄວ້ວ່າຄຳນີ້=ຮ້ານໃດ) ຫຼື ຈັບຄູ່ບໍ່ໄດ້ (ອາດເປັນຮ້ານໃໝ່ທີ່ຖືກກ່າວເຖິງຫຼາຍແຖວ)
+  const prelim=[]; const bareNewNames=new Set(); const knownWordShop={};
   lines.forEach(rawLine=>{
     const p=aiParseLine(rawLine);
     prelim.push({rawLine, p});
-    if(p && !p.shop){
+    if(p){
       const words=p.namePart.trim().split(/\s+/).filter(Boolean);
-      if(words.length===1) bareNewNames.add(words[0]);
+      if(words.length===1){
+        if(p.shop) knownWordShop[words[0]]=p.shop.name;
+        else bareNewNames.add(words[0]);
+      }
     }
   });
-  // ຮອບ 2: ຖ້າແຖວອື່ນຂຶ້ນຕົ້ນດ້ວຍຊື່ຄຳດຽວດຽວກັນ (ຈາກຮອບ 1) ໃຫ້ແຍກເປັນ ຮ້ານ+ລາຍການ (ຮ້ານໃໝ່ດຽວກັນ ຖືກກ່າວເຖິງຫຼາຍແຖວ)
+  // ຮອບ 2: ຖ້າແຖວອື່ນຂຶ້ນຕົ້ນດ້ວຍຊື່ຄຳດຽວດຽວກັນ (ຈາກຮອບ 1) ໃຫ້ແຍກເປັນ ຮ້ານ+ລາຍການ — ບໍ່ວ່າຄຳນັ້ນຈະແມ່ນຄຳຫຍໍ້ທີ່ຮູ້ຈັກແລ້ວ ຫຼື ຮ້ານໃໝ່ດຽວກັນທີ່ຖືກກ່າວເຖິງຫຼາຍແຖວ
   AI_PARSED=[]; AI_UNPARSED=[];
   prelim.forEach(({rawLine,p})=>{
-    if(!p){ AI_UNPARSED.push(rawLine); return; }
-    let shopName=p.shop?p.shop.name:null, item=p.item, method=p.method, aliasKey=p.namePart;
+    // ແຖວທີ່ອ່ານບໍ່ໄດ້ (ບໍ່ພົບ ຈຳນວນ+ຫົວໜ່ວຍ) — ໃສ່ເປັນແຖວແກ້ໄຂໄດ້ຢູ່ບ່ອນເກົ່າໃນລຳດັບເລີຍ (ບໍ່ລົບອອກ/ຍົກໄປໜ້າອື່ນ) ເວັ້ນແຕ່ແມ່ນວັນທີ/ເວລາ/ໂຕເລກລ້ວນໆ ໃຫ້ຂ້າມໄປເລີຍ (ບໍ່ແມ່ນລາຍການ)
+    if(!p){
+      if(aiIsNoiseLine(rawLine)) return;
+      AI_PARSED.push({
+        shopName:'', isNewShop:true, item:'', itemWasGuessed:true,
+        qty:null, unit:'ຫິ້ວ', note:'', orig:rawLine, method:'unreadable', aliasKey:'',
+        unreadable:true,
+      });
+      return;
+    }
+    let shopName=p.shop?p.shop.name:null, item=p.item, method=p.method, aliasKey=(p.matchedPrefix||p.namePart), isNewShop=!p.shop;
     if(!p.shop){
       const words=p.namePart.trim().split(/\s+/).filter(Boolean);
-      if(words.length>1 && bareNewNames.has(words[0])){
+      if(words.length>1 && knownWordShop[words[0]]){
+        shopName=knownWordShop[words[0]]; item=words.slice(1).join(' '); method='batch-known'; aliasKey=words[0]; isNewShop=false;
+      }else if(words.length>1 && bareNewNames.has(words[0])){
         shopName=words[0]; item=words.slice(1).join(' '); method='batch-new'; aliasKey=words[0];
       }
     }
@@ -4434,7 +4495,7 @@ function aiParseText(){
     p.pairs.forEach(pr=>{
       AI_PARSED.push({
         shopName: shopName || p.namePart,
-        isNewShop: !p.shop,
+        isNewShop: isNewShop,
         item: finalItem,
         itemWasGuessed: itemWasGuessed,
         qty: pr.qty,
@@ -4450,7 +4511,10 @@ function aiParseText(){
 }
 function aiShopOptionsHtml(selectedName, isNewShop){
   let h='';
-  if(isNewShop){ h+='<option value="__new__" selected>🆕 '+escapeHtml(selectedName)+' (ຮ້ານໃໝ່)</option>'; }
+  if(isNewShop){
+    if(selectedName){ h+='<option value="__new__" selected>🆕 '+escapeHtml(selectedName)+' (ຮ້ານໃໝ່)</option>'; }
+    else{ h+='<option value="" selected disabled>— ເລືອກຮ້ານ —</option>'; }
+  }
   sortedShopsList().forEach(s=>{
     const sel=(!isNewShop && s.name===selectedName) ? ' selected' : '';
     h+='<option value="'+escapeAttr(s.name)+'"'+sel+'>'+escapeHtml(s.name)+'</option>';
@@ -4476,6 +4540,12 @@ function aiItemSelChange(sel){
   if(!ci) return;
   if(sel.value==='__custom__'){ ci.style.display='block'; ci.focus(); }
   else{ ci.style.display='none'; }
+}
+// ລົບແຖວອອກຈາກລາຍການທັນທີ (ຕົວຢ່າງ: ແຖວທີ່ອ່ານຜິດ/ບໍ່ຢາກຕື່ມ) — ລົບອອກຈາກໜ້າຈໍເລີຍ ຈະບໍ່ຖືກສົ່ງເຂົ້າຄິວຕອນກົດ "ຕື່ມທັງໝົດ"
+function aiRemoveRow(btn){
+  const row=btn.closest('.ai-row');
+  if(row) row.remove();
+  aiUpdateSummary();   // ລົບແລ້ວ ໃຫ້ຕົວເລກສະຫຼຸບປັບຫຼຸດລົງທັນທີ ໃຫ້ເຫັນຈຳນວນທີ່ເຫຼືອຕົວຈິງ
 }
 // ຖ້າແກ້ຮ້ານແຖວໃດແຖວໜຶ່ງ: 1) ແຖວອື່ນທີ່ຄາດຄະເນຈາກຄຳຫຍໍ້ດຽວກັນ (aliasKey ດຽວກັນ) ປ່ຽນຕາມກັນອັດຕະໂນມັດ
 // 2) ຖ້າແຖວນັ້ນ (ຫຼືແຖວທີ່ຕິດຕາມ) ບໍ່ໄດ້ຂຽນລາຍການສະເພາະໄວ້ (ໃຊ້ຄ່າເລີ່ມຕົ້ນ) → ອັບເດດລາຍການໃຫ້ເປັນລາຍການເລີ່ມຕົ້ນຂອງຮ້ານໃໝ່ທີ່ເລືອກທັນທີ
@@ -4514,37 +4584,46 @@ function aiShopSelChange(sel){
 function aiRenderPreview(){
   const wrap=document.getElementById('ai-preview-wrap');
   const list=document.getElementById('ai-preview-list');
-  const summary=document.getElementById('ai-preview-summary');
   if(!AI_PARSED.length && !AI_UNPARSED.length){ wrap.style.display='none'; toast('ບໍ່ພົບຂໍ້ຄວາມທີ່ອ່ານໄດ້'); return; }
   wrap.style.display='block';
-  const reviewCount=AI_PARSED.filter(r=>r.isNewShop || r.method==='fuzzy').length;
-  summary.textContent='ອ່ານໄດ້ '+AI_PARSED.length+' ລາຍການ'+(reviewCount?(' (ຕ້ອງກວດ '+reviewCount+' ອັນ)'):'')+(AI_UNPARSED.length?(', ອ່ານບໍ່ໄດ້ '+AI_UNPARSED.length+' ແຖວ'):'');
   let h='';
   AI_PARSED.forEach((r,i)=>{
     const needsReview = r.isNewShop || r.method==='fuzzy';
-    const badge = r.isNewShop ? '<span class="ai-badge ai-badge-new">🆕 ຮ້ານໃໝ່</span>'
+    const badge = r.unreadable ? '<span class="ai-badge ai-badge-warn">✏️ ອ່ານບໍ່ໄດ້ — ໃສ່ເອງ</span>'
+      : r.isNewShop ? '<span class="ai-badge ai-badge-new">🆕 ຮ້ານໃໝ່</span>'
       : r.method==='alias' ? '<span class="ai-badge ai-badge-alias">🧠 ຈື່ໄວ້ແລ້ວ</span>'
       : (r.method==='exact'||r.method==='substring') ? '<span class="ai-badge ai-badge-ok">✅ ຈັບຄູ່ໄດ້</span>'
       : '<span class="ai-badge ai-badge-warn">🔶 ບໍ່ແນ່ໃຈ</span>';
     const itemHas=PRODUCTS.some(p=>p.name===(r.item||'').trim());
-    h+='<div class="ai-row" data-idx="'+i+'" data-review="'+(needsReview?'1':'0')+'">'
-      +'<div class="ai-row-orig">'+badge+' '+escapeHtml(r.orig)+'</div>'
+    const qtyField = r.unreadable
+      ? '<input type="text" inputmode="decimal" class="ai-qty-in" data-idx="'+i+'" placeholder="ຈຳນວນ">'
+      : '<span class="ai-qty-txt">'+fmt(r.qty)+'</span>';
+    h+='<div class="ai-row" data-idx="'+i+'" data-review="'+(needsReview?'1':'0')+'" data-unreadable="'+(r.unreadable?'1':'0')+'">'
+      +'<div class="ai-row-orig"><span class="ai-row-orig-text">'+badge+' '+escapeHtml(r.orig)+'</span><button type="button" class="ai-row-del" onclick="aiRemoveRow(this)" title="ລົບແຖວນີ້ (ບໍ່ຕື່ມເຂົ້າຄິວ)">✕</button></div>'
       +'<div class="ai-row-fields">'
         +'<select class="ai-shop-sel" data-idx="'+i+'" onchange="aiShopSelChange(this)">'+aiShopOptionsHtml(r.shopName, r.isNewShop)+'</select>'
         +'<select class="ai-item-sel" data-idx="'+i+'" onchange="aiItemSelChange(this)">'+aiItemOptionsHtml(r.item)+'</select>'
         +'<input class="ai-item-custom" data-idx="'+i+'" style="display:none" value="'+(itemHas?'':escapeAttr(r.item))+'" placeholder="ພິມຊື່ລາຍການ...">'
-        +'<span class="ai-qty-txt">'+fmt(r.qty)+'</span>'
+        +qtyField
         +'<select class="ai-unit-sel" data-idx="'+i+'">'+unitOptionsHtml(r.unit)+'</select>'
         +'<input class="ai-note-in" data-idx="'+i+'" value="'+escapeAttr(r.note)+'" placeholder="ໝາຍເຫດ">'
       +'</div></div>';
   });
   list.innerHTML=h;
   const uwrap=document.getElementById('ai-unparsed-wrap');
-  if(AI_UNPARSED.length){
-    uwrap.style.display='block';
-    document.getElementById('ai-unparsed-list').innerHTML=AI_UNPARSED.map(l=>escapeHtml(l)).join('<br>');
-  }else{ uwrap.style.display='none'; }
+  if(uwrap) uwrap.style.display='none';   // ແຖວອ່ານບໍ່ໄດ້ ຕອນນີ້ຢູ່ໃນລາຍການຫຼັກແລ້ວ (ແກ້ໄຂໄດ້ຢູ່ບ່ອນເກົ່າ) — ບໍ່ຕ້ອງແຍກລາຍການ
   aiApplyFilter();
+  aiUpdateSummary();
+}
+// ນັບຈຳນວນຈິງ ຈາກແຖວທີ່ຍັງເຫຼືອຢູ່ໃນ DOM ຕອນນີ້ (ບໍ່ແມ່ນຄ່າຄົງທີ່ຕອນອ່ານຄັ້ງທຳອິດ) — ຖ້າລົບແຖວອອກ ຕົວເລກຈະປັບຫຼຸດລົງໃຫ້ເຫັນຕົວຈິງທັນທີ
+function aiUpdateSummary(){
+  const summary=document.getElementById('ai-preview-summary');
+  if(!summary) return;
+  const rows=Array.from(document.querySelectorAll('#ai-preview-list .ai-row'));
+  const total=rows.length;
+  const reviewCount=rows.filter(r=>r.dataset.review==='1').length;
+  const unreadableCount=rows.filter(r=>r.dataset.unreadable==='1').length;
+  summary.textContent='ອ່ານໄດ້ '+total+' ລາຍການ'+(reviewCount?(' (ຕ້ອງກວດ '+reviewCount+' ອັນ)'):'')+(unreadableCount?(', ອ່ານບໍ່ໄດ້ '+unreadableCount+' ແຖວ — ແກ້ໄຂໄດ້ຢູ່ໃນລາຍການລຸ່ມນີ້ເລີຍ'):'');
 }
 // ຕິກ "ສະແດງສະເພາະທີ່ຕ້ອງກວດ" -> ເຊື່ອງແຖວທີ່ຈັບຄູ່ໝັ້ນໃຈແລ້ວ (ຈື່ໄວ້/ກົງເປະ/substring), ເຫຼືອແຕ່ ຮ້ານໃໝ່ + ບໍ່ແນ່ໃຈ (ອ່ານບໍ່ໄດ້ສະແດງຢູ່ສະເໝີ)
 function aiApplyFilter(){
@@ -4573,6 +4652,9 @@ function aiConfirmImport(){
     item=(item||'').trim() || 'ໝູ';
     const unit=(rowEl.querySelector('.ai-unit-sel').value||src.unit||'ຫິ້ວ');
     const note=(rowEl.querySelector('.ai-note-in').value||'').trim();
+    const qtyIn=rowEl.querySelector('.ai-qty-in');
+    const qty = qtyIn ? (parseFloat((qtyIn.value||'').replace(/[^\d.]/g,''))||0) : src.qty;
+    if(!(qty>0)) return;   // ແຖວອ່ານບໍ່ໄດ້ ຍັງບໍ່ທັນໃສ່ຈຳນວນ → ຂ້າມໄປກ່ອນ (ຍັງບໍ່ຫາຍ ຍັງຢູ່ໃນລາຍການໃຫ້ແກ້ໄດ້ຄັ້ງຕໍ່ໄປ)
     ensureShopRegistered(shop);
     const key = src.aliasKey ? String(src.aliasKey).trim().replace(/\s+/g,'') : '';
     // ຮຽນຮູ້ຄຳຫຍໍ້ອັດຕະໂນມັດ — ຖ້າແຕ່ກ່ອນຈັບຄູ່ບໍ່ຊັດເຈນ (ໃໝ່/ບໍ່ແນ່ໃຈ) ຫຼື ຜູ້ໃຊ້ແກ້ໄຂຮ້ານເອງ ແລ້ວຢືນຢັນເປັນຮ້ານແທ້ → ຈື່ໄວ້ໃຫ້ຄັ້ງໜ້າ (ໃນເຄື່ອງ + ອອນລາຍ ຖ້າເຊື່ອມຕໍ່ຢູ່)
@@ -4584,7 +4666,7 @@ function aiConfirmImport(){
     if(key && src.itemWasGuessed && item && item!=='ໝູ' && AI_SHOP_ITEM[key]!==item){
       AI_SHOP_ITEM[key]=item; learnedItemCount++; learnedItemPairs.push({key:key, value:item});
     }
-    rows.push({shop:shop, item:item, qty:src.qty, unit:unit, note:note});
+    rows.push({shop:shop, item:item, qty:qty, unit:unit, note:note});
   });
   if(learnedCount){
     saveAiAliases();
