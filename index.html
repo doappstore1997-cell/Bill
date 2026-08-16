@@ -2247,11 +2247,14 @@ var qrcode = function() {
   <div class="ap-bar">
     <button class="ap-back" onclick="closeAuto()">←</button>
     <div class="ap-title">⚡ ອອກໃບບິນຫຼາຍຮ້ານ</div>
-    <button class="ap-done" onclick="buildBulk()">ສ້າງ →</button>
+    <button id="ap-done-btn" class="ap-done" onclick="buildBulk()">ສ້າງ →</button>
   </div>
   <div class="ap-body">
     <div class="ap-card">
-      <div id="sy-status" style="font-size:13.5px;font-weight:800;margin:0 0 8px;color:#555">ໂໝດ: ໃນເຄື່ອງ (localStorage)</div>
+      <label style="display:flex;align-items:center;gap:8px;margin:0 0 8px;cursor:pointer">
+        <input type="checkbox" id="sy-toggle" onchange="onSyncToggle(this)" style="width:18px;height:18px;cursor:pointer;flex:none">
+        <span id="sy-status" style="font-size:13.5px;font-weight:800;color:#555">ໂໝດ: ໃນເຄື່ອງ (localStorage)</span>
+      </label>
       <button class="ap-lockbtn" onclick="openSyncConfig()">🔒 ຕັ້ງຄ່າອອນລາຍ (ໃສ່ລະຫັດ)</button>
       <div id="sync-panel" style="display:none;margin-top:8px">
         <label class="ap-label">🔗 ອອນລາຍ (ແຊร์หลายเครื่อง)</label>
@@ -2298,7 +2301,11 @@ var qrcode = function() {
       </label>
       <div id="ocr-status" class="ocr-status"></div>
     </details>
-    <button class="ap-gen-big" onclick="buildBulk()">⚡ ສ້າງໃບບິນທັງໝົດ</button>
+    <button id="ap-gen-btn" class="ap-gen-big" onclick="buildBulk()">⚡ ສ້າງໃບບິນທັງໝົດ</button>
+    <div id="ap-gen-loading" class="ap-gen-big" style="display:none;text-align:center;opacity:.9;cursor:default">
+      ⏳ ກຳລັງອັບໂຫລດຂໍ້ມູນ... ລໍຖ້າບ່ອນນີ້ກ່ອນອອກບິນ
+      <div style="margin-top:8px"><a href="javascript:void(0)" onclick="buildBulk()" style="color:#fff;text-decoration:underline;font-size:13px;font-weight:600">ເນັດຊ້າ/ບໍ່ໄດ້? ກົດອອກບິນເລີຍ (ຂໍ້ມູນຢູ່ໃນເຄື່ອງຄົບແລ້ວ)</a></div>
+    </div>
   </div>
 </div>
 <div id="grid-page" class="auto-page" style="display:none">
@@ -3380,6 +3387,27 @@ function syncInitUI(){
   const n=document.getElementById('sy-user'); if(n) n.value=SYNC_USER;
   const t=document.getElementById('sy-token'); if(t) t.value=SYNC_TOKEN;
   syncStatus(syncOn()?('ໂໝດ: ອອນລາຍ ✓ ('+(SYNC_USER||'ບໍ່ລະບຸຊື່')+')'):'ໂໝດ: ໃນເຄື່ອງ (localStorage)', syncOn()?'#0a7d4d':'#555');
+  const cb=document.getElementById('sy-toggle'); if(cb) cb.checked=syncOn();
+}
+// ຕິກ/ຖອດຕິກ ຂ້າງ ໂໝດ: ອອນລາຍ — ສະລັບໄດ້ທັນທີບໍ່ຕ້ອງໃສ່ລະຫັດ (ໃຊ້ຄ່າ URL/ຜູ້ໃຊ້/ໂທເຄັນທີ່ຕັ້ງໄວ້ຄັ້ງລ້າສຸດ) ແຕ່ຖ້າຈະ "ຕັດ" ໃຫ້ຖາມຢືນຢັນກ່ອນ ກັນກົດພາດແລ້ວຫລຸດ sync ໂດຍບໍ່ຮູ້ໂຕ
+function onSyncToggle(cb){
+  if(cb.checked){ syncQuickReconnect(); }
+  else{
+    const ok=confirm('ຢຸດອອນລາຍ? ຂໍ້ມູນຈາກເຄື່ອງນີ້ຈະບໍ່ຂຶ້ນຊ້ອນຮ້ານອື່ນ ຈົນກວ່າຈະຕໍ່ຄືນ');
+    if(!ok){ cb.checked=true; return; }
+    syncDisconnect();
+  }
+}
+function syncQuickReconnect(){
+  let u='',n='',tk='DL2026';
+  try{
+    u=localStorage.getItem('dl_sync_url_last')||SYNC_URL_DEFAULT;
+    n=localStorage.getItem('dl_sync_user_last')||SYNC_USER||'';
+    tk=localStorage.getItem('dl_sync_token_last')||'DL2026';
+  }catch(e){ u=SYNC_URL_DEFAULT; }
+  SYNC_URL=u; SYNC_USER=n; SYNC_TOKEN=tk;
+  try{ localStorage.setItem('dl_sync_url',u); localStorage.setItem('dl_sync_user',n); localStorage.setItem('dl_sync_token',tk); }catch(e){}
+  syncInitUI(); toast('ເຊື່ອມຕໍ່ອອນລາຍແລ້ວ'); cloudRefresh(); syncStartPoll();
 }
 function _applyItems(j){ if(j&&j.items){ setCloudItems(j.items); } return j; }
 async function cloudGet(){
@@ -3445,10 +3473,14 @@ function syncConnect(){
   const tk=((document.getElementById('sy-token')||{}).value||'DL2026').trim()||'DL2026';
   if(!/^https:\/\/script\.google\.com\/.*\/exec/.test(u)){ toast('ລິ້ງບໍ່ຖືກ — ຕ້ອງລົງທ້າຍ /exec'); return; }
   SYNC_URL=u; SYNC_USER=n; SYNC_TOKEN=tk;
-  try{ localStorage.setItem('dl_sync_url',u); localStorage.setItem('dl_sync_user',n); localStorage.setItem('dl_sync_token',tk); }catch(e){}
+  try{ localStorage.setItem('dl_sync_url',u); localStorage.setItem('dl_sync_user',n); localStorage.setItem('dl_sync_token',tk); localStorage.setItem('dl_sync_url_last',u); localStorage.setItem('dl_sync_user_last',n); localStorage.setItem('dl_sync_token_last',tk); }catch(e){}
   syncInitUI(); toast('ເຊື່ອມຕໍ່ອອນລາຍແລ້ວ'); cloudRefresh(); syncStartPoll();
 }
 function syncDisconnect(){
+  // ຈື່ຄ່າຫລ້າສຸດໄວ້ກ່ອນຕັດ — ເພື່ອໃຫ້ຕິກກັບຄືນມາຕໍ່ໄດ້ທັນທີ ບໍ່ຕ້ອງພິມ URL/ໂທເຄັນໃໝ່
+  try{
+    if(SYNC_URL){ localStorage.setItem('dl_sync_url_last',SYNC_URL); localStorage.setItem('dl_sync_user_last',SYNC_USER); localStorage.setItem('dl_sync_token_last',SYNC_TOKEN); }
+  }catch(e){}
   SYNC_URL=''; try{ localStorage.removeItem('dl_sync_url'); }catch(e){}
   syncStopPoll(); syncInitUI(); toast('ຢຸດອອນລາຍ — ກັບໃຊ້ໃນເຄື່ອງ');
 }
@@ -4220,17 +4252,49 @@ async function gridGenerate(){
   setTimeout(()=>{ const n=document.getElementById('bill-nav'); if(n) n.scrollIntoView({behavior:'smooth',block:'start'}); },60);
   toast('ອອກບິນ '+BULK.length+' ໃບແລ້ວ — ກົດ ◀ ▶ ຫຼື ປັດ ເພື່ອເບິ່ງແຕ່ລະຮ້ານ');
 }
+function pendingSyncDone(){ return !PENDING.length && !PENDING_OPS.length && !_flushBusy && !_opsBusy; }
+function waitPendingFlush(timeoutMs){
+  return new Promise(function(resolve){
+    if(pendingSyncDone()){ resolve(true); return; }
+    const start=Date.now();
+    const iv=setInterval(function(){
+      if(pendingSyncDone()){ clearInterval(iv); resolve(true); }
+      else if(Date.now()-start>timeoutMs){ clearInterval(iv); resolve(false); }
+    },300);
+  });
+}
+// ປຸ່ມ "⚡ ສ້າງໃບບິນທັງໝົດ" / "ສ້າງ →" — ເຊື່ອງໄວ້ (ສະແດງ "ກຳລັງອັບໂຫລດ..." ແທນ) ຈົນກວ່າຈະບໍ່ມີລາຍການຄ້າງອັບໂຫລດຂຶ້ນຄລາວອີກ ກັນກົດອອກບິນຊ້ຳ/ກ່ອນຂໍ້ມູນຄົບ
+function updateBillButtonState(){
+  const ready = !syncOn() || pendingSyncDone();
+  const btn=document.getElementById('ap-gen-btn');
+  const loading=document.getElementById('ap-gen-loading');
+  const topBtn=document.getElementById('ap-done-btn');
+  if(btn) btn.style.display = ready ? '' : 'none';
+  if(loading) loading.style.display = ready ? 'none' : 'block';
+  if(topBtn){ topBtn.disabled = !ready; topBtn.style.opacity = ready ? '' : '.45'; topBtn.style.cursor = ready ? '' : 'default'; }
+}
+let _billBtnTimer=null;
+function billBtnStartPoll(){ billBtnStopPoll(); updateBillButtonState(); _billBtnTimer=setInterval(updateBillButtonState,500); }
+function billBtnStopPoll(){ if(_billBtnTimer){ clearInterval(_billBtnTimer); _billBtnTimer=null; } }
 async function openAuto(){
   document.getElementById('auto-page').style.display='block'; document.body.style.overflow='hidden';
   syncInitUI();
+  billBtnStartPoll();
   if(syncOn()){
-    try{ await cloudRefresh(); alert('ກຽມພ້ອມແລ້ວ! ອັບໂຫລດຮ້ານສຳເລັດ — ມີ '+QUEUE.length+' ລາຍການ ພ້ອມອອກໃບຮັບເງິນໄດ້ເລີຍ'); }catch(e){}
+    try{
+      await cloudRefresh();
+      // ຖ້າຍັງມີລາຍການ/ການແກ້ໄຂ ຄ້າງອັບໂຫລດຂຶ້ນຄລາວຢູ່ (PENDING/PENDING_OPS) — ໃຫ້ລໍຖ້າຈົນອັບໂຫລດແທ້ໆສຳເລັດກ່ອນ ຄ່ອຍແຈ້ງເຕືອນ ກັນອອກບິນຊ້ຳ/ກ່ອນຂໍ້ມູນຄົບ
+      if(!pendingSyncDone()){
+        showAdding(true,'ກຳລັງອັບໂຫລດ...');
+        const done=await waitPendingFlush(15000);
+        showAdding(false);
+        if(!done){ toast('ຍັງອັບໂຫລດຂໍ້ມູນບໍ່ຄົບ — ລໍຖ້າ ຫຼື ເຊັກເນັດ ກ່ອນອອກໃບບິນ'); syncStartPoll(); return; }
+      }
+    }catch(e){ showAdding(false); }
     syncStartPoll();
-  }else{
-    alert('ກຽມພ້ອມແລ້ວ! ມີ '+QUEUE.length+' ລາຍການ ພ້ອມອອກໃບຮັບເງິນໄດ້ເລີຍ');
   }
 }
-function closeAuto(){ document.getElementById('auto-page').style.display='none'; document.body.style.overflow=''; syncStopPoll(); }
+function closeAuto(){ document.getElementById('auto-page').style.display='none'; document.body.style.overflow=''; syncStopPoll(); billBtnStopPoll(); }
 /* ---------- ອອກບິນແບບ AI (ອ່ານຂໍ້ຄວາມປະຈຳວັນ ໃນເຄື່ອງ — ບໍ່ຕໍ່ AI ພາຍນອກ) ---------- */
 let AI_PARSED=[];      // [{shopName,isNewShop,item,qty,unit,note,orig,method,namePart}]
 let AI_UNPARSED=[];    // ແຖວທີ່ອ່ານບໍ່ໄດ້
@@ -4968,7 +5032,8 @@ function cloneFix(doc){
   });
   doc.querySelectorAll('.unit-sel').forEach(sel=>{
     const span=doc.createElement('span');
-    span.textContent=' '+sel.value;
+    const hidden = sel.style.display==='none';
+    span.textContent = hidden ? '' : (' '+sel.value);
     span.style.fontWeight='600';
     if(sel.parentNode) sel.parentNode.replaceChild(span, sel);
   });
