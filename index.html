@@ -3380,7 +3380,7 @@ function syncInitUI(){
 function _applyItems(j){ if(j&&j.items){ setCloudItems(j.items); } return j; }
 async function cloudGet(){
   const j=await _jsonp(SYNC_URL+'?token='+encodeURIComponent(SYNC_TOKEN));
-  if(j&&j.ok&&Array.isArray(j.rows)){ if(j.prices && typeof j.prices==='object') CLOUD_PRICES=j.prices; if(Array.isArray(j.shops)) applyCloudShops(j.shops); if(j.aliases && typeof j.aliases==='object') applyCloudAliases(j.aliases); if(Array.isArray(j.order) && Date.now()-_orderSetAt>3000) CLOUD_ORDER=j.order; return {items:j.rows.map(rowToItem)}; }
+  if(j&&j.ok&&Array.isArray(j.rows)){ if(j.prices && typeof j.prices==='object') CLOUD_PRICES=j.prices; if(Array.isArray(j.shops)) applyCloudShops(j.shops); if(j.aliases && typeof j.aliases==='object') applyCloudAliases(j.aliases); if(j.shopItems && typeof j.shopItems==='object') applyCloudShopItems(j.shopItems); if(Array.isArray(j.order) && Date.now()-_orderSetAt>3000) CLOUD_ORDER=j.order; return {items:j.rows.map(rowToItem)}; }
   throw new Error((j&&j.error)||'err');
 }
 function applyCloudShops(list){
@@ -4250,6 +4250,72 @@ try{
   });
   if(_seededAny) saveAiAliases();
 }catch(e){}
+// ຄຳໃນແຖວທີ່ບົ່ງບອກລາຍການສະເພາະ (ບໍ່ວ່າຮ້ານໃດ) — ຖ້າພົບໃຫ້ໃຊ້ຊື່ລາຍການເຕັມນີ້ແທນ ບໍ່ວ່າຈະຈັບຄູ່ຫຍັງໄດ້ກ່ອນໜ້ານັ້ນ
+const AI_ITEM_KEYWORDS=[
+  {kw:'ກ່ອງໂຟມ', item:'ແກັດໂຟມ'},
+  {kw:'ແກັດໂຟມ', item:'ແກັດໂຟມ'},
+  {kw:'ກ່ອງ', item:'ແກັດໂຟມ'},
+  {kw:'ແກັດ', item:'ແກັດໂຟມ'},
+  {kw:'ໄສ້', item:'ໄສ້ຕັນ'},
+  {kw:'ມຶກ', item:'ປາມຶກກອບ'},
+];
+function aiKeywordItem(text){
+  const t=String(text||'');
+  const hit=AI_ITEM_KEYWORDS.find(k=>t.includes(k.kw));
+  return hit ? hit.item : '';
+}
+// ລາຍການເລີ່ມຕົ້ນຂອງແຕ່ລະຮ້ານ (ຖ້າຮ້ານຂຽນແຕ່ ຈຳນວນ+ຫົວໜ່ວຍ ບໍ່ໄດ້ລະບຸລາຍການ) — ຄີຄື aliasKey (ຄຳຫຍໍ້ທີ່ພິມ) ຫຼື ຊື່ຮ້ານຈິງ, ບັນທຶກໄວ້ໃນເຄື່ອງ + ອອນລາຍ
+const AI_SHOP_ITEM_KEY='dl_ai_shopitem_v1';
+function loadAiShopItems(){ try{ const r=localStorage.getItem(AI_SHOP_ITEM_KEY); if(r){ const o=JSON.parse(r); if(o&&typeof o==='object') return o; } }catch(e){} return {}; }
+function saveAiShopItems(){ try{ localStorage.setItem(AI_SHOP_ITEM_KEY, JSON.stringify(AI_SHOP_ITEM)); }catch(e){} }
+let AI_SHOP_ITEM=loadAiShopItems();
+function applyCloudShopItems(obj){
+  if(!obj || typeof obj!=='object') return;
+  let changed=false;
+  Object.keys(obj).forEach(k=>{ if(obj[k] && AI_SHOP_ITEM[k]!==obj[k]){ AI_SHOP_ITEM[k]=obj[k]; changed=true; } });
+  if(changed) saveAiShopItems();
+}
+function aiShopDefaultItem(shopName, aliasKey){
+  const norm=s=>String(s||'').trim().replace(/\s+/g,'');
+  const byAlias = aliasKey ? AI_SHOP_ITEM[norm(aliasKey)] : '';
+  if(byAlias) return byAlias;
+  const byShop = shopName ? AI_SHOP_ITEM[norm(shopName)] : '';
+  return byShop || '';
+}
+const AI_SHOP_ITEM_DEFAULTS=[
+  {k:'ແຄມຂອງ', v:'ສະໃບນາງຊອຍ'},
+  {k:'ຈອມມະນີ', v:'ສະໃບນາງຊອຍ'},
+  {k:'ໜອງໄຮ', v:'ສະໃບນາງຊອຍ'},
+  {k:'ຫນອງໄຮ', v:'ສະໃບນາງຊອຍ'},
+  {k:'ໂພນຕ້ອງ', v:'ສະໃບນາງຊອຍ'},
+  {k:'ໜໜ', v:'ສະໃບນາງຊອຍ'},
+  {k:'ດາດເອງ', v:'ສະໃບນາງຊອຍ'},
+  {k:'ຊົມດາວ', v:'ສະໃບນາງເຕັມ'},
+  {k:'ລາລີຕາ', v:'ສະໃບນາງເຕັມ'},
+  {k:'ລາລີຕາສະໄບ', v:'ສະໃບນາງເຕັມ'},
+  {k:'ມີຢູ', v:'ສະໃບນາງຊອຍ'},
+  {k:'ຫິວຊາບູ', v:'ສະໃບນາງເຕັມ'},
+  {k:'ໂຕບົ້ງ', v:'ສະໃບນາງເຕັມ'},
+  {k:'ເອື້ອຍຕຸ້ຍ', v:'ສະໃບນາງເຕັມ'},
+  {k:'ໂດລ່າໄຊສົມບູນ', v:'ສະໃບນາງເຕັມ'},
+  {k:'ໂດລາໄຊສົມບູນ', v:'ສະໃບນາງເຕັມ'},
+  {k:'ອ້າຍໃຈ', v:'ສະໃບນາງເຕັມ'},
+  {k:'2ຜົວເມຍ', v:'ສະໃບນາງຊອຍ'},
+  {k:'ສອງຜົວເມຍ', v:'ສະໃບນາງຊອຍ'},
+  {k:'ເອື້ອຍຝົນຫນອງວຽງຄຳ', v:'ສະໃບນາງເຕັມ'},
+];
+try{
+  let _seededAny2=false;
+  AI_SHOP_ITEM_DEFAULTS.forEach(d=>{
+    const flag='dl_ai_shopitem_seeded_'+d.k;
+    if(!localStorage.getItem(flag)){
+      if(AI_SHOP_ITEM[d.k]===undefined) AI_SHOP_ITEM[d.k]=d.v;
+      localStorage.setItem(flag,'1');
+      _seededAny2=true;
+    }
+  });
+  if(_seededAny2) saveAiShopItems();
+}catch(e){}
 function openAiImport(){
   document.getElementById('ai-page').style.display='block';
   document.body.style.overflow='hidden';
@@ -4320,7 +4386,7 @@ function aiMatchShop(namePart){
 // ວິເຄາະ 1 ແຖວ: ຕັດເລກລຳດັບນຳໜ້າ, ຫາຄູ່ (ຈຳນວນ+ຫົວໜ່ວຍ) ໄດ້ຫຼາຍຄູ່ຕໍ່ 1 ແຖວ, ຊື່ກ່ອນໂຕເລກ=ຮ້ານ/ລາຍການ, ຫຼັງໂຕເລກສຸດທ້າຍ=ໝາຍເຫດ
 function aiParseLine(rawLine){
   let line=rawLine.replace(/[​⁠﻿]/g,'');
-  line=line.replace(/^\s*\d+(?:\.\d+)?[.\):]?\s*/,'').trim();
+  line=line.replace(/^\s*\d+(?:\.\d+)?[.\):]\s*/,'').trim();   // ຕັດເລກລຳດັບ (ຕ້ອງມີ ./)/: ນຳ) — ຖ້າບໍ່ມີ ຖືວ່າເປັນສ່ວນໜຶ່ງຂອງຊື່ຮ້ານ (ເຊັ່ນ "2 ຜົວເມຍ")
   if(!line) return null;
   const unitAlt=AI_UNIT_WORDS.map(u=>u.replace(/[.*+?^${}()|[\]\\]/g,'\\$&')).join('|');
   const re=new RegExp('(\\d+(?:[.,]\\d+)?)\\s*[\\/]?\\s*('+unitAlt+')','g');
@@ -4357,11 +4423,15 @@ function aiParseText(){
         shopName=words[0]; item=words.slice(1).join(' '); method='batch-new'; aliasKey=words[0];
       }
     }
+    const kwItem=aiKeywordItem(rawLine);                              // ຄຳສະເພາະ (ໄສ້/ມຶກ/ແກັດ...) ຊະນະທຸກຢ່າງ
+    const itemWasGuessed = !kwItem && !item;                          // ບໍ່ມີຄຳສະເພາະ ແລະ ບໍ່ມີລາຍການທີ່ຂຽນຈິງ → ໃຊ້ຄ່າເລີ່ມຕົ້ນ (ຮ້ານ/ໝູ)
+    const finalItem = kwItem || item || aiShopDefaultItem(shopName, aliasKey) || 'ໝູ';
     p.pairs.forEach(pr=>{
       AI_PARSED.push({
         shopName: shopName || p.namePart,
         isNewShop: !p.shop,
-        item: item || 'ໝູ',
+        item: finalItem,
+        itemWasGuessed: itemWasGuessed,
         qty: pr.qty,
         unit: pr.unit,
         note: p.note,
@@ -4467,6 +4537,8 @@ function aiConfirmImport(){
   const rows=[];
   let learnedCount=0;
   const learnedPairs=[];
+  let learnedItemCount=0;
+  const learnedItemPairs=[];
   document.querySelectorAll('#ai-preview-list .ai-row').forEach(rowEl=>{
     const idx=+rowEl.dataset.idx;
     const src=AI_PARSED[idx]; if(!src) return;
@@ -4479,17 +4551,25 @@ function aiConfirmImport(){
     const unit=(rowEl.querySelector('.ai-unit-sel').value||src.unit||'ຫິ້ວ');
     const note=(rowEl.querySelector('.ai-note-in').value||'').trim();
     ensureShopRegistered(shop);
+    const key = src.aliasKey ? String(src.aliasKey).trim().replace(/\s+/g,'') : '';
     // ຮຽນຮູ້ຄຳຫຍໍ້ອັດຕະໂນມັດ — ຖ້າແຕ່ກ່ອນຈັບຄູ່ບໍ່ຊັດເຈນ (ໃໝ່/ບໍ່ແນ່ໃຈ) ຫຼື ຜູ້ໃຊ້ແກ້ໄຂຮ້ານເອງ ແລ້ວຢືນຢັນເປັນຮ້ານແທ້ → ຈື່ໄວ້ໃຫ້ຄັ້ງໜ້າ (ໃນເຄື່ອງ + ອອນລາຍ ຖ້າເຊື່ອມຕໍ່ຢູ່)
-    if(sel.value!=='__new__' && src.aliasKey){
-      const key=String(src.aliasKey).trim().replace(/\s+/g,'');
+    if(sel.value!=='__new__' && key){
       const wasUncertain = src.method==='none' || src.method==='fuzzy' || src.method==='batch-new' || (sel.value!==src.shopName);
-      if(key && wasUncertain && AI_ALIASES[key]!==shop){ AI_ALIASES[key]=shop; learnedCount++; learnedPairs.push({key:key, value:shop}); }
+      if(wasUncertain && AI_ALIASES[key]!==shop){ AI_ALIASES[key]=shop; learnedCount++; learnedPairs.push({key:key, value:shop}); }
+    }
+    // ຮຽນຮູ້ລາຍການເລີ່ມຕົ້ນຂອງຮ້ານ — ຖ້າແຖວນີ້ບໍ່ໄດ້ຂຽນລາຍການໄວ້ (ໃຊ້ຄ່າເລີ່ມຕົ້ນ) ແລ້ວຢືນຢັນ/ເລືອກລາຍການໃດໜຶ່ງ → ຈື່ໄວ້ເປັນລາຍການເລີ່ມຕົ້ນຂອງຮ້ານນີ້ຄັ້ງໜ້າ
+    if(key && src.itemWasGuessed && item && item!=='ໝູ' && AI_SHOP_ITEM[key]!==item){
+      AI_SHOP_ITEM[key]=item; learnedItemCount++; learnedItemPairs.push({key:key, value:item});
     }
     rows.push({shop:shop, item:item, qty:src.qty, unit:unit, note:note});
   });
   if(learnedCount){
     saveAiAliases();
     if(syncOn()){ learnedPairs.forEach(p=>{ cloudPost({action:'alias', key:p.key, value:p.value}); }); }
+  }
+  if(learnedItemCount){
+    saveAiShopItems();
+    if(syncOn()){ learnedItemPairs.forEach(p=>{ cloudPost({action:'shopitem', key:p.key, value:p.value}); }); }
   }
   if(!rows.length){ toast('ບໍ່ມີລາຍການໃຫ້ຕື່ມ'); return; }
   if(syncOn()){
@@ -4500,7 +4580,7 @@ function aiConfirmImport(){
     rows.forEach(r=>{ QUEUE.push({shop:r.shop, item:r.item, qty:r.qty, unit:r.unit, price:0, note:r.note}); });
     saveQueue(); renderQueue();
   }
-  toast('ຕື່ມ '+rows.length+' ລາຍການເຂົ້າຄິວແລ້ວ'+(learnedCount?(' (ຈື່ຄຳຫຍໍ້ໃໝ່ '+learnedCount+' ຄຳ)'):'')+' — ໄປ Auto ຫຼື ຕາຕະລາງ ເພື່ອອອກບິນ');
+  toast('ຕື່ມ '+rows.length+' ລາຍການເຂົ້າຄິວແລ້ວ'+(learnedCount?(' (ຈື່ຄຳຫຍໍ້ໃໝ່ '+learnedCount+' ຄຳ)'):'')+(learnedItemCount?(' (ຈື່ລາຍການເລີ່ມຕົ້ນ '+learnedItemCount+' ຮ້ານ)'):'')+' — ໄປ Auto ຫຼື ຕາຕະລາງ ເພື່ອອອກບິນ');
   document.getElementById('ai-input').value='';
   document.getElementById('ai-preview-wrap').style.display='none';
   AI_PARSED=[]; AI_UNPARSED=[];
