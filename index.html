@@ -4477,11 +4477,28 @@ function aiItemSelChange(sel){
   if(sel.value==='__custom__'){ ci.style.display='block'; ci.focus(); }
   else{ ci.style.display='none'; }
 }
-// ຖ້າແກ້ຮ້ານແຖວໃດແຖວໜຶ່ງ ໃຫ້ແຖວອື່ນທີ່ຄາດຄະເນຈາກຄຳຫຍໍ້ດຽວກັນ (aliasKey ດຽວກັນ) ປ່ຽນຕາມກັນອັດຕະໂນມັດ — ບໍ່ຕ້ອງແກ້ເທື່ອລະແຖວ
+// ຖ້າແກ້ຮ້ານແຖວໃດແຖວໜຶ່ງ: 1) ແຖວອື່ນທີ່ຄາດຄະເນຈາກຄຳຫຍໍ້ດຽວກັນ (aliasKey ດຽວກັນ) ປ່ຽນຕາມກັນອັດຕະໂນມັດ
+// 2) ຖ້າແຖວນັ້ນ (ຫຼືແຖວທີ່ຕິດຕາມ) ບໍ່ໄດ້ຂຽນລາຍການສະເພາະໄວ້ (ໃຊ້ຄ່າເລີ່ມຕົ້ນ) → ອັບເດດລາຍການໃຫ້ເປັນລາຍການເລີ່ມຕົ້ນຂອງຮ້ານໃໝ່ທີ່ເລືອກທັນທີ
+function aiApplyShopItemDefault(rowIdx, rowEl, newShopName){
+  const rsrc=AI_PARSED[rowIdx]; if(!rsrc || !rsrc.itemWasGuessed) return;
+  const dflt=aiShopDefaultItem(newShopName, rsrc.aliasKey); if(!dflt) return;
+  const itemSel=rowEl.querySelector('.ai-item-sel'); if(!itemSel) return;
+  const hasOpt=Array.from(itemSel.options).some(o=>o.value===dflt);
+  if(hasOpt){ itemSel.value=dflt; const ci=rowEl.querySelector('.ai-item-custom'); if(ci) ci.style.display='none'; }
+  else{
+    itemSel.value='__custom__';
+    const ci=rowEl.querySelector('.ai-item-custom');
+    if(ci){ ci.value=dflt; ci.style.display='block'; }
+  }
+}
 function aiShopSelChange(sel){
   const idx=+sel.dataset.idx;
-  const src=AI_PARSED[idx]; if(!src || !src.aliasKey) return;
+  const src=AI_PARSED[idx]; if(!src) return;
   const newVal=sel.value;
+  const newShopName = (newVal==='__new__') ? src.shopName : newVal;
+  const curRow=sel.closest('.ai-row');
+  if(curRow) aiApplyShopItemDefault(idx, curRow, newShopName);
+  if(!src.aliasKey) return;
   document.querySelectorAll('#ai-preview-list .ai-row').forEach(row=>{
     const oIdx=+row.dataset.idx;
     if(oIdx===idx) return;
@@ -4491,6 +4508,7 @@ function aiShopSelChange(sel){
     if(!osel) return;
     const hasOpt=Array.from(osel.options).some(o=>o.value===newVal);
     if(hasOpt) osel.value=newVal;
+    aiApplyShopItemDefault(oIdx, row, newShopName);
   });
 }
 function aiRenderPreview(){
@@ -4577,12 +4595,29 @@ function aiConfirmImport(){
     if(syncOn()){ learnedItemPairs.forEach(p=>{ cloudPost({action:'shopitem', key:p.key, value:p.value}); }); }
   }
   if(!rows.length){ toast('ບໍ່ມີລາຍການໃຫ້ຕື່ມ'); return; }
+  // ຕື່ມເຂົ້າຄິວ — ຖ້າຮ້ານ+ລາຍການດຽວກັນມີຢູ່ໃນຄິວແລ້ວ (ຫຼືກຳລັງລໍສົ່ງ) ໃຫ້ອັບເດດຈຳນວນ/ຫົວໜ່ວຍ/ໝາຍເຫດເປັນຄ່າລ່າສຸດແທນ ບໍ່ເພີ່ມແຖວຊ້ຳ
   if(syncOn()){
-    rows.forEach(r=>{ addPending({shop:r.shop, item:r.item, qty:r.qty, unit:r.unit, price:(getPriceHist(r.shop,r.item)[0]||0), note:r.note, addedBy:SYNC_USER}); });
+    rows.forEach(r=>{
+      const key=r.shop+'␟'+r.item;
+      const existingId=GRID_ROW_ID[key];
+      const pendingRow=PENDING.find(p=>p.shop===r.shop && p.item===r.item);
+      if(existingId){
+        updateCloudItemLocal(existingId, {qty:r.qty, unit:r.unit, note:r.note});
+        cloudDo({action:'update', id:existingId, fields:{qty:r.qty, unit:r.unit, note:r.note}});
+      }else if(pendingRow){
+        pendingRow.qty=r.qty; pendingRow.unit=r.unit; pendingRow.note=r.note; savePending();
+      }else{
+        addPending({shop:r.shop, item:r.item, qty:r.qty, unit:r.unit, price:(getPriceHist(r.shop,r.item)[0]||0), note:r.note, addedBy:SYNC_USER});
+      }
+    });
     renderMerged();
     flushPending(true);
   }else{
-    rows.forEach(r=>{ QUEUE.push({shop:r.shop, item:r.item, qty:r.qty, unit:r.unit, price:0, note:r.note}); });
+    rows.forEach(r=>{
+      const existing=QUEUE.find(q=>q.shop===r.shop && q.item===r.item);
+      if(existing){ existing.qty=r.qty; existing.unit=r.unit; existing.note=r.note; }
+      else{ QUEUE.push({shop:r.shop, item:r.item, qty:r.qty, unit:r.unit, price:0, note:r.note}); }
+    });
     saveQueue(); renderQueue();
   }
   toast('ຕື່ມ '+rows.length+' ລາຍການເຂົ້າຄິວແລ້ວ'+(learnedCount?(' (ຈື່ຄຳຫຍໍ້ໃໝ່ '+learnedCount+' ຄຳ)'):'')+(learnedItemCount?(' (ຈື່ລາຍການເລີ່ມຕົ້ນ '+learnedItemCount+' ຮ້ານ)'):'')+' — ໄປ Auto ຫຼື ຕາຕະລາງ ເພື່ອອອກບິນ');
