@@ -2347,6 +2347,30 @@ var qrcode = function() {
     <div id="botmu-status" style="font-size:12.5px;color:var(--muted);margin-top:10px;text-align:center;line-height:1.5"></div>
   </div>
 </div>
+<div id="stock-modal" class="price-modal" style="display:none">
+  <div class="pm-card" style="max-width:420px;text-align:left;max-height:88vh;overflow:auto">
+    <button class="pm-x" onclick="closeStockCheck()" aria-label="ປິດ">✕</button>
+    <div class="pm-title" style="text-align:center">📦 ກວດອໍເດີ / ສະຕັອກ</div>
+    <div style="font-size:12.5px;color:var(--muted);margin-bottom:12px;text-align:center;line-height:1.5">ຍອດເຫລືອ = ອໍເດີ(ສະຕັອກ)ທັງໝົດ ລົບ ຍອດຂາຍທັງໝົດ (ຕັດອອກອັດຕະໂນມັດ ທຸກຄັ້ງທີ່ກົດກັອບປີ້ໃບບິນ)</div>
+    <label class="ap-label">ລາຍການ</label>
+    <select id="stk-item" class="ap-in"></select>
+    <div class="ap-two">
+      <div>
+        <label class="ap-label">ຈຳນວນເຕີມເຂົ້າ</label>
+        <input id="stk-qty" class="ap-in" type="number" inputmode="numeric" placeholder="ຈຳນວນ">
+      </div>
+      <div>
+        <label class="ap-label">ຫົວໜ່ວຍ</label>
+        <select id="stk-unit" class="ap-in"><option>ໂລ</option><option>Kg</option><option>ຫິ້ວ</option><option>ແກັດ</option><option>ຕໍ່ຖ້ຽວ</option><option>ກີບ</option><option>ຖົງ</option><option>ອັນ</option></select>
+      </div>
+    </div>
+    <label class="ap-label">ໝາຍເຫດ (ບໍ່ບັງຄັບ)</label>
+    <input id="stk-note" class="ap-in" placeholder="ເຊັ່ນ ຊື້ຈາກ...">
+    <button class="pm-save" style="margin-top:10px;background:#0891b2" onclick="submitStockAdd()">➕ ເຕີມສະຕັອກ</button>
+    <div id="stock-status" style="font-size:12.5px;color:var(--muted);margin:10px 0;text-align:center;line-height:1.5"></div>
+    <div id="stock-list"></div>
+  </div>
+</div>
 <div id="ai-page" class="auto-page" style="display:none">
   <div class="ap-bar">
     <button class="ap-back" onclick="closeAiImport()">←</button>
@@ -2481,6 +2505,7 @@ var qrcode = function() {
     <button class="auto-launch" style="background:var(--army);margin-top:-8px" onclick="openGrid()">📊 ຕາຕະລາງໃສ່ຈຳນວນ (ຫຼາຍຮ້ານ x ຫຼາຍລາຍການ)<span class="al-sub">ຮ້ານເປັນແຖວ · ລາຍການເປັນຖັນ · ໃສ່ຈຳນວນແລ້ວອອກບິນທັງໝົດ</span></button>
     <button class="auto-launch" style="background:#7c3aed;margin-top:-8px" onclick="openBotmuSummary()">🐷 ສະຫຼຸບຮ້ານໂຕໝູ (ລາຍອາທິດ)<span class="al-sub">ເລືອກຊ່ວງວັນທີ ລວມຈຳນວນ+ເງິນ ອອກເປັນໃບບິນດຽວ</span></button>
     <button class="auto-launch" style="background:#0891b2;margin-top:-8px" onclick="openAiImport()">🤖 ອອກບິນແບບ AI (ຂຽນປະຈຳວັນ)<span class="al-sub">ວາງຂໍ້ຄວາມປະຈຳວັນ → ອ່ານ ຈັບຄູ່ຮ້ານ ແລ້ວຕື່ມເຂົ້າຄິວໃຫ້</span></button>
+    <button class="auto-launch" style="background:#b45309;margin-top:-8px" onclick="openStockCheck()">📦 ກວດອໍເດີ / ສະຕັອກ<span class="al-sub">ອໍເດີ - ຍອດຂາຍ = ຍອດເຫລືອ · ມີປຸ່ມເຕີມສະຕັອກ</span></button>
     <h2>ຂໍ້ມູນຮ້ານ</h2>
     <div class="field">
       <label>ຊື່ຮ້ານ</label>
@@ -3218,6 +3243,7 @@ function pushPriceHist(shop,item,price){
   savePriceHist();
 }
 let CLOUD_PRICES={};
+let STOCK_TOTALS={}, SALES_TOTALS={};   // ໃໝ່: ອໍເດີ/ສະຕັອກ ແລະ ຍອດຂາຍລວມ ຂອງແຕ່ລະລາຍການ (ຈາກ Google Sheet)
 let _qrCache={total:-1, src:''};
 function _rawPrices(shop,item){
   const a=CLOUD_PRICES[pmKey(shop,item)]||[];
@@ -3412,7 +3438,7 @@ function syncQuickReconnect(){
 function _applyItems(j){ if(j&&j.items){ setCloudItems(j.items); } return j; }
 async function cloudGet(){
   const j=await _jsonp(SYNC_URL+'?token='+encodeURIComponent(SYNC_TOKEN));
-  if(j&&j.ok&&Array.isArray(j.rows)){ if(j.prices && typeof j.prices==='object') CLOUD_PRICES=j.prices; if(Array.isArray(j.shops)) applyCloudShops(j.shops); if(j.aliases && typeof j.aliases==='object') applyCloudAliases(j.aliases); if(j.shopItems && typeof j.shopItems==='object') applyCloudShopItems(j.shopItems); if(Array.isArray(j.order) && Date.now()-_orderSetAt>3000) CLOUD_ORDER=j.order; return {items:j.rows.map(rowToItem)}; }
+  if(j&&j.ok&&Array.isArray(j.rows)){ if(j.prices && typeof j.prices==='object') CLOUD_PRICES=j.prices; if(Array.isArray(j.shops)) applyCloudShops(j.shops); if(j.aliases && typeof j.aliases==='object') applyCloudAliases(j.aliases); if(j.shopItems && typeof j.shopItems==='object') applyCloudShopItems(j.shopItems); if(j.stockTotals && typeof j.stockTotals==='object') STOCK_TOTALS=j.stockTotals; if(j.salesTotals && typeof j.salesTotals==='object') SALES_TOTALS=j.salesTotals; if(Array.isArray(j.order) && Date.now()-_orderSetAt>3000) CLOUD_ORDER=j.order; return {items:j.rows.map(rowToItem)}; }
   throw new Error((j&&j.error)||'err');
 }
 function applyCloudShops(list){
@@ -3853,6 +3879,62 @@ function logDailySaleIfNeeded(){
     rows.push({date:logDate, shop:shop, item:it.name, qty:it.qty, unit:it.unit||'ຫິ້ວ', price:it.price||0});
   });
   if(rows.length) cloudPost({action:'saleslog_add', rows:rows});
+}
+/* ---------- ອໍເດີ/ສະຕັອກ ຂອງແຕ່ລະລາຍການ + ຍອດເຫລືອ (ອໍເດີ - ຍອດຂາຍຈາກ SalesLog, ຕັດອອກອັດຕະໂນມັດ) ---------- */
+function stockItemOptionsHtml(){
+  let h='';
+  PRODUCTS.forEach(p=>{ h+='<option value="'+escapeAttr(p.name)+'">'+escapeHtml(p.name)+'</option>'; });
+  return h;
+}
+function renderStockList(){
+  const box=document.getElementById('stock-list'); if(!box) return;
+  if(!syncOn()){ box.innerHTML='<div style="text-align:center;color:var(--muted);font-size:12.5px;padding:10px 0">ຕ້ອງເປີດໂໝດອອນລາຍກ່ອນ (ຂໍ້ມູນຢູ່ໃນ Google Sheet)</div>'; return; }
+  let h='<table style="width:100%;border-collapse:collapse;font-size:13px">'
+    +'<tr style="border-bottom:2px solid var(--panel-line);font-weight:700;color:var(--muted);font-size:11.5px"><td style="padding:6px 4px">ລາຍການ</td><td style="padding:6px 4px;text-align:right">ອໍເດີ</td><td style="padding:6px 4px;text-align:right">ຂາຍແລ້ວ</td><td style="padding:6px 4px;text-align:right">ຍອດເຫລືອ</td></tr>';
+  PRODUCTS.forEach(p=>{
+    const ordered=STOCK_TOTALS[p.name]||0;
+    const sold=SALES_TOTALS[p.name]||0;
+    const remain=ordered-sold;
+    const color = remain<=0 ? '#b91c1c' : (remain<10 ? '#b45309' : '#0a7d4d');
+    h+='<tr style="border-bottom:1px solid var(--panel-line)">'
+      +'<td style="padding:6px 4px">'+escapeHtml(p.name)+'</td>'
+      +'<td style="padding:6px 4px;text-align:right">'+fmt(ordered)+'</td>'
+      +'<td style="padding:6px 4px;text-align:right">'+fmt(sold)+'</td>'
+      +'<td style="padding:6px 4px;text-align:right;font-weight:800;color:'+color+'">'+fmt(remain)+'</td>'
+      +'</tr>';
+  });
+  h+='</table>';
+  box.innerHTML=h;
+}
+async function openStockCheck(){
+  const sel=document.getElementById('stk-item'); if(sel) sel.innerHTML=stockItemOptionsHtml();
+  const m=document.getElementById('stock-modal'); if(m) m.style.display='flex';
+  const st=document.getElementById('stock-status');
+  if(!syncOn()){ if(st) st.textContent='ຕ້ອງເປີດໂໝດອອນລາຍກ່ອນ (ຂໍ້ມູນຢູ່ໃນ Google Sheet)'; renderStockList(); return; }
+  if(st) st.textContent='ກຳລັງໂຫລດ...';
+  try{ await cloudRefresh(); if(st) st.textContent=''; }catch(e){ if(st) st.textContent='ໂຫລດຂໍ້ມູນລ້າສຸດບໍ່ໄດ້ — ສະແດງຂໍ້ມູນທີ່ມີຢູ່'; }
+  renderStockList();
+}
+function closeStockCheck(){ const m=document.getElementById('stock-modal'); if(m) m.style.display='none'; }
+async function submitStockAdd(){
+  const st=document.getElementById('stock-status');
+  if(!syncOn()){ if(st) st.textContent='ຕ້ອງເປີດໂໝດອອນລາຍກ່ອນ'; return; }
+  const item=(document.getElementById('stk-item')||{}).value||'';
+  const qty=parseFloat(((document.getElementById('stk-qty')||{}).value||'').replace(/[^\d.]/g,''))||0;
+  const unit=(document.getElementById('stk-unit')||{}).value||'ໂລ';
+  const note=((document.getElementById('stk-note')||{}).value||'').trim();
+  if(!item){ if(st) st.textContent='ກະລຸນາເລືອກລາຍການ'; return; }
+  if(!(qty>0)){ if(st) st.textContent='ກະລຸນາໃສ່ຈຳນວນ'; return; }
+  if(st) st.textContent='ກຳລັງບັນທຶກ...';
+  try{
+    await cloudPost({action:'stock_add', row:{item, qty, unit, note, addedBy:SYNC_USER}});
+    STOCK_TOTALS[item]=(STOCK_TOTALS[item]||0)+qty;   // ອັບເດດໜ້າຈໍທັນທີ ບໍ່ຕ້ອງລໍ round-trip
+    const qi=document.getElementById('stk-qty'); if(qi) qi.value='';
+    const ni=document.getElementById('stk-note'); if(ni) ni.value='';
+    if(st) st.textContent='ເຕີມສະຕັອກແລ້ວ ✔';
+    renderStockList();
+    toast('ເຕີມສະຕັອກ '+item+' +'+fmt(qty)+' '+unit+' ແລ້ວ');
+  }catch(e){ if(st) st.textContent='ບັນທຶກບໍ່ສຳເລັດ — ເຊັກເນັດ'; }
 }
 /* ---------- ສະຫຼຸບຮ້ານໂຕໝູ ຕາມຊ່ວງວັນທີ (ຈາກປະຫວັດທີ່ບັນທຶກໄວ້ໃນ Google Sheet) ---------- */
 function botmuBranchShort(branch){
