@@ -2398,6 +2398,20 @@ var qrcode = function() {
     </div>
   </div>
 </div>
+<div id="botmu-ledger-page" class="auto-page" style="display:none">
+  <div class="ap-bar">
+    <button class="ap-back" onclick="closeBotmuLedger()">←</button>
+    <div class="ap-title">🐷 ສະຫຼຸບຮ້ານໂຕໝູ</div>
+    <div style="width:34px"></div>
+  </div>
+  <div class="ap-body" style="max-width:640px">
+    <div id="botmu-ledger-wrap" style="background:#fff;overflow-x:auto">
+      <div id="botmu-ledger-table"></div>
+    </div>
+    <button class="ap-gen-big" style="margin-top:16px" onclick="copyBotmuLedgerImage()">📋 ກັອບປີ້ຮູບ</button>
+    <button class="ap-gen-big" style="margin-top:8px;background:#6b7280" onclick="downloadBotmuLedgerImage()">⬇️ ດາວໂຫລດຮູບ</button>
+  </div>
+</div>
 <div id="adding-overlay" style="display:none;position:fixed;inset:0;z-index:99999;background:rgba(0,0,0,.45);align-items:center;justify-content:center">
   <div style="background:#fff;border-radius:16px;padding:24px 30px;text-align:center;box-shadow:0 8px 30px rgba(0,0,0,.3)">
     <div class="dl-spin"></div>
@@ -3962,6 +3976,97 @@ function closeBotmuSummary(){ const m=document.getElementById('botmu-modal'); if
 function cloudGetBotmuRange(from,to){
   return _jsonp(SYNC_URL+'?token='+encodeURIComponent(SYNC_TOKEN)+'&botmuFrom='+encodeURIComponent(from)+'&botmuTo='+encodeURIComponent(to));
 }
+// ---- ໜ້າສະຫຼຸບຮ້ານໂຕໝູ ແບບຕາຕະລາງ (ລະດັບ/ວັນທີ/ຮ້ານ/ລາຄາ/ກີໂລ/ຈຳນວນເງິນ ຕໍ່ສາຂາ + ລວມຍອດ + ລວມທັງໝົດ) — ໜ້າແຍກຕ່າງຫາກ ບໍ່ລວມກັບໃບບິນຮັບເງິນ ----
+function shortDateFull(iso){
+  if(!iso) return '';
+  const d=new Date(String(iso)+'T00:00:00');
+  if(isNaN(d)) return String(iso);
+  return d.getDate()+'/'+(d.getMonth()+1)+'/'+d.getFullYear();
+}
+function buildBotmuLedgerData(rows){
+  const branchOrder=[]; const byBranch=new Map();
+  rows.forEach(r=>{
+    const branch=(r.branch||'').trim(); if(!branch) return;
+    if(!byBranch.has(branch)){ byBranch.set(branch, []); branchOrder.push(branch); }
+    byBranch.get(branch).push(r);
+  });
+  let grandTotal=0;
+  const groups=branchOrder.map(branch=>{
+    const list=byBranch.get(branch).slice().sort((a,b)=>String(a.date).localeCompare(String(b.date)));
+    let subtotal=0;
+    const rowsOut=list.map(r=>{
+      const qty=Number(r.qty)||0; const price=Number(r.price)||0; const amount=Math.round(qty*price);
+      subtotal+=amount;
+      return {dateDisp:shortDateFull(r.date), qty, price, amount};
+    });
+    grandTotal+=subtotal;
+    return {branch, rows:rowsOut, subtotal};
+  });
+  return {groups, grandTotal};
+}
+function buildBotmuLedgerTitle(rows, from, to){
+  const items=[...new Set(rows.map(r=>(r.item||'').trim()).filter(Boolean))];
+  const itemPart = items.length===1 ? items[0] : BOTMU_GROUP_NAME;
+  return itemPart+' ('+shortDate(from)+' - '+shortDate(to)+')';
+}
+function buildBotmuLedgerHtml(title, groups, grandTotal){
+  const cs='border:1px solid #000;padding:9px 10px;font-size:16px;font-weight:700;text-align:center;color:#000';
+  let h='<table style="width:100%;border-collapse:collapse;background:#fff;font-family:inherit">';
+  h+='<tr><td colspan="6" style="'+cs+';font-size:22px;padding:14px">'+escapeHtml(title)+'</td></tr>';
+  h+='<tr>'
+    +'<td style="'+cs+'">ລະດັບ</td>'
+    +'<td style="'+cs+'">ວັນທີ</td>'
+    +'<td style="'+cs+'">ຮ້ານ</td>'
+    +'<td style="'+cs+'">ລາຄາ</td>'
+    +'<td style="'+cs+'">ກິໂລ</td>'
+    +'<td style="'+cs+'">ຈຳນວນເງິນ</td>'
+    +'</tr>';
+  groups.forEach(g=>{
+    g.rows.forEach((r,i)=>{
+      h+='<tr>'
+        +'<td style="'+cs+'">'+(i+1)+'</td>'
+        +'<td style="'+cs+'">'+escapeHtml(r.dateDisp)+'</td>'
+        +'<td style="'+cs+'">'+escapeHtml(g.branch)+'</td>'
+        +'<td style="'+cs+';text-align:right">'+fmt(r.price)+'</td>'
+        +'<td style="'+cs+'">'+fmt(r.qty)+'</td>'
+        +'<td style="'+cs+';text-align:right">'+fmt(r.amount)+'</td>'
+        +'</tr>';
+    });
+    h+='<tr>'
+      +'<td colspan="4" style="'+cs+'">ລວມຍອດ</td>'
+      +'<td colspan="2" style="'+cs+';background:#ffe97a;text-align:right">'+fmt(g.subtotal)+'</td>'
+      +'</tr>';
+  });
+  h+='<tr><td colspan="4" style="'+cs+'">ລວມເງິນທັງໝົດ</td><td colspan="2" style="'+cs+';background:#a9d9ae;text-align:right">'+fmt(grandTotal)+'</td></tr>';
+  h+='</table>';
+  return h;
+}
+function openBotmuLedger(){ const p=document.getElementById('botmu-ledger-page'); if(p){ p.style.display='block'; document.body.style.overflow='hidden'; } }
+function closeBotmuLedger(){ const p=document.getElementById('botmu-ledger-page'); if(p){ p.style.display='none'; document.body.style.overflow=''; } }
+async function copyBotmuLedgerImage(){
+  const node=document.getElementById('botmu-ledger-wrap');
+  if(typeof html2canvas==='undefined'){ toast('ການກັອບປີ້ຕ້ອງຕໍ່ອິນເຕີເນັດ. ລອງ “ດາວໂຫລດຮູບ” ແທນ'); return; }
+  try{
+    const canvas=await html2canvas(node,{scale:2,backgroundColor:'#ffffff',useCORS:true});
+    if(navigator.clipboard && window.ClipboardItem){
+      const blob=await new Promise(res=>canvas.toBlob(res,'image/png'));
+      await navigator.clipboard.write([new ClipboardItem({'image/png':blob})]);
+      toast('ກັອບປີ້ຮູບແລ້ວ — ກົດ Paste ໃສ່ແອັບໄດ້ເລີຍ');
+    }else{
+      const a=document.createElement('a');
+      a.download='ສະຫຼຸບໂຕໝູ.png'; a.href=canvas.toDataURL('image/png'); a.click();
+      toast('ອຸປະກອນນີ້ກັອບປີ້ຮູບບໍ່ໄດ້ — ບັນທຶກເປັນຮູບໃຫ້ແທນ');
+    }
+  }catch(e){ toast('ກັອບປີ້ບໍ່ສຳເລັດ — ລອງໃຊ້ “ດາວໂຫລດຮູບ” ແທນ'); }
+}
+function downloadBotmuLedgerImage(){
+  const node=document.getElementById('botmu-ledger-wrap');
+  if(typeof html2canvas==='undefined'){ alert('ດາວໂຫລດຮູບຕ້ອງຕໍ່ອິນເຕີເນັດ.'); return; }
+  html2canvas(node,{scale:2,backgroundColor:'#ffffff',useCORS:true}).then(canvas=>{
+    const a=document.createElement('a');
+    a.download='ສະຫຼຸບໂຕໝູ.png'; a.href=canvas.toDataURL('image/png'); a.click();
+  });
+}
 async function runBotmuSummary(){
   const st=document.getElementById('botmu-status');
   const from=(document.getElementById('botmu-from')||{}).value;
@@ -3975,33 +4080,12 @@ async function runBotmuSummary(){
     if(!j || j.ok===false) throw new Error((j&&j.error)||'err');
     const rows=Array.isArray(j.botmuRows)? j.botmuRows : [];
     if(!rows.length){ if(st) st.textContent='ບໍ່ພົບຂໍ້ມູນໃນຊ່ວງວັນທີນີ້'; return; }
-    // ລວມແຍກຕາມ ລາຍການ+ສາຂາ (ບໍ່ລວມຂ້າມສາຂາ) — ໃຫ້ຮູ້ວ່າແຕ່ລະສາຂາເອົາໄປເທົ່າໃດ ງ່າຍຕໍ່ການທຽບບັນຊີ
-    const agg=new Map();
-    rows.forEach(r=>{
-      const item=(r.item||'').trim(); if(!item) return;
-      const branch=botmuBranchShort(r.branch);
-      const key=item+'␟'+branch;
-      const qty=Number(r.qty)||0; const price=Number(r.price)||0;
-      if(!agg.has(key)) agg.set(key,{item, branch, qty:0, money:0, unit:r.unit||'ຫິ້ວ'});
-      const a=agg.get(key); a.qty+=qty; a.money+=qty*price;
-    });
-    const items=[...agg.values()]
-      .sort((a,b)=>{ if(a.item!==b.item) return a.item<b.item?-1:1; return a.branch<b.branch?-1:(a.branch>b.branch?1:0); })
-      .map(a=>({
-        name: a.item+' ('+a.branch+')',
-        qty:a.qty, unit:a.unit,
-        price: a.qty>0 ? Math.round(a.money/a.qty) : 0
-      }));
-    const label=BOTMU_GROUP_NAME+' ('+shortDate(from)+' - '+shortDate(to)+')';
-    if(!SHOPS.some(s=>s.name===label)){ SHOPS.push({name:label, code:'D5,D6,D7'}); saveShops(); populateShops(); }
-    BULK=[{shop:label, items}];
-    BULK_IDX=0;
-    saveBulk();
-    const bn=document.getElementById('bill-nav'); if(bn) bn.style.display='flex';
-    { const pb=document.getElementById('bulk-print-bar'); if(pb) pb.style.display='flex'; }
-    loadBulkBill(0);
+    const {groups, grandTotal}=buildBotmuLedgerData(rows);
+    const title=buildBotmuLedgerTitle(rows, from, to);
+    const box=document.getElementById('botmu-ledger-table'); if(box) box.innerHTML=buildBotmuLedgerHtml(title, groups, grandTotal);
     closeBotmuSummary();
-    toast('ສະຫຼຸບ '+items.length+' ລາຍການ ('+rows.length+' ແຖວ) ວັນທີ '+from+' ຫາ '+to+' ແລ້ວ');
+    openBotmuLedger();
+    toast('ສະຫຼຸບ '+rows.length+' ແຖວ ວັນທີ '+from+' ຫາ '+to+' ແລ້ວ');
   }catch(e){
     if(st) st.textContent='ດຶງຂໍ້ມູນບໍ່ໄດ້ — ເຊັກລິ້ງ/ເນັດ (ຫຼື Apps Script ຍັງບໍ່ຮອງຮັບຟີເຈີນີ້, ເບິ່ງຄຳແນະນຳການຕິດຕັ້ງ)';
   }
