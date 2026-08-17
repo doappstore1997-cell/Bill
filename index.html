@@ -3805,32 +3805,54 @@ function buildBulkFromRows(rows){
     if(!SHOPS.some(s=>s.name===b.shop)){ SHOPS.push({name:b.shop, code:b.gcode||''}); added=true; }
   });
   if(added){ saveShops(); populateShops(); }
-  logBotmuIfNeeded(BULK);   // ບັນທຶກປະຫວັດຮ້ານໂຕໝູ 3 ສາຂາ ໃສ່ Google Sheet ອັດຕະໂນມັດ (ຖ້າອອນລາຍ)
+  // ບັນທຶກປະຫວັດຮ້ານໂຕໝູ 3 ສາຂາ ຕອນນີ້ບໍ່ໄດ້ບັນທຶກຢູ່ບ່ອນນີ້ອີກແລ້ວ — ຍ້າຍໄປບັນທຶກຕອນກົດ "ກັອບປີ້ໃບບິນ" ແທນ (ຄືກັນກັບ SalesLog) ເພື່ອໃຫ້ໄດ້ຂໍ້ມູນທີ່ອັບເດດລ່າສຸດ (ຫຼັງແກ້ໄຂ) ບໍ່ແມ່ນ snapshot ຕອນສ້າງບິນ — ເບິ່ງ logBotmuFromLiveItems()
   BULK_IDX=0;
   saveBulk();
   const bn=document.getElementById('bill-nav'); if(bn) bn.style.display='flex'; { const pb=document.getElementById('bulk-print-bar'); if(pb) pb.style.display='flex'; }
   loadBulkBill(0);
   return true;
 }
-/* ---------- ບັນທຶກປະຫວັດຮ້ານໂຕໝູ 3 ສາຂາ ໃສ່ Google Sheet (ອັດຕະໂນມັດ ທຸກຄັ້ງທີ່ອອກບິນ) ---------- */
+/* ---------- ບັນທຶກປະຫວັດຮ້ານໂຕໝູ 3 ສາຂາ ໃສ່ Google Sheet (ອັດຕະໂນມັດ ທຸກຄັ້ງທີ່ກົດ "ກັອບປີ້ໃບບິນ") ---------- */
 const BOTMU_GROUP_NAME='ໂຕໝູ 3 ສາຂາ';
+const BOTMU_PRE='ໂຕໝູ';
 function todayISO(){ const t=new Date(); return t.getFullYear()+'-'+String(t.getMonth()+1).padStart(2,'0')+'-'+String(t.getDate()).padStart(2,'0'); }
-function logBotmuIfNeeded(bulk){
-  if(!syncOn() || !Array.isArray(bulk)) return;
+// ໃບຮັບເງິນທີ່ສະແດງໃຫ້ "ໂຕໝູ 3 ສາຂາ" ແມ່ນລວມທຸກສາຂາເປັນຕາຕະລາງດຽວ — ແຕ່ລະແຖວຊື່ "ສາຂາ · ລາຍການ" (ເຊັ່ນ "ແຄມຂອງ · ສະໃບນາງເຕັມ")
+// ໃຊ້ live items (ຫຼັງແກ້ໄຂ) ບໍ່ແມ່ນ snapshot ຕອນສ້າງບິນ — ແຍກຄືນເປັນສາຂາຈິງ ແລ້ວບັນທຶກຄືກັນກັບ SalesLog
+function logBotmuFromLiveItems(){
+  if(!syncOn()) return;
+  const shop=((document.getElementById('f-cust')||{}).value||'').trim();
+  if(shop!==BOTMU_GROUP_NAME) return;
   const fd=document.getElementById('f-date');
   const logDate=(fd&&fd.value)?fd.value:todayISO();
-  bulk.forEach(b=>{
-    if(b.shop===BOTMU_GROUP_NAME && b.branches && b.branches.length){
-      const rows=[];
-      b.branches.forEach(br=>{
-        (br.items||[]).forEach(it=>{
-          if(!it || !((it.qty||0)>0)) return;
-          rows.push({date:logDate, branch:br.shop, item:it.name, qty:it.qty, unit:it.unit||'ຫິ້ວ', price:it.price||0});
-        });
-      });
-      if(rows.length) cloudPost({action:'botmulog_add', rows:rows});
-    }
+  const sep=' · ';
+  const rows=[];
+  (items||[]).forEach(it=>{
+    if(!it || !(it.name||'').trim() || !((it.qty||0)>0)) return;
+    const idx=it.name.indexOf(sep);
+    if(idx<0) return;
+    const branchLabel=it.name.slice(0,idx).trim();
+    const itemName=it.name.slice(idx+sep.length).trim();
+    const realShop=SHOPS.find(s=>s.name.startsWith(BOTMU_PRE) && s.name.slice(BOTMU_PRE.length).trim()===branchLabel);
+    if(!realShop) return;
+    rows.push({date:logDate, branch:realShop.name, item:itemName, qty:it.qty, unit:it.unit||'ຫິ້ວ', price:it.price||0});
   });
+  if(rows.length) cloudPost({action:'botmulog_add', rows:rows});
+}
+/* ---------- ບັນທຶກລາຍການຂາຍປະຈຳວັນ ທຸກຮ້ານ ໃສ່ Google Sheet (ອັດຕະໂນມັດ ທຸກຄັ້ງທີ່ກົດ "ກັອບປີ້ໃບບິນ") ---------- */
+// ໃຊ້ຂໍ້ມູນ items ໂຕລ່າສຸດ (ຫຼັງແກ້ໄຂ) ບໍ່ແມ່ນ snapshot ຕອນສ້າງບິນ — ຖ້າຮ້ານ+ວັນທີດຽວກັນຖືກກັອບປີ້ຫຼາຍຄັ້ງ
+// ຝັ່ງ backend ຈະລຶບຂໍ້ມູນເກົ່າຂອງຮ້ານ+ວັນທີນັ້ນອອກກ່ອນ ແລ້ວແທນທີ່ດ້ວຍຊຸດລ່າສຸດ (ບໍ່ໃຫ້ຊ້ຳ)
+function logDailySaleIfNeeded(){
+  if(!syncOn()) return;
+  const shop=((document.getElementById('f-cust')||{}).value||'').trim();
+  if(!shop) return;
+  const fd=document.getElementById('f-date');
+  const logDate=(fd&&fd.value)?fd.value:todayISO();
+  const rows=[];
+  (items||[]).forEach(it=>{
+    if(!it || !(it.name||'').trim() || !((it.qty||0)>0)) return;
+    rows.push({date:logDate, shop:shop, item:it.name, qty:it.qty, unit:it.unit||'ຫິ້ວ', price:it.price||0});
+  });
+  if(rows.length) cloudPost({action:'saleslog_add', rows:rows});
 }
 /* ---------- ສະຫຼຸບຮ້ານໂຕໝູ ຕາມຊ່ວງວັນທີ (ຈາກປະຫວັດທີ່ບັນທຶກໄວ້ໃນ Google Sheet) ---------- */
 function botmuBranchShort(branch){
@@ -4843,6 +4865,10 @@ function aiConfirmImport(){
   document.getElementById('ai-preview-wrap').style.display='none';
   AI_PARSED=[]; AI_UNPARSED=[];
   closeAiImport();
+  // ຖາມວ່າຈະໄປລໍຖ້າອອກໃບບິນຫຼາຍລາຍການເລີຍບໍ — ຕົກລົງ=ໄປໜ້າ Auto, ບໍ່ແມ່ນ=ຢູ່ໜ້າ AI ຄືເກົ່າ
+  if(confirm('ໄປລໍຖ້າຢູ່ໜ້າອອກບິນຫຼາຍລາຍການ ເລີຍບໍ?')){
+    openAuto();
+  }
 }
 function fillBillSelect(){
   const sel=document.getElementById('bill-select'); if(!sel) return;
@@ -5039,6 +5065,8 @@ function cloneFix(doc){
   });
 }
 async function copyImage(){
+  logDailySaleIfNeeded();   // ບັນທຶກລາຍການຂາຍຂອງຮ້ານນີ້+ວັນທີນີ້ ໃສ່ Google Sheet ທຸກຄັ້ງທີ່ກົດກັອບປີ້ (ໂຕລ່າສຸດ ທັບໂຕເກົ່າຂອງມື້ດຽວກັນ)
+  logBotmuFromLiveItems();  // ຖ້າໃບບິນນີ້ແມ່ນ "ໂຕໝູ 3 ສາຂາ" — ບັນທຶກປະຫວັດແຕ່ລະສາຂາຄືກັນ (ໂຕລ່າສຸດ ຫຼັງແກ້ໄຂ)
   const node=document.getElementById('receipt');
   if(typeof html2canvas==='undefined'){
     toast('ການກັອບປີ້ຕ້ອງຕໍ່ອິນເຕີເນັດ. ລອງໃຊ້ “ພິມ / PDF” ແທນ');
