@@ -2132,6 +2132,9 @@ var qrcode = function() {
   .price-in{width:74px;border:none;background:transparent;color:#000;font-family:inherit;font-size:15px;font-weight:600;text-align:right;padding:0;margin:0}
   .price-in:focus{outline:2px solid var(--topbar);outline-offset:1px;border-radius:3px;background:#fff8f0}
   .qty-in{width:38px;border:none;background:transparent;color:#000;font-family:inherit;font-size:15px;font-weight:600;text-align:right;padding:0;margin:0}
+  .kgw-in{width:64px;font-family:inherit;font-size:11px;font-weight:600;color:#b45309;background:#fff8e6;border:1px solid #f2c675;border-radius:5px;padding:2px 4px;margin-left:3px}
+  .kgw-in::placeholder{color:#c99a4a}
+  .kgw-total{font-size:10px;font-weight:700;color:#8a5b00;margin-left:3px;white-space:nowrap}
   .qty-in:focus{outline:2px solid var(--topbar);outline-offset:1px;border-radius:3px;background:#fff8f0}
   .unit-sel{border:none;background:transparent;color:#000;font-family:inherit;font-size:15px;font-weight:600;-webkit-appearance:none;appearance:none;padding:0 1px;cursor:pointer;border-bottom:1px dashed var(--topbar)}
   .unit-sel:focus{outline:2px solid var(--topbar);border-radius:3px}
@@ -2238,6 +2241,7 @@ var qrcode = function() {
     .r-pick{border-bottom:none !important;padding-bottom:0 !important}
     .r-date-input{display:none !important}
     .unit-sel{border-bottom:none !important}
+    .no-capture{display:none !important}
     @page{margin:10mm}
   }
 </style>
@@ -2618,6 +2622,7 @@ var qrcode = function() {
     <div id="bulk-print-bar" style="display:none;gap:6px;width:100%;max-width:680px;margin:6px 0 0">
       <button class="act" onclick="downloadAllBillImages()" style="background:#b45cf0;flex:1;padding:14px 8px;font-size:14.5px;border:none;border-radius:9px;color:#fff;font-weight:700;cursor:pointer">📷 ດາວໂຫລດຮູບໃບຮັບເງິນທັງໝົດ</button>
     </div>
+    <datalist id="kgw-opts"><option value="2"><option value="3"><option value="4"><option value="5"><option value="6"><option value="7"><option value="8"><option value="9"><option value="10"></datalist>
     <div class="scaler">
       <div id="receipt">
         <div class="pad">
@@ -2784,7 +2789,13 @@ function fillShopSelect(sel, keep, withCustom, filterText){
   if(!sel) return;
   sel.innerHTML='';
   const ft=(filterText||'').trim().toLowerCase();
-  const list=sortedShopsList().filter(s=> !ft || (s.name||'').toLowerCase().includes(ft) || (s.code||'').toLowerCase().includes(ft));
+  let list=sortedShopsList().filter(s=> !ft || (s.name||'').toLowerCase().includes(ft) || (s.code||'').toLowerCase().includes(ft));
+  // ຮ້ານທີ່ຖືກເລືອກ (keep) ຕ້ອງມີໃນລາຍການສະເໝີ ເຖິງແມ່ນຄຳຄົ້ນຫາເກົ່າ (ຄ້າງຢູ່ໃນຊ່ອງຄົ້ນຫາ) ຈະບໍ່ກົງກັບຊື່ນີ້ —
+  // ບໍ່ດັ່ງນັ້ນ select ຈະຫາ option ບໍ່ພົບ ແລ້ວ "ຄ້າງ" ຄ່າຮ້ານເກົ່າໄວ້ ບໍ່ປ່ຽນເປັນຊື່ຮ້ານໃໝ່ (ບັນຫາຊື່ຮ້ານຄ້າງຢູ່ໃບບິນ)
+  if(keep && !list.some(s=>s.name===keep)){
+    const kept=SHOPS.find(s=>s.name===keep);
+    if(kept) list=[kept].concat(list);
+  }
   list.forEach(s=>{
     const o=document.createElement('option');
     o.value=s.name; o.dataset.code=s.code;
@@ -2960,11 +2971,38 @@ function unitOptionsHtml(current){
   if(current && !list.includes(current)) list.unshift(current);
   return list.map(u=>'<option'+(u===current?' selected':'')+'>'+escapeHtml(u)+'</option>').join('');
 }
+// ອອເດີເຂົ້າແມ່ນກີໂລ ແຕ່ບາງລາຍການຂາຍອອກເປັນ ຫິ້ວ/ແກັດ/... (ນ້ຳໜັກຕໍ່ໜ່ວຍບໍ່ຄົງທີ່) — isKgUnit() ບອກວ່າ unit ນີ້ນັບເປັນກີໂລໂດຍກົງໄດ້ບໍ່
+function isKgUnit(u){ const x=String(u||'').trim(); return x==='Kg' || x.toLowerCase()==='kg' || x==='ໂລ' || x==='ກີໂລ'; }
+// ນ້ຳໜັກຕໍ່ໜ່ວຍບໍ່ຄົງທີ່ ຕ້ອງໃສ່ນ້ຳໜັກຈິງ ມີແຕ່ ຫິ້ວ/ຖົງ — ໜ່ວຍອື່ນ (ແກັດ/ຕໍ່ຖ້ຽວ/ກີບ/ອັນ/ອື່ນໆ) ບໍ່ຕ້ອງ ໃຫ້ຜ່ານໄດ້ເລີຍ
+function needsKgTracking(u){ const x=String(u||'').trim(); return x==='ຫິ້ວ' || x==='ຖົງ'; }
+function kgwVisible(qty,unit){ return (qty>0) && needsKgTracking(unit); }
+// ຂໍ້ຄວາມ "= X kg" ສະແດງຂ້າງຊ່ອງ ກີໂລ/ຫິ້ວ — ນ້ຳໜັກສະເລ່ຍ 1 ຫົວໜ່ວຍ × ຈຳນວນ = ນ້ຳໜັກລວມ (ຄິດອັດຕະໂນມັດ ບໍ່ຕ້ອງຄິດເອງ)
+function kgwTotalText(it){
+  if(!it || !(it.kgWeight>0) || !(it.qty>0)) return '';
+  return '= '+fmt(it.kgWeight*it.qty)+'kg';
+}
 function unitSelChange(el){
   const i=+el.dataset.i; ensureItem(i);
   items[i].unit=el.value;
   const tr=el.closest('tr');
   if(tr){ const put=tr.querySelector('.punit-txt'); if(put && items[i].price) put.textContent=' ຕໍ່'+el.value; }
+  const kw=el.parentNode.querySelector('.kgw-in');
+  const tot=el.parentNode.querySelector('.kgw-total');
+  if(kw){
+    const show=kgwVisible(items[i].qty, items[i].unit);
+    kw.style.display = show ? '' : 'none';
+    if(tot) tot.style.display = show ? '' : 'none';
+    if(!show){ items[i].kgWeight=0; kw.value=''; if(tot) tot.textContent=''; }
+    else if(tot) tot.textContent=kgwTotalText(items[i]);
+  }
+  bulkSync();
+}
+/* ຊ່ອງນ້ຳໜັກສະເລ່ຍ 1 ຫົວໜ່ວຍ (ກີໂລ/ຫິ້ວ) — ໃສ່ເມື່ອຂາຍເປັນ ຫິ້ວ/ໜ່ວຍອື່ນທີ່ນ້ຳໜັກບໍ່ຄົງທີ່ — ຄູນກັບຈຳນວນອັດຕະໂນມັດ (kgEquivFor) ໃຫ້ຫັກສະຕັອກ(ກີໂລ)ຖືກຕ້ອງ — ບໍ່ຂຶ້ນໃນໃບບິນ/ຮູບກັອບປີ້ (no-capture) */
+function kgWeightInput(el){
+  const i=+el.dataset.i; ensureItem(i);
+  items[i].kgWeight=parseFloat((el.value||'').replace(/[^\d.]/g,''))||0;
+  const tot=el.parentNode.querySelector('.kgw-total');
+  if(tot) tot.textContent=kgwTotalText(items[i]);
   bulkSync();
 }
 /* ຊ່ອງຈຳນວນ + ໜ່ວຍ ໃນຕາຕະລາງ */
@@ -2973,6 +3011,15 @@ function qtyInput(el){
   items[i].qty=parseFloat((el.value||'').replace(/[^\d.]/g,''))||0;
   const us=el.parentNode.querySelector('.unit-sel');
   if(us) us.style.display = items[i].qty ? '' : 'none';
+  const kw=el.parentNode.querySelector('.kgw-in');
+  const tot=el.parentNode.querySelector('.kgw-total');
+  if(kw){
+    const show=kgwVisible(items[i].qty, items[i].unit);
+    kw.style.display = show ? '' : 'none';
+    if(tot) tot.style.display = show ? '' : 'none';
+    if(!show){ items[i].kgWeight=0; kw.value=''; if(tot) tot.textContent=''; }
+    else if(tot) tot.textContent=kgwTotalText(items[i]);
+  }
   recalcRow(i, el.closest('tr'));
 }
 function qtyFocus(el){
@@ -3856,8 +3903,15 @@ function buildBulkFromRows(rows){
 const BOTMU_GROUP_NAME='ໂຕໝູ 3 ສາຂາ';
 const BOTMU_PRE='ໂຕໝູ';
 function todayISO(){ const t=new Date(); return t.getFullYear()+'-'+String(t.getMonth()+1).padStart(2,'0')+'-'+String(t.getDate()).padStart(2,'0'); }
+// ຫາ "ນ້ຳໜັກຈິງເປັນກີໂລ" ຂອງແຖວນີ້ — ຖ້າ unit ເປັນກີໂລຢູ່ແລ້ວ ໃຊ້ qty ໂດຍກົງ, ຖ້າຂາຍເປັນຫິ້ວ/ໜ່ວຍອື່ນ ໃຊ້ kgWeight (ນ້ຳໜັກສະເລ່ຍ 1 ຫົວໜ່ວຍ) × qty (ຈຳນວນຫົວໜ່ວຍ) = ນ້ຳໜັກລວມ — ຂາດ kgWeight ຄືນ null (ບໍ່ດັ້ນເດົາ ບໍ່ອອກຕົວເລກຜິດ)
+function kgEquivFor(it){
+  if(!it) return null;
+  if(isKgUnit(it.unit)) return {qty:it.qty, unit:it.unit};
+  if(it.kgWeight>0) return {qty:it.kgWeight*(it.qty||0), unit:'ກີໂລ'};
+  return null;
+}
 // ໃບຮັບເງິນທີ່ສະແດງໃຫ້ "ໂຕໝູ 3 ສາຂາ" ແມ່ນລວມທຸກສາຂາເປັນຕາຕະລາງດຽວ — ແຕ່ລະແຖວຊື່ "ສາຂາ · ລາຍການ" (ເຊັ່ນ "ແຄມຂອງ · ສະໃບນາງເຕັມ")
-// ໃຊ້ live items (ຫຼັງແກ້ໄຂ) ບໍ່ແມ່ນ snapshot ຕອນສ້າງບິນ — ແຍກຄືນເປັນສາຂາຈິງ ແລ້ວບັນທຶກຄືກັນກັບ SalesLog
+// ໃຊ້ live items (ຫຼັງແກ້ໄຂ) ບໍ່ແມ່ນ snapshot ຕອນສ້າງບິນ — ແຍກຄືນເປັນສາຂາຈິງ ແລ້ວບັນທຶກຄືກັນກັບ SalesLog — ບັນທຶກເປັນກີໂລສະເໝີ (ຂ້າມແຖວທີ່ບໍ່ຮູ້ນ້ຳໜັກຈິງ)
 function logBotmuFromLiveItems(){
   if(!syncOn()) return;
   const shop=((document.getElementById('f-cust')||{}).value||'').trim();
@@ -3874,13 +3928,16 @@ function logBotmuFromLiveItems(){
     const itemName=it.name.slice(idx+sep.length).trim();
     const realShop=SHOPS.find(s=>s.name.startsWith(BOTMU_PRE) && s.name.slice(BOTMU_PRE.length).trim()===branchLabel);
     if(!realShop) return;
-    rows.push({date:logDate, branch:realShop.name, item:itemName, qty:it.qty, unit:it.unit||'ຫິ້ວ', price:it.price||0});
+    const kv=kgEquivFor(it);
+    if(!kv) return;   // ບໍ່ຮູ້ນ້ຳໜັກຈິງ ແລະ ບໍ່ແມ່ນກີໂລ — ຂ້າມ ບໍ່ໃສ່ຕົວເລກຜິດ
+    rows.push({date:logDate, branch:realShop.name, item:itemName, qty:kv.qty, unit:kv.unit, price:it.price||0});
   });
   if(rows.length) cloudPost({action:'botmulog_add', rows:rows});
 }
 /* ---------- ບັນທຶກລາຍການຂາຍປະຈຳວັນ ທຸກຮ້ານ ໃສ່ Google Sheet (ອັດຕະໂນມັດ ທຸກຄັ້ງທີ່ກົດ "ກັອບປີ້ໃບບິນ") ---------- */
 // ໃຊ້ຂໍ້ມູນ items ໂຕລ່າສຸດ (ຫຼັງແກ້ໄຂ) ບໍ່ແມ່ນ snapshot ຕອນສ້າງບິນ — ຖ້າຮ້ານ+ວັນທີດຽວກັນຖືກກັອບປີ້ຫຼາຍຄັ້ງ
 // ຝັ່ງ backend ຈະລຶບຂໍ້ມູນເກົ່າຂອງຮ້ານ+ວັນທີນັ້ນອອກກ່ອນ ແລ້ວແທນທີ່ດ້ວຍຊຸດລ່າສຸດ (ບໍ່ໃຫ້ຊ້ຳ)
+// ຮັກສາ qty/unit ເດີມໄວ້ (ອ່ານງ່າຍ ເປັນ 5 ຫິ້ວ ຄືເກົ່າ) ແຕ່ເພີ່ມ kgQty (ນ້ຳໜັກຈິງເປັນກີໂລ) ໄວ້ແຍກຕ່າງຫາກ ໃຫ້ຫັກສະຕັອກຖືກຕ້ອງ
 function logDailySaleIfNeeded(){
   if(!syncOn()) return;
   const shop=((document.getElementById('f-cust')||{}).value||'').trim();
@@ -3890,7 +3947,8 @@ function logDailySaleIfNeeded(){
   const rows=[];
   (items||[]).forEach(it=>{
     if(!it || !(it.name||'').trim() || !((it.qty||0)>0)) return;
-    rows.push({date:logDate, shop:shop, item:it.name, qty:it.qty, unit:it.unit||'ຫິ້ວ', price:it.price||0});
+    const kv=kgEquivFor(it);
+    rows.push({date:logDate, shop:shop, item:it.name, qty:it.qty, unit:it.unit||'ຫິ້ວ', price:it.price||0, kgQty:(kv?kv.qty:0)});
   });
   if(rows.length) cloudPost({action:'saleslog_add', rows:rows});
 }
@@ -5055,7 +5113,7 @@ function bulkJump(v){
 function loadBulkBill(idx){
   const b=BULK[idx]; if(!b) return;
   populateShops(b.shop);          // ເລືອກຮ້ານ + ລະຫັດຂຶ້ນເອງ
-  items=b.items.map(x=>({name:x.name, qty:x.qty, price:((x.price>0&&x.price<1e9)?x.price:(getPriceHist(b.shop,x.name)[0]||0)), unit:x.unit||'ຫິ້ວ', note:x.note||''}));   // ຮັກສາລາຄາຂອງແຕ່ລະແຖວ (ນ້ຳໜັກຕ່າง) + ໝາຍເຫດ
+  items=b.items.map(x=>({name:x.name, qty:x.qty, price:((x.price>0&&x.price<1e9)?x.price:(getPriceHist(b.shop,x.name)[0]||0)), unit:x.unit||'ຫິ້ວ', note:x.note||'', kgWeight:x.kgWeight||0}));   // ຮັກສາລາຄາຂອງແຕ່ລະແຖວ (ນ້ຳໜັກຕ່າง) + ໝາຍເຫດ + ນ້ຳໜັກ/ຫິ້ວ ທີ່ໃສ່ໄວ້
   renderItemsEditor(); render();
   const sel=document.getElementById('bill-select');
   if(sel){ fillBillSelect(); sel.value=idx; }
@@ -5119,7 +5177,7 @@ function render(){
     html+=`<tr>
       <td class="ord">${i+1}</td>
       <td class="it" contenteditable="true" data-i="${i}" oninput="rowNameInput(this)" onblur="rowNameBlur(this)" onkeydown="cellKey(event,this)">${escapeHtml(it.name)}</td>
-      <td class="num"><span class="qtywrap"><input class="qty-in" type="text" inputmode="decimal" value="${it.qty?fmt(it.qty):''}" data-i="${i}" oninput="qtyInput(this)" onfocus="qtyFocus(this)" onblur="qtyBlur(this)"><select class="unit-sel" data-i="${i}" onchange="unitSelChange(this)" style="${it.qty?'':'display:none'}">${unitOptionsHtml(it.unit||'ຫິ້ວ')}</select></span></td>
+      <td class="num"><span class="qtywrap"><input class="qty-in" type="text" inputmode="decimal" value="${it.qty?fmt(it.qty):''}" data-i="${i}" oninput="qtyInput(this)" onfocus="qtyFocus(this)" onblur="qtyBlur(this)"><select class="unit-sel" data-i="${i}" onchange="unitSelChange(this)" style="${it.qty?'':'display:none'}">${unitOptionsHtml(it.unit||'ຫິ້ວ')}</select><input class="kgw-in no-capture" type="text" inputmode="decimal" list="kgw-opts" placeholder="ກີໂລ/ຫິ້ວ?" title="ນ້ຳໜັກສະເລ່ຍ 1 ຫົວໜ່ວຍ (ກີໂລ) — ຄູນກັບຈຳນວນອັດຕະໂນມັດ ໃຫ້ຫັກສະຕັອກຖືກຕ້ອງ — ບໍ່ຂຶ້ນໃນໃບບິນ" value="${it.kgWeight?fmt(it.kgWeight):''}" data-i="${i}" oninput="kgWeightInput(this)" style="${kgwVisible(it.qty,it.unit)?'':'display:none'}"><span class="kgw-total no-capture" style="${kgwVisible(it.qty,it.unit)?'':'display:none'}">${kgwTotalText(it)}</span></span></td>
       <td class="num"><span class="pricewrap"><input class="price-in" type="text" inputmode="decimal" value="${it.price?fmt(it.price):''}" data-i="${i}" oninput="priceInput(this)" onfocus="priceFocus(this)" onblur="priceBlur(this)"><span class="punit-txt">${it.price?(' ຕໍ່'+(it.unit||'ຫິ້ວ')):''}</span></span></td>
       <td class="num" data-amt="${i}">${amt?fmt(amt):''}</td>
       <td class="note-cell" contenteditable="true" data-i="${i}" oninput="noteInput(this)" onblur="noteBlur(this)">${escapeHtml(it.note||'')}</td></tr>`;
@@ -5230,7 +5288,33 @@ function cloneFix(doc){
     if(sel.parentNode) sel.parentNode.replaceChild(span, sel);
   });
 }
+// ຫາລາຍການທີ່ຂາຍເປັນຫິ້ວ/ໜ່ວຍອື່ນ (ບໍ່ແມ່ນກີໂລ) ແຕ່ຍັງບໍ່ໄດ້ໃສ່ນ້ຳໜັກຈິງ — ໃຊ້ເຕືອນກ່ອນກັອບປີ້ໃບບິນ ເພື່ອຫັກສະຕັອກໃຫ້ຖືກຕ້ອງ
+function missingKgItems(){
+  return (items||[]).filter(it=> it && (it.name||'').trim() && (it.qty||0)>0 && needsKgTracking(it.unit) && !(it.kgWeight>0) ).map(it=>it.name);
+}
+// ຫາ+focus ຊ່ອງ "ກີໂລແທ້?" ໂຕທຳອິດທີ່ຍັງບໍ່ໄດ້ໃສ່ ໃຫ້ຜູ້ໃຊ້ເຫັນ/ພິມໄດ້ທັນທີ
+function focusMissingKgInput(){
+  try{
+    const els=document.querySelectorAll('.kgw-in');
+    for(const el of els){
+      if(el.style.display!=='none'){
+        const i=+el.dataset.i;
+        if(items[i] && !(items[i].kgWeight>0)){
+          el.focus();
+          if(el.scrollIntoView) el.scrollIntoView({block:'center'});
+          break;
+        }
+      }
+    }
+  }catch(e){}
+}
 async function copyImage(){
+  const missKg=missingKgItems();
+  if(missKg.length){
+    alert('ຕ້ອງໃສ່ນ້ຳໜັກຈິງ (ກີໂລ) ກ່ອນຈຶ່ງກັອບປີ້ໄດ້ — ຂາດ: '+missKg.join(', ')+'\n\nກົດ OK ເພື່ອຮັບຮູ້');
+    focusMissingKgInput();
+    return;
+  }
   logDailySaleIfNeeded();   // ບັນທຶກລາຍການຂາຍຂອງຮ້ານນີ້+ວັນທີນີ້ ໃສ່ Google Sheet ທຸກຄັ້ງທີ່ກົດກັອບປີ້ (ໂຕລ່າສຸດ ທັບໂຕເກົ່າຂອງມື້ດຽວກັນ)
   logBotmuFromLiveItems();  // ຖ້າໃບບິນນີ້ແມ່ນ "ໂຕໝູ 3 ສາຂາ" — ບັນທຶກປະຫວັດແຕ່ລະສາຂາຄືກັນ (ໂຕລ່າສຸດ ຫຼັງແກ້ໄຂ)
   const node=document.getElementById('receipt');
