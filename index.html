@@ -5301,7 +5301,12 @@ function cloneFix(doc){
   const sel=doc.getElementById('r-cust');
   if(sel && sel.parentNode){
     const span=doc.createElement('span');
-    span.textContent=sel.value;
+    // ບັນຫາ: html2canvas clone ອາດບໍ່ຮັກສາ option ທີ່ຖືກເລືອກໄວ້ຂອງ <select> ໄວ້ຖືກຕ້ອງ
+    // (ໂດຍສະເພາະ ໃບບິນລວມສາຂາ ທີ່ shop ຖືກຕັ້ງດ້ວຍ JS ບໍ່ແມ່ນຄົນກົດເລືອກເອງ) —
+    // ເຮັດໃຫ້ຮູບທີ່ຖ່າຍໄດ້ ບາງເທື່ອສະແດງຊື່ຮ້ານຜິດ (ຄືກັບຮ້ານທຳອິດໃນລາຍຊື່ ແທນຊື່ຮ້ານທີ່ຖືກຕ້ອງ) —
+    // ແກ້ໂດຍອ່ານຄ່າຈາກ document ຕົວຈິງ (ໜ້າຈໍທີ່ຄົນເຫັນຢູ່) ແທນທີ່ຈະອ່ານຈາກ clone
+    const liveSel=(typeof document!=='undefined') ? document.getElementById('r-cust') : null;
+    span.textContent=(liveSel ? liveSel.value : null) || sel.value || '';
     span.style.fontWeight='600';
     sel.parentNode.replaceChild(span, sel);
   }
