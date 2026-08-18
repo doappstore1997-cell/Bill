@@ -2983,7 +2983,9 @@ function isStockExempt(name){ return STOCK_EXEMPT_ITEMS.has(String(name||'').tri
 function effUnit(u){ const x=String(u||'').trim(); return x || 'ຫິ້ວ'; }
 function kgwVisible(qty,unit,name){ return (qty>0) && needsKgTracking(effUnit(unit)) && !isStockExempt(name); }
 // ນ້ຳໜັກ/ຫິ້ວ ມາດຕະຖານທີ່ຮູ້ແນ່ນອນຂອງບາງລາຍການ (ຄົງທີ່ໂດຍປະມານ) — ຕື່ມໃຫ້ອັດຕະໂນມັດ ແຕ່ຍັງແກ້ໄຂ/ປ່ຽນເອງໄດ້ສະເໝີ
-const KNOWN_KGW = {'ໄສ້ຕັນ': 3};
+const KNOWN_KGW = {'ໄສ້ຕັນ': 3, 'ສະໃບນາງເຕັມ': 3};
+// ໂຕລາຍການທີ່ຖືກຕື່ມນ້ຳໜັກ default ອັດຕະໂນມັດ (it.kgAuto=true) ຍັງບໍ່ທັນຖືກຢືນຢັນຈາກຄົນ — ຕ້ອງຖາມກ່ອນອອກໃບບິນ
+// ຖ້າຄົນພິມ/ແກ້ຄ່າເອງຢູ່ຕາຕະລາງ (kgWeightInput) ຈະຖືວ່າຢືນຢັນແລ້ວ ບໍ່ຕ້ອງຖາມຄືນ
 function applyKnownKgDefault(it){
   if(!it) return;
   if(effUnit(it.unit)==='ຫິ້ວ' && !(it.kgWeight>0)){
@@ -2992,8 +2994,13 @@ function applyKnownKgDefault(it){
     if(def==null){
       for(const k in KNOWN_KGW){ if(nm.includes(k)){ def=KNOWN_KGW[k]; break; } }   // ມີຄຳນີ້ຢູ່ໃນຊື່ (ເຊັ່ນ "ໂພນຕ້ອງ · ໄສ້ຕັນ" ຂອງບິນລວມຫຼາຍຮ້ານ)
     }
-    if(def) it.kgWeight=def;
+    if(def){ it.kgWeight=def; it.kgAuto=true; }
   }
+}
+// ລາຍການທີ່ຍັງໃຊ້ຄ່າ default ອັດຕະໂນມັດ ຍັງບໍ່ທັນຢືນຢັນ — ຕ້ອງຖາມກ່ອນອອກໃບບິນ
+function unconfirmedKgItems(){
+  return (items||[]).filter(it=> it && (it.name||'').trim() && (it.qty||0)>0 && (it.kgWeight||0)>0
+    && it.kgAuto===true && needsKgTracking(effUnit(it.unit)) && !isStockExempt(it.name) );
 }
 // ຂໍ້ຄວາມ "= X kg" ສະແດງຂ້າງຊ່ອງ ກີໂລ/ຫິ້ວ — ນ້ຳໜັກສະເລ່ຍ 1 ຫົວໜ່ວຍ × ຈຳນວນ = ນ້ຳໜັກລວມ (ຄິດອັດຕະໂນມັດ ບໍ່ຕ້ອງຄິດເອງ)
 function kgwTotalText(it){
@@ -3012,7 +3019,7 @@ function unitSelChange(el){
     const show=kgwVisible(items[i].qty, items[i].unit, items[i].name);
     kw.style.display = show ? '' : 'none';
     if(tot) tot.style.display = show ? '' : 'none';
-    if(!show){ items[i].kgWeight=0; kw.value=''; if(tot) tot.textContent=''; }
+    if(!show){ items[i].kgWeight=0; items[i].kgAuto=false; kw.value=''; if(tot) tot.textContent=''; }
     else { kw.value = items[i].kgWeight ? fmt(items[i].kgWeight) : ''; if(tot) tot.textContent=kgwTotalText(items[i]); }
   }
   bulkSync();
@@ -3021,8 +3028,14 @@ function unitSelChange(el){
 function kgWeightInput(el){
   const i=+el.dataset.i; ensureItem(i);
   items[i].kgWeight=parseFloat((el.value||'').replace(/[^\d.]/g,''))||0;
+  items[i].kgAuto=false;   // ຄົນພິມ/ແກ້ເອງ -> ຖືວ່າຢືນຢັນແລ້ວ ບໍ່ຕ້ອງຖາມຄືນຕອນກັອບປີ້
   const tot=el.parentNode.querySelector('.kgw-total');
   if(tot) tot.textContent=kgwTotalText(items[i]);
+  // sync ນ້ຳໜັກ/ຫິ້ວ ຂຶ້ນ Google Sheet ທັນທີ — ໃຫ້ເຄື່ອງອື່ນເປີດບິນຮ້ານດຽວກັນ ເຫັນຄ່ານີ້ຄືກັນ (ຄືກັນກັບ note/price)
+  if(syncOn() && items[i].id){
+    updateCloudItemLocal(items[i].id, {kgWeight: items[i].kgWeight});
+    cloudDo({action:'update', id: items[i].id, fields:{kgWeight: items[i].kgWeight}});
+  }
   bulkSync();
 }
 /* ຊ່ອງຈຳນວນ + ໜ່ວຍ ໃນຕາຕະລາງ */
@@ -3038,7 +3051,7 @@ function qtyInput(el){
     const show=kgwVisible(items[i].qty, items[i].unit, items[i].name);
     kw.style.display = show ? '' : 'none';
     if(tot) tot.style.display = show ? '' : 'none';
-    if(!show){ items[i].kgWeight=0; kw.value=''; if(tot) tot.textContent=''; }
+    if(!show){ items[i].kgWeight=0; items[i].kgAuto=false; kw.value=''; if(tot) tot.textContent=''; }
     else { kw.value = items[i].kgWeight ? fmt(items[i].kgWeight) : ''; if(tot) tot.textContent=kgwTotalText(items[i]); }
   }
   recalcRow(i, el.closest('tr'));
@@ -3900,11 +3913,11 @@ function buildBulkFromRows(rows){
     if(!map.has(key)) map.set(key,{group:!!g, gcode:g?g.code:'', items:[], branches:new Map()});
     const e=map.get(key);
     let _lp=(r.price>0&&r.price<1e9)?r.price:getPriceHist(r.shop,r.item)[0]; if(!(_lp>0)){ const _rc=recallPrice(r.shop,r.item); if(_rc>0&&_rc<1e9) _lp=_rc; }
-    const it={name:r.item, qty:r.qty, price:(_lp||0), unit:r.unit||'ຫິ້ວ', note:r.note||''};
+    const it={id:r.id, name:r.item, qty:r.qty, price:(_lp||0), unit:r.unit||'ຫິ້ວ', note:r.note||'', kgWeight:r.kgWeight||0};
     if(g){
       const branch=(r.shop.startsWith(g.pre)?r.shop.slice(g.pre.length):r.shop).trim();
       // ໜ້າຈໍ (ລວມ): ສະແດງ ສາຂາ · ລາຍການ
-      e.items.push({name:branch+' · '+r.item, qty:r.qty, price:it.price, unit:it.unit, note:it.note});
+      e.items.push({id:it.id, name:branch+' · '+r.item, qty:r.qty, price:it.price, unit:it.unit, note:it.note, kgWeight:it.kgWeight});
       // ເກັບຕົວຈິງແຕ່ລະສາຂາ ໄວ້ພິມແຍກ
       if(!e.branches.has(r.shop)) e.branches.set(r.shop,[]);
       e.branches.get(r.shop).push(it);
@@ -5145,7 +5158,7 @@ function bulkJump(v){
 function loadBulkBill(idx){
   const b=BULK[idx]; if(!b) return;
   populateShops(b.shop);          // ເລືອກຮ້ານ + ລະຫັດຂຶ້ນເອງ
-  items=b.items.map(x=>({name:x.name, qty:x.qty, price:((x.price>0&&x.price<1e9)?x.price:(getPriceHist(b.shop,x.name)[0]||0)), unit:x.unit||'ຫິ້ວ', note:x.note||'', kgWeight:x.kgWeight||0}));   // ຮັກສາລາຄາຂອງແຕ່ລະແຖວ (ນ້ຳໜັກຕ່າง) + ໝາຍເຫດ + ນ້ຳໜັກ/ຫິ້ວ ທີ່ໃສ່ໄວ້
+  items=b.items.map(x=>({id:x.id, name:x.name, qty:x.qty, price:((x.price>0&&x.price<1e9)?x.price:(getPriceHist(b.shop,x.name)[0]||0)), unit:x.unit||'ຫິ້ວ', note:x.note||'', kgWeight:x.kgWeight||0}));   // ຮັກສາລາຄາຂອງແຕ່ລະແຖວ (ນ້ຳໜັກຕ່າง) + ໝາຍເຫດ + ນ້ຳໜັກ/ຫິ້ວ ທີ່ໃສ່ໄວ້ + id (ໃຫ້ sync kgWeight ຄືນຂຶ້ນ Sheet ໄດ້)
   renderItemsEditor(); render();
   const sel=document.getElementById('bill-select');
   if(sel){ fillBillSelect(); sel.value=idx; }
@@ -5342,6 +5355,20 @@ function focusMissingKgInput(){
     }
   }catch(e){}
 }
+// ຖາມຢືນຢັນລາຍການທີ່ລະບົບຕື່ມນ້ຳໜັກ default ໃຫ້ອັດຕະໂນມັດ (ຍັງບໍ່ທັນຢືນຢັນ) ກ່ອນອອກໃບບິນ —
+// ໃຊ້ prompt() ຍ້ອນມີຊ່ອງໃຫ້ແກ້ຕົວເລກໄດ້ໃນປັອບອັບດຽວກັນ: ຖືກແລ້ວກົດ OK ຜ່ານໄດ້ເລີຍ, ຜິດກໍ່ແກ້ຕົວເລກກ່ອນກົດ OK
+function confirmAutoKgWeights(){
+  const list=unconfirmedKgItems();
+  for(const it of list){
+    const ans=prompt('ແມ່ນ "'+it.name+'" = '+fmt(it.kgWeight)+' kg/'+(it.unit||'ຫິ້ວ')+' ແທ້ບໍ?\n(ຖືກແລ້ວກົດ OK, ຫຼືແກ້ຕົວເລກນີ້ກ່ອນກົດ OK)', String(it.kgWeight));
+    if(ans===null) return false;   // ຍົກເລີກ -> ບໍ່ອອກໃບບິນ
+    const v=parseFloat(String(ans).replace(/[^\d.]/g,''));
+    if(!(v>0)){ toast('ຕົວເລກບໍ່ຖືກຕ້ອງ — ລອງກົດ "ກັອບປີ້ໃບບິນ" ໃໝ່'); return false; }
+    it.kgWeight=v; it.kgAuto=false;
+  }
+  if(list.length){ bulkSync(); render(); }
+  return true;
+}
 async function copyImage(){
   const missKg=missingKgItems();
   if(missKg.length){
@@ -5349,6 +5376,7 @@ async function copyImage(){
     focusMissingKgInput();
     return;
   }
+  if(!confirmAutoKgWeights()) return;
   logDailySaleIfNeeded();   // ບັນທຶກລາຍການຂາຍຂອງຮ້ານນີ້+ວັນທີນີ້ ໃສ່ Google Sheet ທຸກຄັ້ງທີ່ກົດກັອບປີ້ (ໂຕລ່າສຸດ ທັບໂຕເກົ່າຂອງມື້ດຽວກັນ)
   logBotmuFromLiveItems();  // ຖ້າໃບບິນນີ້ແມ່ນ "ໂຕໝູ 3 ສາຂາ" — ບັນທຶກປະຫວັດແຕ່ລະສາຂາຄືກັນ (ໂຕລ່າສຸດ ຫຼັງແກ້ໄຂ)
   const node=document.getElementById('receipt');
