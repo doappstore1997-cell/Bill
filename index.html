@@ -2723,7 +2723,7 @@ function laoDate(iso){
   return `${WD[d.getDay()]} ວັນທີ ${d.getDate()}/${d.getMonth()+1}/${d.getFullYear()}`;
 }
 /* ---------- ສະຖານະ & ລາຍການ ---------- */
-let items=[{name:'',qty:0,price:0}];
+let items=[{name:'',qty:0,price:0,unit:'ຫິ້ວ'}];
 const DEFAULT_QR="data:image/png;base64,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";
 let qrDataUrl=DEFAULT_QR;
 const qrPrintImg=new Image();
@@ -2919,7 +2919,7 @@ function rmItem(i){ items.splice(i,1); if(items.length===0) items.push({name:'',
 /* ---------- ພິມໃນຕາຕະລາງໄດ້ໂດຍກົງ (inline edit) ---------- */
 function cellEdit(el){
   const i=+el.dataset.i, k=el.dataset.k;
-  while(items.length<=i) items.push({name:'',qty:0,price:0});
+  while(items.length<=i) items.push({name:'',qty:0,price:0,unit:'ຫິ້ວ'});
   const raw=el.textContent;
   items[i][k] = (k==='name') ? raw : (parseFloat(raw.replace(/[^\d.]/g,''))||0);
   const it=items[i], amt=(it.qty||0)*(it.price||0);
@@ -2975,7 +2975,26 @@ function unitOptionsHtml(current){
 function isKgUnit(u){ const x=String(u||'').trim(); return x==='Kg' || x.toLowerCase()==='kg' || x==='ໂລ' || x==='ກີໂລ'; }
 // ນ້ຳໜັກຕໍ່ໜ່ວຍບໍ່ຄົງທີ່ ຕ້ອງໃສ່ນ້ຳໜັກຈິງ ມີແຕ່ ຫິ້ວ/ຖົງ — ໜ່ວຍອື່ນ (ແກັດ/ຕໍ່ຖ້ຽວ/ກີບ/ອັນ/ອື່ນໆ) ບໍ່ຕ້ອງ ໃຫ້ຜ່ານໄດ້ເລີຍ
 function needsKgTracking(u){ const x=String(u||'').trim(); return x==='ຫິ້ວ' || x==='ຖົງ'; }
-function kgwVisible(qty,unit){ return (qty>0) && needsKgTracking(unit); }
+// ລາຍການທີ່ບໍ່ແມ່ນສິນຄ້າຈິງ (ຄ່າບໍລິການ) — ບໍ່ມີນ້ຳໜັກ, ບໍ່ຕ້ອງໃສ່ກີໂລ, ບໍ່ຕັດອອກຈາກສະຕັອກເຄື່ອງໃນສາງ — ແຕ່ຍັງພິມຢູ່ໃນໃບຮັບເງິນປົກກະຕິ
+const STOCK_EXEMPT_ITEMS = new Set(['ຄ່າຂົນສົ່ງ']);
+function isStockExempt(name){ return STOCK_EXEMPT_ITEMS.has(String(name||'').trim()); }
+// ຫົວໜ່ວຍ effective — ບາງແຖວຍັງບໍ່ທັນມີ .unit ຖືກກຳນົດແທ້ (ຍັງບໍ່ໄດ້ແຕະ dropdown ເລີຍ) ແຕ່ໜ້າຈໍສະແດງ "ຫິ້ວ" ເປັນຄ່າເລີ່ມຕົ້ນຢູ່ແລ້ວ (it.unit||'ຫິ້ວ' ໃນ render()) —
+// ຕ້ອງໃຊ້ຄ່າດຽວກັນນີ້ໃນທຸກບ່ອນທີ່ຕັດສິນໃຈ ບໍ່ດັ່ງນັ້ນຈະບໍ່ຕົງກັບສິ່ງທີ່ຜູ້ໃຊ້ເຫັນຢູ່ໜ້າຈໍ (ບັນຫາ default ບໍ່ເຮັດວຽກ)
+function effUnit(u){ const x=String(u||'').trim(); return x || 'ຫິ້ວ'; }
+function kgwVisible(qty,unit,name){ return (qty>0) && needsKgTracking(effUnit(unit)) && !isStockExempt(name); }
+// ນ້ຳໜັກ/ຫິ້ວ ມາດຕະຖານທີ່ຮູ້ແນ່ນອນຂອງບາງລາຍການ (ຄົງທີ່ໂດຍປະມານ) — ຕື່ມໃຫ້ອັດຕະໂນມັດ ແຕ່ຍັງແກ້ໄຂ/ປ່ຽນເອງໄດ້ສະເໝີ
+const KNOWN_KGW = {'ໄສ້ຕັນ': 3};
+function applyKnownKgDefault(it){
+  if(!it) return;
+  if(effUnit(it.unit)==='ຫິ້ວ' && !(it.kgWeight>0)){
+    const nm=String(it.name||'').trim();
+    let def=KNOWN_KGW[nm];   // ກົງເປະ (ເຊັ່ນ "ໄສ້ຕັນ")
+    if(def==null){
+      for(const k in KNOWN_KGW){ if(nm.includes(k)){ def=KNOWN_KGW[k]; break; } }   // ມີຄຳນີ້ຢູ່ໃນຊື່ (ເຊັ່ນ "ໂພນຕ້ອງ · ໄສ້ຕັນ" ຂອງບິນລວມຫຼາຍຮ້ານ)
+    }
+    if(def) it.kgWeight=def;
+  }
+}
 // ຂໍ້ຄວາມ "= X kg" ສະແດງຂ້າງຊ່ອງ ກີໂລ/ຫິ້ວ — ນ້ຳໜັກສະເລ່ຍ 1 ຫົວໜ່ວຍ × ຈຳນວນ = ນ້ຳໜັກລວມ (ຄິດອັດຕະໂນມັດ ບໍ່ຕ້ອງຄິດເອງ)
 function kgwTotalText(it){
   if(!it || !(it.kgWeight>0) || !(it.qty>0)) return '';
@@ -2984,16 +3003,17 @@ function kgwTotalText(it){
 function unitSelChange(el){
   const i=+el.dataset.i; ensureItem(i);
   items[i].unit=el.value;
+  applyKnownKgDefault(items[i]);
   const tr=el.closest('tr');
   if(tr){ const put=tr.querySelector('.punit-txt'); if(put && items[i].price) put.textContent=' ຕໍ່'+el.value; }
   const kw=el.parentNode.querySelector('.kgw-in');
   const tot=el.parentNode.querySelector('.kgw-total');
   if(kw){
-    const show=kgwVisible(items[i].qty, items[i].unit);
+    const show=kgwVisible(items[i].qty, items[i].unit, items[i].name);
     kw.style.display = show ? '' : 'none';
     if(tot) tot.style.display = show ? '' : 'none';
     if(!show){ items[i].kgWeight=0; kw.value=''; if(tot) tot.textContent=''; }
-    else if(tot) tot.textContent=kgwTotalText(items[i]);
+    else { kw.value = items[i].kgWeight ? fmt(items[i].kgWeight) : ''; if(tot) tot.textContent=kgwTotalText(items[i]); }
   }
   bulkSync();
 }
@@ -3009,16 +3029,17 @@ function kgWeightInput(el){
 function qtyInput(el){
   const i=+el.dataset.i; ensureItem(i);
   items[i].qty=parseFloat((el.value||'').replace(/[^\d.]/g,''))||0;
+  applyKnownKgDefault(items[i]);
   const us=el.parentNode.querySelector('.unit-sel');
   if(us) us.style.display = items[i].qty ? '' : 'none';
   const kw=el.parentNode.querySelector('.kgw-in');
   const tot=el.parentNode.querySelector('.kgw-total');
   if(kw){
-    const show=kgwVisible(items[i].qty, items[i].unit);
+    const show=kgwVisible(items[i].qty, items[i].unit, items[i].name);
     kw.style.display = show ? '' : 'none';
     if(tot) tot.style.display = show ? '' : 'none';
     if(!show){ items[i].kgWeight=0; kw.value=''; if(tot) tot.textContent=''; }
-    else if(tot) tot.textContent=kgwTotalText(items[i]);
+    else { kw.value = items[i].kgWeight ? fmt(items[i].kgWeight) : ''; if(tot) tot.textContent=kgwTotalText(items[i]); }
   }
   recalcRow(i, el.closest('tr'));
 }
@@ -3102,8 +3123,9 @@ function noteBlur(){ trimItems(); bulkSync(); }
 /* ຊ່ອງລາຍການໃນຕາຕະລາງ: ເລືອກ ຫຼື ພິມ + ລາຄາຂຶ້ນເອງ */
 function rowNameInput(el){
   const i=+el.dataset.i;
-  while(items.length<=i) items.push({name:'',qty:0,price:0});
+  while(items.length<=i) items.push({name:'',qty:0,price:0,unit:'ຫິ້ວ'});
   items[i].name=el.textContent;
+  applyKnownKgDefault(items[i]);
   const tr=el.closest('tr');
   const prod=PRODUCTS.find(p=>p.name===el.textContent.trim());
   if(prod){
@@ -3114,6 +3136,15 @@ function rowNameInput(el){
   const it=items[i], amt=(it.qty||0)*(it.price||0);
   const amtCell=tr && tr.querySelector('[data-amt]');
   if(amtCell) amtCell.textContent = amt ? fmt(amt) : '';
+  if(tr){
+    const kw=tr.querySelector('.kgw-in'), tot=tr.querySelector('.kgw-total');
+    if(kw){
+      const show=kgwVisible(it.qty, it.unit, it.name);
+      kw.style.display = show ? '' : 'none';
+      if(tot) tot.style.display = show ? '' : 'none';
+      if(show && document.activeElement!==kw){ kw.value = it.kgWeight ? fmt(it.kgWeight) : ''; if(tot) tot.textContent=kgwTotalText(it); }
+    }
+  }
   let total=0; items.forEach(x=>total+=(x.qty||0)*(x.price||0));
   document.getElementById('p-total').textContent=fmt(total);
   document.getElementById('p-words').textContent=laoWords(total)+' ກີບ';
@@ -3947,7 +3978,8 @@ function logDailySaleIfNeeded(){
   const rows=[];
   (items||[]).forEach(it=>{
     if(!it || !(it.name||'').trim() || !((it.qty||0)>0)) return;
-    const kv=kgEquivFor(it);
+    // ລາຍການບໍລິການ (ຄ່າຂົນສົ່ງ) ບໍ່ແມ່ນສິນຄ້າ — ບໍ່ຕັດອອກຈາກສະຕັອກເຄື່ອງໃນສາງ, kgQty=0 ສະເໝີ ເຖິງແມ່ນຫົວໜ່ວຍຈະເປັນຫຍັງກໍ່ຕາມ
+    const kv=isStockExempt(it.name) ? null : kgEquivFor(it);
     rows.push({date:logDate, shop:shop, item:it.name, qty:it.qty, unit:it.unit||'ຫິ້ວ', price:it.price||0, kgQty:(kv?kv.qty:0)});
   });
   if(rows.length) cloudPost({action:'saleslog_add', rows:rows});
@@ -3955,15 +3987,15 @@ function logDailySaleIfNeeded(){
 /* ---------- ອໍເດີ/ສະຕັອກ ຂອງແຕ່ລະລາຍການ + ຍອດເຫລືອ (ອໍເດີ - ຍອດຂາຍຈາກ SalesLog, ຕັດອອກອັດຕະໂນມັດ) ---------- */
 function stockItemOptionsHtml(){
   let h='';
-  PRODUCTS.forEach(p=>{ h+='<option value="'+escapeAttr(p.name)+'">'+escapeHtml(p.name)+'</option>'; });
+  PRODUCTS.filter(p=>!isStockExempt(p.name)).forEach(p=>{ h+='<option value="'+escapeAttr(p.name)+'">'+escapeHtml(p.name)+'</option>'; });
   return h;
 }
 function renderStockList(){
   const box=document.getElementById('stock-list'); if(!box) return;
   if(!syncOn()){ box.innerHTML='<div style="text-align:center;color:var(--muted);font-size:12.5px;padding:10px 0">ຕ້ອງເປີດໂໝດອອນລາຍກ່ອນ (ຂໍ້ມູນຢູ່ໃນ Google Sheet)</div>'; return; }
   let h='<table style="width:100%;border-collapse:collapse;font-size:13px">'
-    +'<tr style="border-bottom:2px solid var(--panel-line);font-weight:700;color:var(--muted);font-size:11.5px"><td style="padding:6px 4px">ລາຍການ</td><td style="padding:6px 4px;text-align:right">ອໍເດີ</td><td style="padding:6px 4px;text-align:right">ຂາຍແລ້ວ</td><td style="padding:6px 4px;text-align:right">ຍອດເຫລືອ</td></tr>';
-  PRODUCTS.forEach(p=>{
+    +'<tr style="border-bottom:2px solid var(--panel-line);font-weight:700;color:var(--muted);font-size:11.5px"><td style="padding:6px 4px">ລາຍການ</td><td style="padding:6px 4px;text-align:right">ເຄື່ອງໃນສາງ</td><td style="padding:6px 4px;text-align:right">ຂາຍແລ້ວ</td><td style="padding:6px 4px;text-align:right">ຍອດເຫລືອ</td></tr>';
+  PRODUCTS.filter(p=>!isStockExempt(p.name)).forEach(p=>{
     const ordered=STOCK_TOTALS[p.name]||0;
     const sold=SALES_TOTALS[p.name]||0;
     const remain=ordered-sold;
@@ -5173,11 +5205,13 @@ function render(){
   const rowCount = padOn ? Math.max(5, items.length) : items.length;
   for(let i=0;i<rowCount;i++){
     const it = items[i] || {name:'',qty:0,price:0};
+    applyKnownKgDefault(it);
     const amt=(it.qty||0)*(it.price||0); total+=amt;
+    const _kgVis=kgwVisible(it.qty,it.unit,it.name);
     html+=`<tr>
       <td class="ord">${i+1}</td>
       <td class="it" contenteditable="true" data-i="${i}" oninput="rowNameInput(this)" onblur="rowNameBlur(this)" onkeydown="cellKey(event,this)">${escapeHtml(it.name)}</td>
-      <td class="num"><span class="qtywrap"><input class="qty-in" type="text" inputmode="decimal" value="${it.qty?fmt(it.qty):''}" data-i="${i}" oninput="qtyInput(this)" onfocus="qtyFocus(this)" onblur="qtyBlur(this)"><select class="unit-sel" data-i="${i}" onchange="unitSelChange(this)" style="${it.qty?'':'display:none'}">${unitOptionsHtml(it.unit||'ຫິ້ວ')}</select><input class="kgw-in no-capture" type="text" inputmode="decimal" list="kgw-opts" placeholder="ກີໂລ/ຫິ້ວ?" title="ນ້ຳໜັກສະເລ່ຍ 1 ຫົວໜ່ວຍ (ກີໂລ) — ຄູນກັບຈຳນວນອັດຕະໂນມັດ ໃຫ້ຫັກສະຕັອກຖືກຕ້ອງ — ບໍ່ຂຶ້ນໃນໃບບິນ" value="${it.kgWeight?fmt(it.kgWeight):''}" data-i="${i}" oninput="kgWeightInput(this)" style="${kgwVisible(it.qty,it.unit)?'':'display:none'}"><span class="kgw-total no-capture" style="${kgwVisible(it.qty,it.unit)?'':'display:none'}">${kgwTotalText(it)}</span></span></td>
+      <td class="num"><span class="qtywrap"><input class="qty-in" type="text" inputmode="decimal" value="${it.qty?fmt(it.qty):''}" data-i="${i}" oninput="qtyInput(this)" onfocus="qtyFocus(this)" onblur="qtyBlur(this)"><select class="unit-sel" data-i="${i}" onchange="unitSelChange(this)" style="${it.qty?'':'display:none'}">${unitOptionsHtml(it.unit||'ຫິ້ວ')}</select><input class="kgw-in no-capture" type="text" inputmode="decimal" list="kgw-opts" placeholder="ກີໂລ/ຫິ້ວ?" title="ນ້ຳໜັກສະເລ່ຍ 1 ຫົວໜ່ວຍ (ກີໂລ) — ຄູນກັບຈຳນວນອັດຕະໂນມັດ ໃຫ້ຫັກສະຕັອກຖືກຕ້ອງ — ບໍ່ຂຶ້ນໃນໃບບິນ" value="${it.kgWeight?fmt(it.kgWeight):''}" data-i="${i}" oninput="kgWeightInput(this)" style="${_kgVis?'':'display:none'}"><span class="kgw-total no-capture" style="${_kgVis?'':'display:none'}">${kgwTotalText(it)}</span></span></td>
       <td class="num"><span class="pricewrap"><input class="price-in" type="text" inputmode="decimal" value="${it.price?fmt(it.price):''}" data-i="${i}" oninput="priceInput(this)" onfocus="priceFocus(this)" onblur="priceBlur(this)"><span class="punit-txt">${it.price?(' ຕໍ່'+(it.unit||'ຫິ້ວ')):''}</span></span></td>
       <td class="num" data-amt="${i}">${amt?fmt(amt):''}</td>
       <td class="note-cell" contenteditable="true" data-i="${i}" oninput="noteInput(this)" onblur="noteBlur(this)">${escapeHtml(it.note||'')}</td></tr>`;
@@ -5290,7 +5324,7 @@ function cloneFix(doc){
 }
 // ຫາລາຍການທີ່ຂາຍເປັນຫິ້ວ/ໜ່ວຍອື່ນ (ບໍ່ແມ່ນກີໂລ) ແຕ່ຍັງບໍ່ໄດ້ໃສ່ນ້ຳໜັກຈິງ — ໃຊ້ເຕືອນກ່ອນກັອບປີ້ໃບບິນ ເພື່ອຫັກສະຕັອກໃຫ້ຖືກຕ້ອງ
 function missingKgItems(){
-  return (items||[]).filter(it=> it && (it.name||'').trim() && (it.qty||0)>0 && needsKgTracking(it.unit) && !(it.kgWeight>0) ).map(it=>it.name);
+  return (items||[]).filter(it=> it && (it.name||'').trim() && (it.qty||0)>0 && needsKgTracking(effUnit(it.unit)) && !isStockExempt(it.name) && !(it.kgWeight>0) ).map(it=>it.name);
 }
 // ຫາ+focus ຊ່ອງ "ກີໂລແທ້?" ໂຕທຳອິດທີ່ຍັງບໍ່ໄດ້ໃສ່ ໃຫ້ຜູ້ໃຊ້ເຫັນ/ພິມໄດ້ທັນທີ
 function focusMissingKgInput(){
