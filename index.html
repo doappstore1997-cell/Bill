@@ -4108,7 +4108,9 @@ function deliveryItemsSummaryText(raw){
   return deliveryParseItemsField(raw).map(it=>escapeHtml(it.name)+' '+fmt(it.qty||0)+(it.unit?' '+escapeHtml(it.unit):'')).join(', ');
 }
 function cloudGetDeliveryRange(from,to){
-  return _jsonp(SYNC_URL+'?token='+encodeURIComponent(SYNC_TOKEN)+'&deliveryFrom='+encodeURIComponent(from)+'&deliveryTo='+encodeURIComponent(to));
+  // deliveryOnly=1 -> server ບໍ່ຕ້ອງອ່ານ/ສົ່ງ rows/prices/shops/aliases/... ທັງໝົດ (ໃຫຍ່ຂຶ້ນເລື້ອຍໆ) ເອົາແຕ່ deliveryRows
+  // ໄວກວ່າ+payload ນ້ອຍກວ່າ ກັນ timeout ຕອນເນັດຊ້າ
+  return _jsonp(SYNC_URL+'?token='+encodeURIComponent(SYNC_TOKEN)+'&deliveryOnly=1&deliveryFrom='+encodeURIComponent(from)+'&deliveryTo='+encodeURIComponent(to));
 }
 async function openDelivery(){
   const sel=document.getElementById('dv-shop'); if(sel) fillShopSelect(sel, sel.value);
@@ -4152,10 +4154,15 @@ async function loadDeliveryReport(){
   if(!syncOn()){ box.innerHTML='<div style="text-align:center;color:var(--muted);font-size:12.5px;padding:10px 0">ຕ້ອງເປີດໂໝດອອນລາຍກ່ອນ (ຂໍ້ມູນຢູ່ໃນ Google Sheet)</div>'; return; }
   const date=(document.getElementById('dv-date')||{}).value||todayISO();
   box.innerHTML='<div style="text-align:center;color:var(--muted);font-size:12.5px;padding:8px 0">ກຳລັງໂຫລດ...</div>';
-  try{
-    const j=await cloudGetDeliveryRange(date,date);
-    DELIVERY_ROWS=(j&&Array.isArray(j.deliveryRows))?j.deliveryRows:[];
-  }catch(e){ DELIVERY_ROWS=[]; box.innerHTML='<div style="text-align:center;color:#b91c1c;font-size:12.5px;padding:8px 0">ໂຫລດລາຍງານບໍ່ໄດ້ — ເຊັກເນັດ</div>'; return; }
+  // ໃໝ່: ລອງອີກເທື່ອນຶ່ງກ່ອນຈະຂຶ້ນ error — ເນັດມືຖື/ຄວາມຊັກຊ້າຂອງ Apps Script ບາງເທື່ອເຮັດໃຫ້ຄັ້ງທຳອິດ timeout (12 ວິນາທີ)
+  // ທັ້ງທີ່ເນັດຍັງໃຊ້ໄດ້ປົກກະຕິ — retry ຄັ້ງດຽວກ່ອນ ຄ່ອຍຖືວ່າໂຫລດບໍ່ໄດ້ແທ້
+  let j=null, lastErr=null;
+  for(let attempt=0; attempt<2; attempt++){
+    try{ j=await cloudGetDeliveryRange(date,date); lastErr=null; break; }
+    catch(e){ lastErr=e; if(attempt===0){ box.innerHTML='<div style="text-align:center;color:var(--muted);font-size:12.5px;padding:8px 0">ກຳລັງໂຫລດ... (ລອງໃໝ່)</div>'; } }
+  }
+  if(lastErr){ DELIVERY_ROWS=[]; box.innerHTML='<div style="text-align:center;color:#b91c1c;font-size:12.5px;padding:8px 0">ໂຫລດລາຍງານບໍ່ໄດ້ — ເຊັກເນັດ</div>'; return; }
+  DELIVERY_ROWS=(j&&Array.isArray(j.deliveryRows))?j.deliveryRows:[];
   renderDeliveryList();
 }
 function renderDeliveryList(){
@@ -4194,12 +4201,34 @@ function deliveryPhotoChange(e){
       // ອັບເດດໜ້າຈໍທັນທີແບບ optimistic (ບໍ່ຕ້ອງລໍ round-trip) — cloudPost ເປັນ no-cors ອ່ານ response ບໍ່ໄດ້
       const r=DELIVERY_ROWS.find(x=>x.id===id); if(r){ r.status='delivered'; }
       renderDeliveryList();
-      if(st) st.textContent='ອັບໂຫລດຮູບແລ້ວ ✔ — ໝາຍວ່າສົ່ງສຳເລັດແລ້ວ';
-      toast('ອັບໂຫລດຮູບແລ້ວ — ສົ່ງສຳເລັດ ✔');
-      setTimeout(loadDeliveryReport, 1500);   // ໂຫລດຄືນ ໃຫ້ໄດ້ລິ້ງຮູບຈິງຈາກ Sheet
+      if(st) st.textContent='ກຳລັງກວດຢືນຢັນ...';
+      toast('ອັບໂຫລດຮູບແລ້ວ — ກຳລັງກວດຢືນຢັນ...');
+      deliveryVerifyUpload(id, 0);
     }catch(err){ if(st) st.textContent='ອັບໂຫລດຮູບບໍ່ສຳເລັດ — ເຊັກເນັດ'; }
   };
   reader.readAsDataURL(file);
+}
+// ໃໝ່: cloudPost ເປັນ no-cors (client ອ່ານຄຳຕອບຈິງບໍ່ໄດ້ — ບໍ່ຮູ້ວ່າ server ເຮັດສຳເລັດຫຼືລົ້ມ) —
+// ຖ້າພຽງແຕ່ setTimeout(loadDeliveryReport) ຄັ້ງດຽວແລ້ວແລ້ວກັນ: ຫາກ server ລົ້ມແບບງຽບໆ (ເຊັ່ນ ຍັງບໍ່ໄດ້ອະນຸຍາດສິດ Google Drive
+// ຫຼືຍັງບໍ່ໄດ້ deploy ໂຄດຫຼ້າສຸດ) ໜ້າຈໍຈະ "ເດັ້ງກັບຄືນ" ເປັນ ⏳ ຍັງບໍ່ສົ່ງ ໂດຍບໍ່ບອກຫຍັງ (ຄືອາການທີ່ user ລາຍງານ) —
+// ແກ້ໂດຍ: ດຶງລາຍງານຄືນຫຼາຍຄັ້ງ (retry) ແລ້ວກວດວ່າແຖວນັ້ນກາຍເປັນ 'delivered' ແທ້ບໍ່ ຖ້າສຸດທ້າຍຍັງບໍ່ໄດ້ ໃຫ້ແຈ້ງເຕືອນຊັດເຈນ
+// ພ້ອມແນະນຳວິທີແກ້ (ແທນທີ່ຈະງຽບໆ ບໍ່ບອກຫຍັງ)
+function deliveryVerifyUpload(id, attempt){
+  const st=document.getElementById('delivery-status');
+  return loadDeliveryReport().then(()=>{
+    const r=DELIVERY_ROWS.find(x=>x.id===id);
+    if(r && String(r.status)==='delivered'){
+      if(st) st.textContent='ອັບໂຫລດຮູບແລ້ວ ✔ — ໝາຍວ່າສົ່ງສຳເລັດແລ້ວ';
+      toast('ອັບໂຫລດຮູບແລ້ວ — ສົ່ງສຳເລັດ ✔');
+      return;
+    }
+    if(attempt<3){ setTimeout(function(){ deliveryVerifyUpload(id, attempt+1); }, 1800); return; }
+    if(st) st.textContent='⚠️ ອັບໂຫລດຮູບບໍ່ສຳເລັດ (server ບໍ່ຕອບ/ບໍ່ບັນທຶກ) — ກວດ: 1) Apps Script deploy ເປັນ "New version" ຫຼັງແກ້ໂຄດຫຼ້າສຸດແລ້ວບໍ່ 2) ອະນຸຍາດສິດ Google Drive ໃຫ້ script ແລ້ວບໍ່ (ເປີດ Apps Script editor → ເລືອກຟັງຊັນ getDeliveryFolder_ → ກົດ Run ຄັ້ງນຶ່ງເພື່ອຂໍສິດ) 3) ເບິ່ງ Executions log ໃນ Apps Script ວ່າມີ error ບໍ່';
+    toast('⚠️ ອັບໂຫລດຮູບບໍ່ສຳເລັດ — ລອງໃໝ່ ຫຼືເບິ່ງລາຍລະອຽດລຸ່ມ');
+  }).catch(function(){
+    if(attempt<3){ setTimeout(function(){ deliveryVerifyUpload(id, attempt+1); }, 1800); return; }
+    if(st) st.textContent='⚠️ ກວດຢືນຢັນບໍ່ໄດ້ — ເຊັກເນັດ ແລ້ວກົດໂຫລດຄືນ';
+  });
 }
 /* ---------- ຂຽນອໍເດີປະຈຳວັນລວມ (ວາງທັງມື້) — ຈັບຄູ່ຊື່ຮ້ານອັດຕະໂນມັດ ຄືກັນກັບ "ອອກບິນແບບ AI" ແຕ່ບໍ່ບັງຄັບຕ້ອງມີຈຳນວນ/ຫົວໜ່ວຍ ---------- */
 // ວິເຄາະ 1 ແຖວ: ຫາຄູ່ (ຈຳນວນ+ຫົວໜ່ວຍ) ຖ້າມີ — ຊື່ກ່ອນໂຕເລກ(ຫຼືທັງແຖວຖ້າບໍ່ມີເລກເລີຍ) → ຈັບຄູ່ຮ້ານດ້ວຍ aiMatchShop
