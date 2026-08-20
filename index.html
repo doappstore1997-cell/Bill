@@ -3521,12 +3521,13 @@ if(typeof window!=='undefined'){ window.addEventListener('online', function(){ i
 CLOUD_ITEMS = QUEUE.filter(function(q){ return !q._pending; });
 QUEUE = CLOUD_ITEMS.concat(pendingItems());
 /* ================= ONLINE SYNC (Google Sheets) ================= */
-const SYNC_URL_DEFAULT='https://script.google.com/macros/s/AKfycbzhqimA14EgK6CI3nXOxTYv-3vC9CuJMOxZbXUpkXgVnxYfJ0hmrMphtg8zA8EU7jjSRQ/exec';
-const SYNC_URL_OLD='https://script.google.com/macros/s/AKfycbwSSRd9AofrbjSHca6CTfdeTJdPvA7TiQ09mEu53cxqlTCK8nd66mBO_c_MyRpFO70dPA/exec';
+const SYNC_URL_DEFAULT='https://script.google.com/macros/s/AKfycbzxjzB99iXpRa6n8-sbgJQnEVZ-YxrbdPAvoJ-f0_VYCdBm5Z2wA11EfYQXoKToEUn7/exec';
+const SYNC_URL_OLD='https://script.google.com/macros/s/AKfycbzhqimA14EgK6CI3nXOxTYv-3vC9CuJMOxZbXUpkXgVnxYfJ0hmrMphtg8zA8EU7jjSRQ/exec';
+const SYNC_URL_OLD2='https://script.google.com/macros/s/AKfycbwSSRd9AofrbjSHca6CTfdeTJdPvA7TiQ09mEu53cxqlTCK8nd66mBO_c_MyRpFO70dPA/exec';
 let SYNC_URL='', SYNC_USER='', SYNC_TOKEN='DL2026';
 try{
   let stored=localStorage.getItem('dl_sync_url');
-  if(stored===SYNC_URL_OLD){ stored=''; localStorage.removeItem('dl_sync_url'); }  // ລ້າງ URL ເກົ່າ
+  if(stored===SYNC_URL_OLD || stored===SYNC_URL_OLD2){ stored=''; localStorage.removeItem('dl_sync_url'); }  // ລ້າງ URL ເກົ່າ
   SYNC_URL=stored||SYNC_URL_DEFAULT;
   SYNC_USER=localStorage.getItem('dl_sync_user')||'';
   SYNC_TOKEN=localStorage.getItem('dl_sync_token')||'DL2026';
