@@ -995,224 +995,267 @@ var qrcode = function() {
     };
     return _this;
   };
-  //---------------------------------------------------------------------
-  // QRRSBlock
-  //---------------------------------------------------------------------
   var QRRSBlock = function() {
+
     var RS_BLOCK_TABLE = [
+
       // L
       // M
       // Q
       // H
+
       // 1
       [1, 26, 19],
       [1, 26, 16],
       [1, 26, 13],
       [1, 26, 9],
+
       // 2
       [1, 44, 34],
       [1, 44, 28],
       [1, 44, 22],
       [1, 44, 16],
+
       // 3
       [1, 70, 55],
       [1, 70, 44],
       [2, 35, 17],
       [2, 35, 13],
+
       // 4
       [1, 100, 80],
       [2, 50, 32],
       [2, 50, 24],
       [4, 25, 9],
+
       // 5
       [1, 134, 108],
       [2, 67, 43],
       [2, 33, 15, 2, 34, 16],
       [2, 33, 11, 2, 34, 12],
+
       // 6
       [2, 86, 68],
       [4, 43, 27],
       [4, 43, 19],
       [4, 43, 15],
+
       // 7
       [2, 98, 78],
       [4, 49, 31],
       [2, 32, 14, 4, 33, 15],
       [4, 39, 13, 1, 40, 14],
+
       // 8
       [2, 121, 97],
       [2, 60, 38, 2, 61, 39],
       [4, 40, 18, 2, 41, 19],
       [4, 40, 14, 2, 41, 15],
+
       // 9
       [2, 146, 116],
       [3, 58, 36, 2, 59, 37],
       [4, 36, 16, 4, 37, 17],
       [4, 36, 12, 4, 37, 13],
+
       // 10
       [2, 86, 68, 2, 87, 69],
       [4, 69, 43, 1, 70, 44],
       [6, 43, 19, 2, 44, 20],
       [6, 43, 15, 2, 44, 16],
+
       // 11
       [4, 101, 81],
       [1, 80, 50, 4, 81, 51],
       [4, 50, 22, 4, 51, 23],
       [3, 36, 12, 8, 37, 13],
+
       // 12
       [2, 116, 92, 2, 117, 93],
       [6, 58, 36, 2, 59, 37],
       [4, 46, 20, 6, 47, 21],
       [7, 42, 14, 4, 43, 15],
+
       // 13
       [4, 133, 107],
       [8, 59, 37, 1, 60, 38],
       [8, 44, 20, 4, 45, 21],
       [12, 33, 11, 4, 34, 12],
+
       // 14
       [3, 145, 115, 1, 146, 116],
       [4, 64, 40, 5, 65, 41],
       [11, 36, 16, 5, 37, 17],
       [11, 36, 12, 5, 37, 13],
+
       // 15
       [5, 109, 87, 1, 110, 88],
       [5, 65, 41, 5, 66, 42],
       [5, 54, 24, 7, 55, 25],
       [11, 36, 12, 7, 37, 13],
+
       // 16
       [5, 122, 98, 1, 123, 99],
       [7, 73, 45, 3, 74, 46],
       [15, 43, 19, 2, 44, 20],
       [3, 45, 15, 13, 46, 16],
+
       // 17
       [1, 135, 107, 5, 136, 108],
       [10, 74, 46, 1, 75, 47],
       [1, 50, 22, 15, 51, 23],
       [2, 42, 14, 17, 43, 15],
+
       // 18
       [5, 150, 120, 1, 151, 121],
       [9, 69, 43, 4, 70, 44],
       [17, 50, 22, 1, 51, 23],
       [2, 42, 14, 19, 43, 15],
+
       // 19
       [3, 141, 113, 4, 142, 114],
       [3, 70, 44, 11, 71, 45],
       [17, 47, 21, 4, 48, 22],
       [9, 39, 13, 16, 40, 14],
+
       // 20
       [3, 135, 107, 5, 136, 108],
       [3, 67, 41, 13, 68, 42],
       [15, 54, 24, 5, 55, 25],
       [15, 43, 15, 10, 44, 16],
+
       // 21
       [4, 144, 116, 4, 145, 117],
       [17, 68, 42],
       [17, 50, 22, 6, 51, 23],
       [19, 46, 16, 6, 47, 17],
+
       // 22
       [2, 139, 111, 7, 140, 112],
       [17, 74, 46],
       [7, 54, 24, 16, 55, 25],
       [34, 37, 13],
+
       // 23
       [4, 151, 121, 5, 152, 122],
       [4, 75, 47, 14, 76, 48],
       [11, 54, 24, 14, 55, 25],
       [16, 45, 15, 14, 46, 16],
+
       // 24
       [6, 147, 117, 4, 148, 118],
       [6, 73, 45, 14, 74, 46],
       [11, 54, 24, 16, 55, 25],
       [30, 46, 16, 2, 47, 17],
+
       // 25
       [8, 132, 106, 4, 133, 107],
       [8, 75, 47, 13, 76, 48],
       [7, 54, 24, 22, 55, 25],
       [22, 45, 15, 13, 46, 16],
+
       // 26
       [10, 142, 114, 2, 143, 115],
       [19, 74, 46, 4, 75, 47],
       [28, 50, 22, 6, 51, 23],
       [33, 46, 16, 4, 47, 17],
+
       // 27
       [8, 152, 122, 4, 153, 123],
       [22, 73, 45, 3, 74, 46],
       [8, 53, 23, 26, 54, 24],
       [12, 45, 15, 28, 46, 16],
+
       // 28
       [3, 147, 117, 10, 148, 118],
       [3, 73, 45, 23, 74, 46],
       [4, 54, 24, 31, 55, 25],
       [11, 45, 15, 31, 46, 16],
+
       // 29
       [7, 146, 116, 7, 147, 117],
       [21, 73, 45, 7, 74, 46],
       [1, 53, 23, 37, 54, 24],
       [19, 45, 15, 26, 46, 16],
+
       // 30
       [5, 145, 115, 10, 146, 116],
       [19, 75, 47, 10, 76, 48],
       [15, 54, 24, 25, 55, 25],
       [23, 45, 15, 25, 46, 16],
+
       // 31
       [13, 145, 115, 3, 146, 116],
       [2, 74, 46, 29, 75, 47],
       [42, 54, 24, 1, 55, 25],
       [23, 45, 15, 28, 46, 16],
+
       // 32
       [17, 145, 115],
       [10, 74, 46, 23, 75, 47],
       [10, 54, 24, 35, 55, 25],
       [19, 45, 15, 35, 46, 16],
+
       // 33
       [17, 145, 115, 1, 146, 116],
       [14, 74, 46, 21, 75, 47],
       [29, 54, 24, 19, 55, 25],
       [11, 45, 15, 46, 46, 16],
+
       // 34
       [13, 145, 115, 6, 146, 116],
       [14, 74, 46, 23, 75, 47],
       [44, 54, 24, 7, 55, 25],
       [59, 46, 16, 1, 47, 17],
+
       // 35
       [12, 151, 121, 7, 152, 122],
       [12, 75, 47, 26, 76, 48],
       [39, 54, 24, 14, 55, 25],
       [22, 45, 15, 41, 46, 16],
+
       // 36
       [6, 151, 121, 14, 152, 122],
       [6, 75, 47, 34, 76, 48],
       [46, 54, 24, 10, 55, 25],
       [2, 45, 15, 64, 46, 16],
+
       // 37
       [17, 152, 122, 4, 153, 123],
       [29, 74, 46, 14, 75, 47],
       [49, 54, 24, 10, 55, 25],
       [24, 45, 15, 46, 46, 16],
+
       // 38
       [4, 152, 122, 18, 153, 123],
       [13, 74, 46, 32, 75, 47],
       [48, 54, 24, 14, 55, 25],
       [42, 45, 15, 32, 46, 16],
+
       // 39
       [20, 147, 117, 4, 148, 118],
       [40, 75, 47, 7, 76, 48],
       [43, 54, 24, 22, 55, 25],
       [10, 45, 15, 67, 46, 16],
+
       // 40
       [19, 148, 118, 6, 149, 119],
       [18, 75, 47, 31, 76, 48],
       [34, 54, 24, 34, 55, 25],
       [20, 45, 15, 61, 46, 16]
     ];
+
     var qrRSBlock = function(totalCount, dataCount) {
       var _this = {};
       _this.totalCount = totalCount;
       _this.dataCount = dataCount;
       return _this;
     };
+
     var _this = {};
+
     var getRsBlockTable = function(typeNumber, errorCorrectionLevel) {
+
       switch(errorCorrectionLevel) {
       case QRErrorCorrectionLevel.L :
         return RS_BLOCK_TABLE[(typeNumber - 1) * 4 + 0];
@@ -1226,80 +1269,114 @@ var qrcode = function() {
         return undefined;
       }
     };
+
     _this.getRSBlocks = function(typeNumber, errorCorrectionLevel) {
+
       var rsBlock = getRsBlockTable(typeNumber, errorCorrectionLevel);
+
       if (typeof rsBlock == 'undefined') {
         throw 'bad rs block @ typeNumber:' + typeNumber +
             '/errorCorrectionLevel:' + errorCorrectionLevel;
       }
+
       var length = rsBlock.length / 3;
+
       var list = [];
+
       for (var i = 0; i < length; i += 1) {
+
         var count = rsBlock[i * 3 + 0];
         var totalCount = rsBlock[i * 3 + 1];
         var dataCount = rsBlock[i * 3 + 2];
+
         for (var j = 0; j < count; j += 1) {
           list.push(qrRSBlock(totalCount, dataCount) );
         }
       }
+
       return list;
     };
+
     return _this;
   }();
+
   //---------------------------------------------------------------------
   // qrBitBuffer
   //---------------------------------------------------------------------
+
   var qrBitBuffer = function() {
+
     var _buffer = [];
     var _length = 0;
+
     var _this = {};
+
     _this.getBuffer = function() {
       return _buffer;
     };
+
     _this.getAt = function(index) {
       var bufIndex = Math.floor(index / 8);
       return ( (_buffer[bufIndex] >>> (7 - index % 8) ) & 1) == 1;
     };
+
     _this.put = function(num, length) {
       for (var i = 0; i < length; i += 1) {
         _this.putBit( ( (num >>> (length - i - 1) ) & 1) == 1);
       }
     };
+
     _this.getLengthInBits = function() {
       return _length;
     };
+
     _this.putBit = function(bit) {
+
       var bufIndex = Math.floor(_length / 8);
       if (_buffer.length <= bufIndex) {
         _buffer.push(0);
       }
+
       if (bit) {
         _buffer[bufIndex] |= (0x80 >>> (_length % 8) );
       }
+
       _length += 1;
     };
+
     return _this;
   };
+
   //---------------------------------------------------------------------
   // qrNumber
   //---------------------------------------------------------------------
+
   var qrNumber = function(data) {
+
     var _mode = QRMode.MODE_NUMBER;
     var _data = data;
+
     var _this = {};
+
     _this.getMode = function() {
       return _mode;
     };
+
     _this.getLength = function(buffer) {
       return _data.length;
     };
+
     _this.write = function(buffer) {
+
       var data = _data;
+
       var i = 0;
+
       while (i + 2 < data.length) {
         buffer.put(strToNum(data.substring(i, i + 3) ), 10);
         i += 3;
       }
+
       if (i < data.length) {
         if (data.length - i == 1) {
           buffer.put(strToNum(data.substring(i, i + 1) ), 4);
@@ -1308,6 +1385,7 @@ var qrcode = function() {
         }
       }
     };
+
     var strToNum = function(s) {
       var num = 0;
       for (var i = 0; i < s.length; i += 1) {
@@ -1315,41 +1393,56 @@ var qrcode = function() {
       }
       return num;
     };
+
     var chatToNum = function(c) {
       if ('0' <= c && c <= '9') {
         return c.charCodeAt(0) - '0'.charCodeAt(0);
       }
       throw 'illegal char :' + c;
     };
+
     return _this;
   };
+
   //---------------------------------------------------------------------
   // qrAlphaNum
   //---------------------------------------------------------------------
+
   var qrAlphaNum = function(data) {
+
     var _mode = QRMode.MODE_ALPHA_NUM;
     var _data = data;
+
     var _this = {};
+
     _this.getMode = function() {
       return _mode;
     };
+
     _this.getLength = function(buffer) {
       return _data.length;
     };
+
     _this.write = function(buffer) {
+
       var s = _data;
+
       var i = 0;
+
       while (i + 1 < s.length) {
         buffer.put(
           getCode(s.charAt(i) ) * 45 +
           getCode(s.charAt(i + 1) ), 11);
         i += 2;
       }
+
       if (i < s.length) {
         buffer.put(getCode(s.charAt(i) ), 6);
       }
     };
+
     var getCode = function(c) {
+
       if ('0' <= c && c <= '9') {
         return c.charCodeAt(0) - '0'.charCodeAt(0);
       } else if ('A' <= c && c <= 'Z') {
@@ -1370,35 +1463,48 @@ var qrcode = function() {
         }
       }
     };
+
     return _this;
   };
+
   //---------------------------------------------------------------------
   // qr8BitByte
   //---------------------------------------------------------------------
+
   var qr8BitByte = function(data) {
+
     var _mode = QRMode.MODE_8BIT_BYTE;
     var _data = data;
     var _bytes = qrcode.stringToBytes(data);
+
     var _this = {};
+
     _this.getMode = function() {
       return _mode;
     };
+
     _this.getLength = function(buffer) {
       return _bytes.length;
     };
+
     _this.write = function(buffer) {
       for (var i = 0; i < _bytes.length; i += 1) {
         buffer.put(_bytes[i], 8);
       }
     };
+
     return _this;
   };
+
   //---------------------------------------------------------------------
   // qrKanji
   //---------------------------------------------------------------------
+
   var qrKanji = function(data) {
+
     var _mode = QRMode.MODE_KANJI;
     var _data = data;
+
     var stringToBytes = qrcode.stringToBytesFuncs['SJIS'];
     if (!stringToBytes) {
       throw 'sjis not supported.';
@@ -1409,20 +1515,30 @@ var qrcode = function() {
       if (test.length != 2 || ( (test[0] << 8) | test[1]) != code) {
         throw 'sjis not supported.';
       }
-    }('友', 0x9746);
+    }('\u53cb', 0x9746);
+
     var _bytes = stringToBytes(data);
+
     var _this = {};
+
     _this.getMode = function() {
       return _mode;
     };
+
     _this.getLength = function(buffer) {
       return ~~(_bytes.length / 2);
     };
+
     _this.write = function(buffer) {
+
       var data = _bytes;
+
       var i = 0;
+
       while (i + 1 < data.length) {
+
         var c = ( (0xff & data[i]) << 8) | (0xff & data[i + 1]);
+
         if (0x8140 <= c && c <= 0x9FFC) {
           c -= 0x8140;
         } else if (0xE040 <= c && c <= 0xEBBF) {
@@ -1430,32 +1546,45 @@ var qrcode = function() {
         } else {
           throw 'illegal char at ' + (i + 1) + '/' + c;
         }
+
         c = ( (c >>> 8) & 0xff) * 0xC0 + (c & 0xff);
+
         buffer.put(c, 13);
+
         i += 2;
       }
+
       if (i < data.length) {
         throw 'illegal char at ' + (i + 1);
       }
     };
+
     return _this;
   };
+
   //=====================================================================
   // GIF Support etc.
   //
+
   //---------------------------------------------------------------------
   // byteArrayOutputStream
   //---------------------------------------------------------------------
+
   var byteArrayOutputStream = function() {
+
     var _bytes = [];
+
     var _this = {};
+
     _this.writeByte = function(b) {
       _bytes.push(b & 0xff);
     };
+
     _this.writeShort = function(i) {
       _this.writeByte(i);
       _this.writeByte(i >>> 8);
     };
+
     _this.writeBytes = function(b, off, len) {
       off = off || 0;
       len = len || b.length;
@@ -1463,14 +1592,17 @@ var qrcode = function() {
         _this.writeByte(b[i + off]);
       }
     };
+
     _this.writeString = function(s) {
       for (var i = 0; i < s.length; i += 1) {
         _this.writeByte(s.charCodeAt(i) );
       }
     };
+
     _this.toByteArray = function() {
       return _bytes;
     };
+
     _this.toString = function() {
       var s = '';
       s += '[';
@@ -1483,20 +1615,27 @@ var qrcode = function() {
       s += ']';
       return s;
     };
+
     return _this;
   };
+
   //---------------------------------------------------------------------
   // base64EncodeOutputStream
   //---------------------------------------------------------------------
+
   var base64EncodeOutputStream = function() {
+
     var _buffer = 0;
     var _buflen = 0;
     var _length = 0;
     var _base64 = '';
+
     var _this = {};
+
     var writeEncoded = function(b) {
       _base64 += String.fromCharCode(encode(b & 0x3f) );
     };
+
     var encode = function(n) {
       if (n < 0) {
         // error.
@@ -1513,21 +1652,27 @@ var qrcode = function() {
       }
       throw 'n:' + n;
     };
+
     _this.writeByte = function(n) {
+
       _buffer = (_buffer << 8) | (n & 0xff);
       _buflen += 8;
       _length += 1;
+
       while (_buflen >= 6) {
         writeEncoded(_buffer >>> (_buflen - 6) );
         _buflen -= 6;
       }
     };
+
     _this.flush = function() {
+
       if (_buflen > 0) {
         writeEncoded(_buffer << (6 - _buflen) );
         _buffer = 0;
         _buflen = 0;
       }
+
       if (_length % 3 != 0) {
         // padding
         var padlen = 3 - _length % 3;
@@ -1536,30 +1681,41 @@ var qrcode = function() {
         }
       }
     };
+
     _this.toString = function() {
       return _base64;
     };
+
     return _this;
   };
+
   //---------------------------------------------------------------------
   // base64DecodeInputStream
   //---------------------------------------------------------------------
+
   var base64DecodeInputStream = function(str) {
+
     var _str = str;
     var _pos = 0;
     var _buffer = 0;
     var _buflen = 0;
+
     var _this = {};
+
     _this.read = function() {
+
       while (_buflen < 8) {
+
         if (_pos >= _str.length) {
           if (_buflen == 0) {
             return -1;
           }
           throw 'unexpected end of file./' + _buflen;
         }
+
         var c = _str.charAt(_pos);
         _pos += 1;
+
         if (c == '=') {
           _buflen = 0;
           return -1;
@@ -1567,13 +1723,16 @@ var qrcode = function() {
           // ignore if whitespace.
           continue;
         }
+
         _buffer = (_buffer << 6) | decode(c.charCodeAt(0) );
         _buflen += 6;
       }
+
       var n = (_buffer >>> (_buflen - 8) ) & 0xff;
       _buflen -= 8;
       return n;
     };
+
     var decode = function(c) {
       if (0x41 <= c && c <= 0x5a) {
         return c - 0x41;
@@ -1589,77 +1748,108 @@ var qrcode = function() {
         throw 'c:' + c;
       }
     };
+
     return _this;
   };
+
   //---------------------------------------------------------------------
   // gifImage (B/W)
   //---------------------------------------------------------------------
+
   var gifImage = function(width, height) {
+
     var _width = width;
     var _height = height;
     var _data = new Array(width * height);
+
     var _this = {};
+
     _this.setPixel = function(x, y, pixel) {
       _data[y * _width + x] = pixel;
     };
+
     _this.write = function(out) {
+
       //---------------------------------
       // GIF Signature
+
       out.writeString('GIF87a');
+
       //---------------------------------
       // Screen Descriptor
+
       out.writeShort(_width);
       out.writeShort(_height);
+
       out.writeByte(0x80); // 2bit
       out.writeByte(0);
       out.writeByte(0);
+
       //---------------------------------
       // Global Color Map
+
       // black
       out.writeByte(0x00);
       out.writeByte(0x00);
       out.writeByte(0x00);
+
       // white
       out.writeByte(0xff);
       out.writeByte(0xff);
       out.writeByte(0xff);
+
       //---------------------------------
       // Image Descriptor
+
       out.writeString(',');
       out.writeShort(0);
       out.writeShort(0);
       out.writeShort(_width);
       out.writeShort(_height);
       out.writeByte(0);
+
       //---------------------------------
       // Local Color Map
+
       //---------------------------------
       // Raster Data
+
       var lzwMinCodeSize = 2;
       var raster = getLZWRaster(lzwMinCodeSize);
+
       out.writeByte(lzwMinCodeSize);
+
       var offset = 0;
+
       while (raster.length - offset > 255) {
         out.writeByte(255);
         out.writeBytes(raster, offset, 255);
         offset += 255;
       }
+
       out.writeByte(raster.length - offset);
       out.writeBytes(raster, offset, raster.length - offset);
       out.writeByte(0x00);
+
       //---------------------------------
       // GIF Terminator
       out.writeString(';');
     };
+
     var bitOutputStream = function(out) {
+
       var _out = out;
       var _bitLength = 0;
       var _bitBuffer = 0;
+
       var _this = {};
+
       _this.write = function(data, length) {
+
         if ( (data >>> length) != 0) {
           throw 'length over';
         }
+
         while (_bitLength + length >= 8) {
           _out.writeByte(0xff & ( (data << _bitLength) | _bitBuffer) );
           length -= (8 - _bitLength);
@@ -1667,60 +1857,89 @@ var qrcode = function() {
           _bitBuffer = 0;
           _bitLength = 0;
         }
+
         _bitBuffer = (data << _bitLength) | _bitBuffer;
         _bitLength = _bitLength + length;
       };
+
       _this.flush = function() {
         if (_bitLength > 0) {
           _out.writeByte(_bitBuffer);
         }
       };
+
       return _this;
     };
+
     var getLZWRaster = function(lzwMinCodeSize) {
+
       var clearCode = 1 << lzwMinCodeSize;
       var endCode = (1 << lzwMinCodeSize) + 1;
       var bitLength = lzwMinCodeSize + 1;
+
       // Setup LZWTable
       var table = lzwTable();
+
       for (var i = 0; i < clearCode; i += 1) {
         table.add(String.fromCharCode(i) );
       }
       table.add(String.fromCharCode(clearCode) );
       table.add(String.fromCharCode(endCode) );
+
       var byteOut = byteArrayOutputStream();
       var bitOut = bitOutputStream(byteOut);
+
       // clear code
       bitOut.write(clearCode, bitLength);
+
       var dataIndex = 0;
+
       var s = String.fromCharCode(_data[dataIndex]);
       dataIndex += 1;
+
       while (dataIndex < _data.length) {
+
         var c = String.fromCharCode(_data[dataIndex]);
         dataIndex += 1;
+
         if (table.contains(s + c) ) {
+
           s = s + c;
+
         } else {
+
           bitOut.write(table.indexOf(s), bitLength);
+
           if (table.size() < 0xfff) {
+
             if (table.size() == (1 << bitLength) ) {
               bitLength += 1;
             }
+
             table.add(s + c);
           }
+
           s = c;
         }
       }
+
       bitOut.write(table.indexOf(s), bitLength);
+
       // end code
       bitOut.write(endCode, bitLength);
+
       bitOut.flush();
+
       return byteOut.toByteArray();
     };
+
     var lzwTable = function() {
+
       var _map = {};
       var _size = 0;
+
       var _this = {};
+
       _this.add = function(key) {
         if (_this.contains(key) ) {
           throw 'dup key:' + key;
@@ -1728,19 +1947,25 @@ var qrcode = function() {
         _map[key] = _size;
         _size += 1;
       };
+
       _this.size = function() {
         return _size;
       };
+
       _this.indexOf = function(key) {
         return _map[key];
       };
+
       _this.contains = function(key) {
         return typeof _map[key] != 'undefined';
       };
+
       return _this;
     };
+
     return _this;
   };
+
   var createDataURL = function(width, height, getPixel) {
     var gif = gifImage(width, height);
     for (var y = 0; y < height; y += 1) {
@@ -1748,22 +1973,29 @@ var qrcode = function() {
         gif.setPixel(x, y, getPixel(x, y) );
       }
     }
+
     var b = byteArrayOutputStream();
     gif.write(b);
+
     var base64 = base64EncodeOutputStream();
     var bytes = b.toByteArray();
     for (var i = 0; i < bytes.length; i += 1) {
       base64.writeByte(bytes[i]);
     }
     base64.flush();
+
     return 'data:image/gif;base64,' + base64;
   };
+
   //---------------------------------------------------------------------
   // returns qrcode function.
+
   return qrcode;
 }();
+
 // multibyte support
 !function() {
+
   qrcode.stringToBytesFuncs['UTF-8'] = function(s) {
     // http://stackoverflow.com/questions/18729405/how-to-convert-utf8-string-to-byte-array
     function toUTF8Array(str) {
@@ -1798,7 +2030,9 @@ var qrcode = function() {
     }
     return toUTF8Array(s);
   };
+
 }();
+
 (function (factory) {
   if (typeof define === 'function' && define.amd) {
       define([], factory);
@@ -2228,6 +2462,8 @@ var qrcode = function() {
   .ai-badge-warn{background:#fff4d6;color:#92600a}
   .ai-badge-new{background:#e0ecff;color:#1d4ed8}
   .ai-badge-alias{background:#ede9fe;color:#6d28d9}
+  .ai-row-confirm{flex:0 0 auto;font-family:inherit;font-size:11.5px;font-weight:700;border:none;border-radius:6px;padding:5px 9px;margin-top:4px;cursor:pointer;background:#e5e7eb;color:#374151}
+  .ai-row-confirm.confirmed{background:#16a34a;color:#fff}
   /* ---------- Print ---------- */
   @media print{
     body{background:#fff}
@@ -2762,7 +2998,7 @@ function laoDate(iso){
 }
 /* ---------- ສະຖານະ & ລາຍການ ---------- */
 let items=[{name:'',qty:0,price:0,unit:'ຫິ້ວ'}];
-const DEFAULT_QR="data:image/png;base64,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";
+const DEFAULT_QR="data:image/png;base64,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";
 let qrDataUrl=DEFAULT_QR;
 const qrPrintImg=new Image();
 qrPrintImg.src=qrDataUrl;
@@ -4514,7 +4750,7 @@ function gridReload(){
 }
 // ລ້າງທັງໝົດ — ລ້າງທັງຄິວທີ່ໃຊ້ຮ່ວມກັບໜ້າ Auto (ອອນລາຍ ທຸກເຄື່ອງ) ພ້ອມທັງລາຍການພິເສດ/ໝາຍເຫດຂອງຕາຕະລາງ
 function gridClearAll(){
-  if(!confirm('ລ້າງລາຍການທັງໝົດ (ທຸກຮ້ານ ທຸກລາຍການ ໃນຕາຕະລາງ)?')) return;
+  if(!confirm('ລ້າງລາຍການທັງໝົດ (ທຸກຮ້ານ ທຸກລາຍการ ໃນຕາຕະລາງ)?')) return;
   if(syncOn()){
     PENDING=[]; savePending(); PENDING_OPS=[]; saveOps();
     CLOUD_ITEMS=[]; QORDER=[]; saveQOrder(); CLOUD_ORDER=[]; renderMerged();
@@ -4530,20 +4766,20 @@ function gridClearAll(){
 }
 let GRID_ROW_ID={};   // shop␟item -> id ຂອງແຖວໃນຄິວ (ຄລາວ) — ໃຊ້ອັບເດດແທນທີ່ຈະເພີ່ມຊ້ຳ ຕອນພິມໃນຕາຕະລາງ
 let _gridSyncTimers={};
-// ລາຍການພິເສດ/ຊ້ຳ ຕໍ່ຮ້ານ (ນອກຕາຕະລາງຫຼັກ) — ໃຫ້ໃສ່ລາຍການດຽວກັນຫຼາຍເທື່ອ ພ້ອມໝາຍເຫດແຍກແຕ່ລະລາຍການໄດ້ — ບັນທຶກໄວ້ໃນເຄື່ອງ ບໍ່ໃຫ້ຫາຍ ຖ້າອອກແອັບກ່ອນອອກບິນ
+// ລາຍການພິເສດ/ຊ້ຳ ຕໍ່ຮ້ານ (ນອກຕາຕະລາງຫຼັກ) — ໃຫ້ໃສ່ລາຍການດຽວກັນຫຼາຍເທື່ອ ພ້ອມໝາຍເຫดแยกแต่ละรายการได้ — ບັນທຶກໄວ້ໃນເຄື່ອງ ບໍ່ໃຫ້ຫາຍ ຖ້າອອກແອັບກ່ອນອອກບິນ
 const GRID_EXTRA_KEY='dl_grid_extra_v1';
 function loadGridExtra(){ try{ const r=localStorage.getItem(GRID_EXTRA_KEY); if(r){ const o=JSON.parse(r); if(o&&typeof o==='object') return o; } }catch(e){} return {}; }
 function saveGridExtra(){ try{ localStorage.setItem(GRID_EXTRA_KEY, JSON.stringify(GRID_EXTRA)); }catch(e){} }
 let GRID_EXTRA=loadGridExtra();        // shopName -> [{id,item,qty,unit,note}]
 let GRID_EXTRA_OPEN=new Set();   // ຊື່ຮ້ານທີ່ກຳລັງເປີດຊ່ອງລາຍການພິເສດຢູ່
 let GRID_EXTRA_SEQ=(function(){ let m=0; Object.keys(GRID_EXTRA).forEach(k=>(GRID_EXTRA[k]||[]).forEach(e=>{ if(e.id>m) m=e.id; })); return m+1; })();
-// ໝາຍເຫດຂອງແຕ່ລະຊ່ອງໃນຕາຕະລາງຫຼັກ (ຊ່ອງຕື່ມຈຳນວນທຳອິດ) — key = shop␟item — ຈະຕິດໄປໃນໃບບິນທີ່ອອກ — ບັນທຶກໄວ້ໃນເຄື່ອງ ບໍ່ໃຫ້ຫາຍ
+// ໝາຍເຫดของแต่ละช่องในตาราง主 (ชอง เพิ่มจำนวนแรก) — key = shop␟item — ຈະຕິດໄປໃນໃບບິນທີ່ອອກ — ບັນທຶກໄວ້ໃນເຄື່ອງ ບໍ່ໃຫ້ຫາຍ
 const GRID_CELL_NOTES_KEY='dl_grid_cell_notes_v1';
 function loadGridCellNotes(){ try{ const r=localStorage.getItem(GRID_CELL_NOTES_KEY); if(r){ const o=JSON.parse(r); if(o&&typeof o==='object') return o; } }catch(e){} return {}; }
 function saveGridCellNotes(){ try{ localStorage.setItem(GRID_CELL_NOTES_KEY, JSON.stringify(GRID_CELL_NOTES)); }catch(e){} }
 let GRID_CELL_NOTES=loadGridCellNotes();
 let _gcnKey='';
-// ຄິດໄລ່ GRID_ROW_ID ຄືນຈາກ QUEUE ປັດຈຸບັນ (ຮ້ານ+ລາຍການທີ່ມີແຖວດຽວເທົ່ານັ້ນ ຈຶ່ງ sync ອັບເດດແທນເພີ່ມໃໝ່ໄດ້ຢ່າງແນ່ນອນ)
+// ຄິດໄລ່ GRID_ROW_ID ຄືນຈາກ QUEUE ปัจจุบัน (ຮ້ານ+ລາຍการ ที่มีแถวเดียวเท่านั้น จึง sync อัพเดทแทนเพิ่มใหม่ได้อย่างแน่นอน)
 function syncGridRowIds(){
   const idCount={};
   GRID_ROW_ID={};
@@ -4576,7 +4812,7 @@ function buildGridTable(){
   sortedShopsList().forEach(s=>{
     if((GRID_EXTRA[s.name]||[]).length) GRID_EXTRA_OPEN.add(s.name);   // ຮ້ານທີ່ມີລາຍການພິເສດຢູ່ກ່ອນແລ້ວ ໃຫ້ເປີດສະແດງເລີຍ
     const extraCount=(GRID_EXTRA[s.name]||[]).length;
-    h+='<tr class="gt-row"><td class="gt-shop"><span class="gt-shop-name">'+escapeHtml(s.name)+'</span> <button type="button" class="gx-add" title="ເພີ່ມລາຍການພິເສດ/ຊ້ຳ ພ້ອມໝາຍເຫດ" onclick="toggleGridExtra(this)">➕'+(extraCount?'<span class="gx-badge">'+extraCount+'</span>':'')+'</button></td>';
+    h+='<tr class="gt-row"><td class="gt-shop"><span class="gt-shop-name">'+escapeHtml(s.name)+'</span> <button type="button" class="gx-add" title="ເພີ່ມລາຍການພິເສດ/ຊ້ຳ ພ້ອມໝາຍເຫด" onclick="toggleGridExtra(this)">➕'+(extraCount?'<span class="gx-badge">'+extraCount+'</span>':'')+'</button></td>';
     PRODUCTS.forEach(p=>{
       const key=s.name+'␟'+p.name;
       let v=prev[key]||'';
@@ -4585,7 +4821,7 @@ function buildGridTable(){
       const cls=v?'grid-qty-in has-val':'grid-qty-in';
       const hasNote=!!(GRID_CELL_NOTES[key]&&GRID_CELL_NOTES[key].trim());
       h+='<td><div class="gq-wrap"><input type="text" inputmode="decimal" class="'+cls+'" data-shop="'+escapeAttr(s.name)+'" data-prod="'+escapeAttr(p.name)+'"'+valAttr+' placeholder="0" oninput="gridCellInput(this)">'
-        +'<button type="button" class="gq-note'+(hasNote?' has-note':'')+'" data-shop="'+escapeAttr(s.name)+'" data-prod="'+escapeAttr(p.name)+'" title="ໝາຍເຫດ (ຈະຕິດໄປໃນໃບບິນ)" onclick="openGridCellNote(this)">📝</button></div></td>';
+        +'<button type="button" class="gq-note'+(hasNote?' has-note':'')+'" data-shop="'+escapeAttr(s.name)+'" data-prod="'+escapeAttr(p.name)+'" title="ໝາຍເຫด (ຈະຕິດໄປໃນໃບບິນ)" onclick="openGridCellNote(this)">📝</button></div></td>';
     });
     h+='</tr>';
     h+='<tr class="gt-extra-row" data-shop="'+escapeAttr(s.name)+'" style="display:none"><td colspan="'+(PRODUCTS.length+1)+'"><div class="gx-box"></div></td></tr>';
@@ -4621,8 +4857,8 @@ function applyGridFilter(){
   });
   updateGridItemCount();
 }
-// ນັບຈຳນວນຮ້ານທີ່ມີລາຍການ ແລະ ຈຳນວນລາຍການລວມທັງໝົດ (ຊ່ອງທີ່ໃສ່ຈຳນວນແລ້ວ + ລາຍການພິເສດ) ໃນຕາຕະລາງທັງໝົດ (ບໍ່ຂຶ້ນກັບການກອງແຖວ)
-// ໝາຍເຫດ: ໂຕໝູ 3 ສາຂາ ແລະ ໝູນ້ອຍ 2 ສາຂາ ລວມບິນດຽວ ຈຶ່ງນັບເປັນ 1 ຮ້ານ (ຄືກັນກັບຕອນອອກໃບບິນ)
+// ນັບຈຳນວນຮ້ານທີ່ມີລາຍການ ແລະ ຈຳນວນລາຍการรวมทั้งหมด (ชอง ที่ใส่จำนวนแล้ว + ลายการพิเศษ) ໃນຕາຕะลางทั้งหมด (บ่ขึ้นกับการกรองแถว)
+// ໝາยเหด: ໂຕໝູ 3 ສາຂາ ແລະ ໝູນ້ອຍ 2 ສາຂາ ລວມບิลดั่ว ຈึ่งนับเป็น 1 ร้าน (ถือกันกับตอนออกใบบิล)
 function updateGridItemCount(){
   const out=document.getElementById('grid-item-count'); if(!out) return;
   const GRID_MERGE_GROUPS=[{pre:'ໂຕໝູ'},{pre:'ໝູນ້ອຍ'}];
@@ -4640,9 +4876,9 @@ function updateGridItemCount(){
     shopsWithItems.add(g ? g.pre : shopName);
   });
   const shopCount=shopsWithItems.size;
-  out.textContent = itemCount ? ('('+shopCount+' ຮ້ານ, '+itemCount+' ລາຍການ)') : '';
+  out.textContent = itemCount ? ('('+shopCount+' ຮ້ານ, '+itemCount+' ລາຍการ)') : '';
 }
-// ເປີດ/ປິດ ຊ່ອງລາຍການພິເສດ (ຊ້ຳ/ໝາຍເຫດ) ຂອງແຖວຮ້ານທີ່ກົດ +
+// ເປີດ/ປິດ ຊ່ອງລາຍการพิเศษ (ซ้ำ/หมายเหด) ของแถวร้านที่กด +
 function toggleGridExtra(btn){
   const tr=btn.closest('tr');
   const extraRow=tr && tr.nextElementSibling;
@@ -4657,25 +4893,25 @@ function gxRowShop(el){
   const row=el.closest('.gt-extra-row');
   return row ? row.dataset.shop : '';
 }
-// ແຕ້ມເນື້ອຫາຊ່ອງລາຍການພິເສດ (ລາຍການທີ່ເພີ່ມໄວ້ + ປຸ່ມເພີ່ມ)
+// ແຕ້ມเนื้อหาชอง ลายการพิเศษ (ลายการที่เพิ่มไว้ + ปุ่มเพิ่ม)
 function renderGridExtraBox(extraRow){
   const shopName=extraRow.dataset.shop;
   const box=extraRow.querySelector('.gx-box'); if(!box) return;
   const list=GRID_EXTRA[shopName]||[];
-  let h='<div class="gx-title">ລາຍການພິເສດ/ຊ້ຳ — ໃສ່ໄດ້ຫຼາຍລາຍການເຖິງຊື່ຊ້ຳກັນ ພ້ອມໝາຍເຫດແຍກແຕ່ລະລາຍການ</div>';
+  let h='<div class="gx-title">ລາຍการพิเศษ/ซ้ำ — ใส่ได้หลายรายการเถิงชื่อซ้ำกัน พร้อมหมายเหดแยกแต่ละรายการ</div>';
   if(list.length){
     h+='<div class="gx-list">';
     list.forEach(e=>{
       h+='<div class="gx-row">'
         +'<input class="gx-in gx-item" list="product-list" value="'+escapeAttr(e.item||'')+'" placeholder="ຊື່ລາຍการ" oninput="gxUpdate(this,'+e.id+',\'item\')">'
         +'<input class="gx-in gx-qty" type="text" inputmode="decimal" value="'+escapeAttr(e.qty?String(e.qty):'')+'" placeholder="ຈຳນວນ" oninput="gxUpdate(this,'+e.id+',\'qty\')">'
-        +'<input class="gx-in gx-note" value="'+escapeAttr(e.note||'')+'" placeholder="📝 ໝາຍເຫດ" oninput="gxUpdate(this,'+e.id+',\'note\')">'
+        +'<input class="gx-in gx-note" value="'+escapeAttr(e.note||'')+'" placeholder="📝 ໝາยเหด" oninput="gxUpdate(this,'+e.id+',\'note\')">'
         +'<button type="button" class="gx-del" title="ລົບ" onclick="gxRemove(this,'+e.id+')">×</button>'
         +'</div>';
     });
     h+='</div>';
   }
-  h+='<button type="button" class="gx-plus" onclick="gxAdd(this)">+ ເພີ່ມລາຍการ</button>';
+  h+='<button type="button" class="gx-plus" onclick="gxAdd(this)">+ ເພີ່ມลายการ</button>';
   box.innerHTML=h;
 }
 function gxAdd(btn){
@@ -4691,8 +4927,8 @@ function gxUpdate(el,id,field){
   const list=GRID_EXTRA[shopName]||[];
   const e=list.find(x=>x.id===id); if(!e) return;
   e[field]=el.value;
-  saveGridExtra();   // ບັນທຶກໄວ້ໃນເຄື່ອງທັນທີ ບໍ່ໃຫ້ຫາຍ ຖ້າອອກແອັບກ່ອນອອກບິນ
-  applyGridFilter();   // ອັບເດດ ຈຳນວນ+ຕົວກຣອງ "ມີລາຍການ" ທັນທີ (ບໍ່ແຕະ innerHTML ຂອງຊ່ອງນີ້ ບໍ່ໃຫ້ focus ຫາຍ)
+  saveGridExtra();   // ບັນທຶกไว้ในเครื่องทันที ไม่ให้หายถ้าออกแอปก่อนออกบิล
+  applyGridFilter();   // ອັບເดตจำนวน+ตัวกรอง "มีรายการ" ทันที (ไม่แตะ innerHTML ของช่องนี้ ไม่ให้ focus หาย)
 }
 function gxRemove(btn,id){
   const extraRow=btn.closest('.gt-extra-row');
@@ -4712,11 +4948,11 @@ function gridCellInput(el){
   if(syncOn()){
     _gridSyncTimers[key]=setTimeout(()=>syncGridCellToQueue(shop,item,el.value), 700);
   }else{
-    // ບໍ່ໄດ້ອອນລາຍ — ບັນທຶກໃສ່ຄິວໃນເຄື່ອງ (localStorage) ໄວ້ກ່ອນ ບໍ່ໃຫ້ຫາຍ ຖ້າຫລົງກົດອອກ ຫຼື ອອກແອັບກ່ອນອອກບິນ
+    // ບໍ່ໄດ້ອອນລາຍ — ບັນທຶกใส่คิวในเครื่อง (localStorage) ไว้ก่อน ไม่ให้หาย ถ้าหลงกดออก หรือ ออกแอปก่อนออกบิล
     _gridSyncTimers[key]=setTimeout(()=>syncGridCellToQueueOffline(shop,item,el.value), 700);
   }
 }
-// ບັນທຶກຈຳນວນຂອງຊ່ອງໃນຕາຕະລາງເຂົ້າຄິວທ້ອງຖິ່ນ (ໂໝດບໍ່ອອນລາຍ) — ອັບເດດແທນທີ່ຈະເພີ່ມຊ້ຳ, ລົບອອກຖ້າຈຳນວນເປັນ 0
+// ບັນທຶกจำนวนของช่องในตารางเข้าคิวท้องถิ่น (โหมดไม่ออนลาย) — อัพเดทแทนที่จะเพิ่มซ้ำ, ลบออกถ้าจำนวนเป็น 0
 function syncGridCellToQueueOffline(shop,item,rawVal){
   const qty=parseFloat((rawVal||'').replace(/[^\d.]/g,''))||0;
   const existing=QUEUE.find(r=>r.shop===shop && r.item===item);
@@ -4730,7 +4966,7 @@ function syncGridCellToQueueOffline(shop,item,rawVal){
   QUEUE.push({shop:shop, item:item, qty:qty, unit:unit, price:price});
   saveQueue(); renderQueue();
 }
-// ພິມໃນຕາຕະລາງແລ້ວ sync ເຂົ້າຄິວທັນທີ (ຫຼັງພິມພັກ 0.7 ວິນາທີ) — ໃຫ້ໜ້າ "ອອກໃບບິນຫຼາຍຮ້ານ" (Auto) ເຫັນລາຍການດຽວກັນ ບໍ່ຊ້ຳກັນ
+// ພິมในตารางแล้ว sync เข้าคิวทันที (หลังพิมพักก 0.7 วินาที) — ใหหน้า "ออกใบบิลหลายร้าน" (Auto) เห็นรายการเดียวกัน ไม่ซ้ำกัน
 function syncGridCellToQueue(shop,item,rawVal){
   const qty=parseFloat((rawVal||'').replace(/[^\d.]/g,''))||0;
   const key=shop+'␟'+item;
@@ -4757,7 +4993,7 @@ function syncGridCellToQueue(shop,item,rawVal){
   renderMerged();
   flushPending(true);
 }
-// ໝາຍເຫດຂອງຊ່ອງຕື່ມຈຳນວນທຳອິດ ໃນຕາຕະລາງຫຼາຍຮ້ານ x ຫຼາຍລາຍການ (ຈະຕິດໄປໃນໃບບິນທີ່ອອກ)
+// ໝາยเหดของช่องเพิ่มจำนวนแรก ในตารางหลายร้าน x หลายรายการ (จะติดไปในใบบิลที่ออก)
 function openGridCellNote(btn){
   const shop=btn.dataset.shop, item=btn.dataset.prod;
   _gcnKey=shop+'␟'+item;
@@ -4780,14 +5016,14 @@ function saveGridCellNote(){
   closeGridCellNote();
 }
 async function gridGenerate(){
-  // ດຶງຄິວລ່າສຸດຈາກ Google Sheet ກ່ອນອອກບິນ — ໃຫ້ດຶງລາຍການທີ່ລໍຖ້າ (ຈາກ Auto/ຄິວ) ມາລວມນຳ ຄືປຸ່ມ "ອອກໃບບິນຫຼາຍຮ້ານ auto"
+  // ດຶงคิวล่าสุดจาก Google Sheet ก่อนออกบิล — ใหดึงรายการที่ลอถ้า (จาก Auto/คิว) มารวมนำ ถือปุ่ม "ออกใบบิลหลายร้าน auto"
   if(syncOn()){
     showAdding(true,'ກຳລັງໂຫລດຂໍ້ມູນລ່າສຸດ...');
     try{ const j=await cloudGet(); if(j&&j.items){ setCloudItems(j.items); } }
     catch(e){ toast('ໂຫລດຂໍ້ມູນລ່າສຸດບໍ່ໄດ້ — ຈະໃຊ້ຂໍ້ມູນທີ່ມີຢູ່ໃນເຄື່ອງແທນ'); }
     finally{ showAdding(false); }
   }
-  // ຕາຕະລາງແມ່ນຫຼັກ (ຄ່າຊ່ອງໄດ້ຖືກດຶງຈາກຄິວມາໃສ່ໃຫ້ແລ້ວຕອນເປີດໜ້ານີ້) — ຈຶ່ງເອົາສະເພາະລາຍການໃນຄິວທີ່ "ບໍ່ມີຊ່ອງ" ໃນຕາຕະລາງ (ຮ້ານ/ລາຍການພິມເອງ) ມາລວມນຳ ບໍ່ໃຫ້ນັບຊ້ຳ
+  // ตารางแม่นหลัก (ค่าช่องได้ถูกดึงจากคิวมาใสให้แล้วตอนเปิดหน้านี้) — จึงเอาสะเพาะรายการในคิวที่ "ไม่มีช่อง" ในตาราง (ร้าน/รายการพิมเอง) มารวมนำ ไม่ให้นับซ้ำ
   const gridKeys=new Set();
   SHOPS.forEach(s=>PRODUCTS.forEach(p=>gridKeys.add(s.name+'␟'+p.name)));
   const rows=QUEUE.filter(r=>!gridKeys.has((r.shop||'')+'␟'+(r.item||'')));
@@ -4798,7 +5034,7 @@ async function gridGenerate(){
       rows.push({shop:inp.dataset.shop, item:inp.dataset.prod, qty:qty, unit:defaultUnitFor(inp.dataset.prod), note:(GRID_CELL_NOTES[noteKey]||'')});
     }
   });
-  // ລາຍການພິເສດ/ຊ້ຳ ຕໍ່ຮ້ານ (ຮ້ານດຽວ ລາຍการซ้ำกันได้ พร้อมໝາຍເຫດແຍກແຕ່ລະລາຍການ)
+  // ลายการพิเศษ/ซ้ำ ต่อร้าน (ร้านเดียว ลายการซ้ำกันได้ พร้อมหมายเหดแยกแต่ละรายการ)
   Object.keys(GRID_EXTRA).forEach(shopName=>{
     (GRID_EXTRA[shopName]||[]).forEach(e=>{
       const item=(e.item||'').trim();
@@ -4811,7 +5047,7 @@ async function gridGenerate(){
   if(!buildBulkFromRows(rows)) return;
   closeGrid();
   setTimeout(()=>{ const n=document.getElementById('bill-nav'); if(n) n.scrollIntoView({behavior:'smooth',block:'start'}); },60);
-  toast('ອອກບິນ '+BULK.length+' ໃບແລ້ວ — ກົດ ◀ ▶ ຫຼື ປັດ ເພື່ອເບິ່ງແຕ່ລະຮ້ານ');
+  toast('ອອກບິນ '+BULK.length+' ໃบแล้ว — กด ◀ ▶ หรือ ปัด เพื่อดูแต่ละร้าน');
 }
 function pendingSyncDone(){ return !PENDING.length && !PENDING_OPS.length && !_flushBusy && !_opsBusy; }
 function waitPendingFlush(timeoutMs){
@@ -4824,7 +5060,7 @@ function waitPendingFlush(timeoutMs){
     },300);
   });
 }
-// ປຸ່ມ "⚡ ສ້າງໃບບິນທັງໝົດ" / "ສ້າງ →" — ເຊື່ອງໄວ້ (ສະແດງ "ກຳລັງອັບໂຫລດ..." ແທນ) ຈົນກວ່າຈະບໍ່ມີລາຍການຄ້າງອັບໂຫລດຂຶ້ນຄລາວອີກ ກັນກົດອອກບິນຊ້ຳ/ກ່ອນຂໍ້ມູນຄົບ
+// ปุ่ม "⚡ ສ້າງใบบิลทั้งหมด" / "ສ້าง →" — เซื่องไว้ (สะแดง "กำลังอัปโหลด..." แทน) จนกว่าจะไม่มีรายการค้างอัปโหลดขึ้นคลาวอีก กันกดออกบิลซ้ำ/ก่อนข้อมูลครบ
 function updateBillButtonState(){
   const ready = !syncOn() || pendingSyncDone();
   const btn=document.getElementById('ap-gen-btn');
@@ -4844,12 +5080,12 @@ async function openAuto(){
   if(syncOn()){
     try{
       await cloudRefresh();
-      // ຖ້າຍັງມີລາຍການ/ການແກ້ໄຂ ຄ້າງອັບໂຫລດຂຶ້ນຄລາວຢູ່ (PENDING/PENDING_OPS) — ໃຫ້ລໍຖ້າຈົນອັບໂຫລດແທ້ໆສຳເລັດກ່ອນ ຄ່ອຍແຈ້ງເຕືອນ ກັນອອກບິນຊ້ຳ/ກ່ອນຂໍ້ມູນຄົບ
+      // ຖ້າยังมีรายการ/การแก้ไข ค้างอัปโหลดขึ้นคลาวอยู่ (PENDING/PENDING_OPS) — ใหลอถ้าจนอัปโหลดแท้ๆสำเร็จก่อน ค่อยแจ้งเตือน กันออกบิลซ้ำ/ก่อนข้อมูลครบ
       if(!pendingSyncDone()){
         showAdding(true,'ກຳລັງອັບໂຫລດ...');
         const done=await waitPendingFlush(15000);
         showAdding(false);
-        if(!done){ toast('ຍັງອັບໂຫລດຂໍ້ມູນບໍ່ຄົບ — ລໍຖ້າ ຫຼື ເຊັກເນັດ ກ່ອນອອກໃບບິນ'); syncStartPoll(); return; }
+        if(!done){ toast('ยังอัปโหลดข้อมูลไม่ครบ — ลอถ้า หรือ เชกเน็ต ก่อนออกใบบิล'); syncStartPoll(); return; }
       }
     }catch(e){ showAdding(false); }
     syncStartPoll();
@@ -4859,6 +5095,7 @@ function closeAuto(){ document.getElementById('auto-page').style.display='none';
 /* ---------- ອອກບິນແບບ AI (ອ່ານຂໍ້ຄວາມປະຈຳວັນ ໃນເຄື່ອງ — ບໍ່ຕໍ່ AI ພາຍນອກ) ---------- */
 let AI_PARSED=[];      // [{shopName,isNewShop,item,qty,unit,note,orig,method,namePart}]
 let AI_UNPARSED=[];    // ແຖວທີ່ອ່ານບໍ່ໄດ້
+let AI_CONFIRMED=new Set();   // idx set ຂອງແຖວ "ອ່ານບໍ່ໄດ້" ທີ່ຄົນຢືນຢັນແລ້ວ (ຕ້ອງກົດ "ຢືນຢັນ" ເອງ ບໍ່ໃຫ້ຫາຍໄປອັດຕະໂນມັດ)
 // ຄຳຫຍໍ້/ຊື່ຫຍໍ້ຮ້ານທີ່ຈື່ໄວ້ (ຄຳ → ຊື່ຮ້ານຈິງ) — ບັນທຶກໄວ້ໃນເຄື່ອງ, ຮຽນຮູ້ອັດຕະໂນມັດທຸກຄັ້ງທີ່ແກ້ໄຂຮ້ານໃນໜ້າກວດກ່ອນຕື່ມ
 const AI_ALIAS_KEY='dl_ai_alias_v1';
 function loadAiAliases(){ try{ const r=localStorage.getItem(AI_ALIAS_KEY); if(r){ const o=JSON.parse(r); if(o&&typeof o==='object') return o; } }catch(e){} return {}; }
@@ -5031,7 +5268,7 @@ function aiCharPrefixSplit(namePart, nkLen){
   }
   return { prefix: namePart.slice(0,i).trim(), leftover: namePart.slice(i).trim() };
 }
-// ຈັບຄູ່ namePart (ຂໍ້ຄວາມກ່ອນໂຕເລກ) ກັບຮ້ານທີ່ມີໃນລະບົບ: 0) ຄຳຫຍໍ້ທີ່ຈື່ໄວ້ 1) ກົງເປັະ 2) substring ທັງສອງທາງ 3) bigram fuzzy
+// ຈັບຄູ່ namePart (ຂໍ້ຄວາມກ່ອນໂຕເລກ) ກັບຮ້ານທີ່ມີໃນລະບົບ: 0) ຄຳຫຍໍ້ທີ່ຈື່ໄວ້ 1) ກົງເປະ 2) substring ທັງສອງທາງ 3) bigram fuzzy
 function aiMatchShop(namePart){
   const norm=s=>String(s||'').trim().replace(/\s+/g,'');
   const np=norm(namePart);
@@ -5111,6 +5348,7 @@ function aiStripWaHeader(line){ return String(line||'').replace(AI_WA_HEADER_RE,
 function aiParseText(){
   const raw=(document.getElementById('ai-input').value||'');
   const lines=raw.split(/\r?\n/).map(l=>aiStripWaHeader(l.trim())).filter(l=>l);
+  AI_CONFIRMED=new Set();   // ວິເຄາະໃໝ່ທຸກຄັ້ງ → ລ້າງສະຖານະຢືນຢັນເກົ່າ (ຂໍ້ຄວາມ/ລຳດັບແຖວອາດປ່ຽນໄປ)
   // ຮອບ 1: ວິເຄາະແຕ່ລະແຖວເອກະລາດ, ເກັບຊື່ຄຳດຽວ — ຖ້າຈັບຄູ່ຮ້ານໄດ້ (ຈື່ໄວ້ວ່າຄຳນີ້=ຮ້ານໃດ) ຫຼື ຈັບຄູ່ບໍ່ໄດ້ (ອາດເປັນຮ້ານໃໝ່ທີ່ຖືກກ່າວເຖິງຫຼາຍແຖວ)
   const prelim=[]; const bareNewNames=new Set(); const knownWordShop={};
   lines.forEach(rawLine=>{
@@ -5198,12 +5436,12 @@ function aiItemSelChange(sel){
   const ci=wrap ? wrap.querySelector('.ai-item-custom') : null;
   if(ci){ if(sel.value==='__custom__'){ ci.style.display='block'; ci.focus(); } else{ ci.style.display='none'; } }
   const row=sel.closest('.ai-row');
-  if(row) aiRefreshRowBadge(row);
+  if(row){ const idx=+row.dataset.idx; AI_CONFIRMED.delete(idx); aiRefreshRowBadge(row); }
 }
 // ພິມຊື່ລາຍການເອງ (ຊ່ອງ "ຂຽນເອງ") — ຖ້າພິມກົງກັບຊື່ລາຍການທີ່ມີໃນລະບົບແລ້ວ (ໂຕພິມພໍດີ) ໃຫ້ປ້າຍເຕືອນ "ບໍ່ຢູ່ໃນລະບົບ" ປ່ຽນທັນທີ ບໍ່ຕ້ອງລໍຈົນຕື່ມ/ວາດຄືນ
 function aiItemCustomInput(inp){
   const row=inp.closest('.ai-row');
-  if(row) aiRefreshRowBadge(row);
+  if(row){ const idx=+row.dataset.idx; AI_CONFIRMED.delete(idx); aiRefreshRowBadge(row); }
 }
 // ອັບເດດປ້າຍເຕືອນ+ສະຖານະຕ້ອງກວດຂອງແຖວນີ້ ໃຫ້ຕົງກັບຄ່າທີ່ເລືອກ/ພິມຢູ່ໃນຫ້ອງຕອນນີ້ (ຮ້ານ/ລາຍການ/ຈຳນວນ) — ບໍ່ຕ້ອງລໍໃຫ້ວາດລາຍການຄືນໃໝ່ທັງໝົດ
 function aiRefreshRowBadge(row){
@@ -5219,17 +5457,28 @@ function aiRefreshRowBadge(row){
   const method = (!isNewShop && shopVal!==src.shopName) ? 'manual' : src.method;
   const qtyIn=row.querySelector('.ai-qty-in');
   const qtyOk = qtyIn ? (parseFloat((qtyIn.value||'').replace(/[^\d.]/g,''))>0) : true;   // ແຖວທີ່ບໍ່ແມ່ນ "ອ່ານບໍ່ໄດ້" ບໍ່ມີຫ້ອງນີ້ ຖືວ່າຈຳນວນພ້ອມຢູ່ແລ້ວສະເໝີ
-  const b=aiBadgeFor(src.unreadable, isNewShop, itemHas, method, qtyOk);
+  const confirmed = AI_CONFIRMED.has(idx);
+  const b=aiBadgeFor(src.unreadable, isNewShop, itemHas, method, qtyOk, confirmed);
   const badgeEl=row.querySelector('.ai-row-badge');
   if(badgeEl){ badgeEl.className='ai-badge ai-row-badge '+b.cls; badgeEl.innerHTML=b.label; }
   row.dataset.review=b.review?'1':'0';
+  const confirmBtn=row.querySelector('.ai-row-confirm');
+  if(confirmBtn){
+    confirmBtn.style.display = src.unreadable ? '' : 'none';
+    confirmBtn.classList.toggle('confirmed', confirmed);
+    confirmBtn.textContent = confirmed ? '✔ ຢືນຢັນແລ້ວ' : '✅ ຢືນຢັນ';
+  }
   aiApplyFilter();
   aiUpdateSummary();
 }
-// ພິມຈຳນວນໃສ່ແຖວອ່ານບໍ່ໄດ້ (ຫ້ອງ "ຈຳນວນ") — ຖ້າໃສ່ຄົບ (ຮ້ານ+ລາຍການ+ຈຳນວນ) ໃຫ້ໂຕເຕືອນ "ອ່ານບໍ່ໄດ້" ປ່ຽນເປັນພ້ອມແລ້ວທັນທີ
+// ພິມຈຳນວນໃສ່ແຖວອ່ານບໍ່ໄດ້ (ຫ້ອງ "ຈຳນວນ") — ພຽງແຕ່ໃສ່ຕົວເລກ ຍັງບໍ່ຖືວ່າ "ພ້ອມແລ້ວ" ໂດຍອັດຕະໂນມັດ — ຕ້ອງກົດ "ຢືນຢັນ" ເອງ ຫຼັງໃສ່ໃຫ້ຄົບ ຈຶ່ງຈະຫາຍຈາກລາຍການທີ່ຕ້ອງກວດ (ແກ້ບັນຫາ: ພິມເລກໂຕດຽວກໍຫາຍ ກ່ອນພິມຄົບ)
 function aiQtyInput(inp){
   const row=inp.closest('.ai-row');
-  if(row) aiRefreshRowBadge(row);
+  if(row){ const idx=+row.dataset.idx; AI_CONFIRMED.delete(idx); aiRefreshRowBadge(row); }
+}
+function aiShopSelChangeUnconfirm(row){
+  if(!row) return;
+  const idx=+row.dataset.idx; AI_CONFIRMED.delete(idx);
 }
 // ລົບແຖວອອກຈາກລາຍການທັນທີ (ຕົວຢ່າງ: ແຖວທີ່ອ່ານຜິດ/ບໍ່ຢາກຕື່ມ) — ລົບອອກຈາກໜ້າຈໍເລີຍ ຈະບໍ່ຖືກສົ່ງເຂົ້າຄິວຕອນກົດ "ຕື່ມທັງໝົດ"
 function aiRemoveRow(btn){
@@ -5257,7 +5506,7 @@ function aiShopSelChange(sel){
   const newVal=sel.value;
   const newShopName = (newVal==='__new__') ? src.shopName : newVal;
   const curRow=sel.closest('.ai-row');
-  if(curRow){ aiApplyShopItemDefault(idx, curRow, newShopName); aiRefreshRowBadge(curRow); }
+  if(curRow){ AI_CONFIRMED.delete(idx); aiApplyShopItemDefault(idx, curRow, newShopName); aiRefreshRowBadge(curRow); }
   if(!src.aliasKey) return;
   document.querySelectorAll('#ai-preview-list .ai-row').forEach(row=>{
     const oIdx=+row.dataset.idx;
@@ -5268,22 +5517,41 @@ function aiShopSelChange(sel){
     if(!osel) return;
     const hasOpt=Array.from(osel.options).some(o=>o.value===newVal);
     if(hasOpt) osel.value=newVal;
+    AI_CONFIRMED.delete(oIdx);
     aiApplyShopItemDefault(oIdx, row, newShopName);
     aiRefreshRowBadge(row);
   });
 }
 // ຄິດໄລ່ປ້າຍເຕືອນ+ວ່າຕ້ອງກວດຫຼືບໍ່ — ໃຊ້ຮ່ວມກັນທັງຕອນວາດຄັ້ງທຳອິດ ແລະ ຕອນອັບເດດສົດຫຼັງແກ້ໄຂ (ambiguous ຮ້ານ/ລາຍການ/ຈຳນວນ)
-// ແຖວ "ອ່ານບໍ່ໄດ້" ບໍ່ຄ້າງໂຕເຕືອນຕະຫລອດໄປອີກຕໍ່ໄປ — ຖ້າໃສ່ຄົບ (ຮ້ານທີ່ມີໃນລະບົບ + ລາຍການທີ່ມີໃນລະບົບ + ຈຳນວນ>0) ຈະປ່ຽນເປັນພ້ອມແລ້ວ
-function aiBadgeFor(unreadable, isNewShop, itemHas, method, qtyOk){
+// ແຖວ "ອ່ານບໍ່ໄດ້" ບໍ່ຄ້າງໂຕເຕືອນຕະຫລອດໄປອີກຕໍ່ໄປ — ແຕ່ຈະປ່ຽນເປັນ "ພ້ອມແລ້ວ" ກໍຕໍ່ເມື່ອຄົນກົດ "ຢືນຢັນ" ເອງເທົ່ານັ້ນ (ໃສ່ຄົບ ຮ້ານ+ລາຍການ+ຈຳນວນ ຍັງບໍ່ພໍ ຕ້ອງກົດຢືນຢັນນຳ) ເພື່ອກັນບໍ່ໃຫ້ແຖວຫາຍໄປຈາກລາຍການ "ຕ້ອງກວດ" ກ່ອນຄົນຈະພິມຈົບ
+function aiBadgeFor(unreadable, isNewShop, itemHas, method, qtyOk, confirmed){
   if(unreadable){
-    if(!isNewShop && itemHas && qtyOk===true) return {cls:'ai-badge-ok', label:'✅ ພ້ອມແລ້ວ (ໃສ່ຄົບແລ້ວ)', review:false};
-    return {cls:'ai-badge-warn', label:'✏️ ອ່ານບໍ່ໄດ້ — ໃສ່ເອງ', review:true};
+    if(confirmed) return {cls:'ai-badge-ok', label:'✅ ພ້ອມແລ້ວ (ຢືນຢັນແລ້ວ)', review:false};
+    return {cls:'ai-badge-warn', label:'✏️ ອ່ານບໍ່ໄດ້ — ໃສ່ໃຫ້ຄົບແລ້ວກົດ “ຢືນຢັນ”', review:true};
   }
   if(isNewShop) return {cls:'ai-badge-new', label:'🆕 ຮ້ານໃໝ່', review:true};
   if(!itemHas) return {cls:'ai-badge-warn', label:'📦 ລາຍການໃໝ່ — ບໍ່ຢູ່ໃນລະບົບ', review:true};
   if(method==='alias') return {cls:'ai-badge-alias', label:'🧠 ຈື່ໄວ້ແລ້ວ', review:false};
   if(method==='exact'||method==='substring'||method==='manual') return {cls:'ai-badge-ok', label:'✅ ຈັບຄູ່ໄດ້', review:false};
   return {cls:'ai-badge-warn', label:'🔶 ບໍ່ແນ່ໃຈ', review:false};
+}
+// ກົດປຸ່ມ "✅ ຢືນຢັນ" ຢູ່ແຖວ "ອ່ານບໍ່ໄດ້" — ກວດວ່າໃສ່ຄົບແລ້ວ (ຮ້ານທີ່ມີໃນລະບົບ + ລາຍການ + ຈຳນວນ>0) ກ່ອນຈຶ່ງຈະຢືນຢັນໄດ້
+function aiConfirmRow(btn){
+  const row=btn.closest('.ai-row'); if(!row) return;
+  const idx=+row.dataset.idx;
+  const shopSel=row.querySelector('.ai-shop-sel');
+  const shopVal=shopSel?shopSel.value:'';
+  if(!shopVal || shopVal==='__new__'){ toast('ກະລຸນາເລືອກຮ້ານກ່ອນ (ຫຼືພິມຊື່ຮ້ານໃໝ່)'); return; }
+  const itemSel=row.querySelector('.ai-item-sel');
+  const itemCustom=row.querySelector('.ai-item-custom');
+  const item = (itemSel && itemSel.value==='__custom__') ? (itemCustom?itemCustom.value:'').trim() : (itemSel?itemSel.value:'').trim();
+  if(!item){ toast('ກະລຸນາໃສ່ຊື່ລາຍການ'); return; }
+  const qtyIn=row.querySelector('.ai-qty-in');
+  const qty=qtyIn?(parseFloat((qtyIn.value||'').replace(/[^\d.]/g,''))||0):0;
+  if(!(qty>0)){ toast('ກະລຸນາໃສ່ຈຳນວນ'); return; }
+  AI_CONFIRMED.add(idx);
+  aiRefreshRowBadge(row);
+  toast('ຢືນຢັນແລ້ວ ✔');
 }
 function aiRenderPreview(){
   const wrap=document.getElementById('ai-preview-wrap');
@@ -5293,12 +5561,16 @@ function aiRenderPreview(){
   let h='';
   AI_PARSED.forEach((r,i)=>{
     const itemHas=PRODUCTS.some(p=>p.name===(r.item||'').trim());
-    const b=aiBadgeFor(r.unreadable, r.isNewShop, itemHas, r.method, r.unreadable?false:true);   // ແຖວອ່ານບໍ່ໄດ້ ຫ້ອງຈຳນວນຍັງບໍ່ທັນໃສ່ ຕອນວາດຄັ້ງທຳອິດ
+    const confirmed=AI_CONFIRMED.has(i);
+    const b=aiBadgeFor(r.unreadable, r.isNewShop, itemHas, r.method, r.unreadable?false:true, confirmed);
     const needsReview=b.review;
     const badge='<span class="ai-badge ai-row-badge '+b.cls+'">'+b.label+'</span>';
     const qtyField = r.unreadable
       ? '<input type="text" inputmode="decimal" class="ai-qty-in" data-idx="'+i+'" placeholder="ຈຳນວນ" oninput="aiQtyInput(this)">'
       : '<span class="ai-qty-txt">'+fmt(r.qty)+'</span>';
+    const confirmBtn = r.unreadable
+      ? ('<button type="button" class="ai-row-confirm'+(confirmed?' confirmed':'')+'" data-idx="'+i+'" onclick="aiConfirmRow(this)">'+(confirmed?'✔ ຢືນຢັນແລ້ວ':'✅ ຢືນຢັນ')+'</button>')
+      : '';
     h+='<div class="ai-row" data-idx="'+i+'" data-review="'+(needsReview?'1':'0')+'" data-unreadable="'+(r.unreadable?'1':'0')+'">'
       +'<div class="ai-row-orig"><span class="ai-row-orig-text"><span class="ai-row-num">'+(i+1)+'.</span> '+badge+' '+escapeHtml(r.orig)+'</span><button type="button" class="ai-row-del" onclick="aiRemoveRow(this)" title="ລົບແຖວນີ້ (ບໍ່ຕື່ມເຂົ້າຄິວ)">✕</button></div>'
       +'<div class="ai-row-fields">'
@@ -5308,6 +5580,7 @@ function aiRenderPreview(){
         +qtyField
         +'<select class="ai-unit-sel" data-idx="'+i+'">'+unitOptionsHtml(r.unit)+'</select>'
         +'<input class="ai-note-in" data-idx="'+i+'" value="'+escapeAttr(r.note)+'" placeholder="ໝາຍເຫດ">'
+        +confirmBtn
       +'</div></div>';
   });
   list.innerHTML=h;
@@ -5326,7 +5599,7 @@ function aiUpdateSummary(){
   const unreadableCount=rows.filter(r=>r.dataset.unreadable==='1').length;
   summary.textContent='ອ່ານໄດ້ '+total+' ລາຍການ'+(reviewCount?(' (ຕ້ອງກວດ '+reviewCount+' ອັນ)'):'')+(unreadableCount?(', ອ່ານບໍ່ໄດ້ '+unreadableCount+' ແຖວ — ແກ້ໄຂໄດ້ຢູ່ໃນລາຍການລຸ່ມນີ້ເລີຍ'):'');
 }
-// ຕິກ "ສະແດງສະເພາະທີ່ຕ້ອງກວດ" -> ເຊື່ອງແຖວທີ່ຈັບຄູ່ໝັ້ນໃຈແລ້ວ (ຈື່ໄວ້/ກົງເປະ/substring), ເຫຼືອແຕ່ ຮ້ານໃໝ່ + ບໍ່ແນ່ໃຈ (ອ່ານບໍ່ໄດ້ສະແດງຢູ່ສະເໝີ)
+// ຕິກ "ສະແດງສະເພາະທີ່ຕ້ອງກວດ" -> ເຊື່ອງແຖວທີ່ຈັບຄູ່ໝັ້ນໃຈແລ້ວ (ຈື່ໄວ້/ກົງເປະ/substring), ເຫຼືອແຕ່ ຮ້ານໃໝ່ + ບໍ່ແນ່ໃຈ (ອ່ານບໍ່ໄດ້ສະແດງຢູ່ສະເໝີ ຈົນກວ່າຈະຢືນຢັນ)
 function aiApplyFilter(){
   const cb=document.getElementById('ai-only-review');
   const onlyReview=!!(cb && cb.checked);
@@ -5356,6 +5629,7 @@ function aiConfirmImport(){
     const qtyIn=rowEl.querySelector('.ai-qty-in');
     const qty = qtyIn ? (parseFloat((qtyIn.value||'').replace(/[^\d.]/g,''))||0) : src.qty;
     if(!(qty>0)) return;   // ແຖວອ່ານບໍ່ໄດ້ ຍັງບໍ່ທັນໃສ່ຈຳນວນ → ຂ້າມໄປກ່ອນ (ຍັງບໍ່ຫາຍ ຍັງຢູ່ໃນລາຍການໃຫ້ແກ້ໄດ້ຄັ້ງຕໍ່ໄປ)
+    if(src.unreadable && !AI_CONFIRMED.has(idx)) return;   // ແຖວອ່ານບໍ່ໄດ້ ຕ້ອງຢືນຢັນກ່ອນ ຈຶ່ງຈະຕື່ມເຂົ້າຄິວໄດ້ (ກັນຫາຍໄປແບບບໍ່ໄດ້ຕັ້ງໃຈ)
     ensureShopRegistered(shop);
     const key = src.aliasKey ? String(src.aliasKey).trim().replace(/\s+/g,'') : '';
     // ຮຽນຮູ້ຄຳຫຍໍ້ອັດຕະໂນມັດ — ຖ້າແຕ່ກ່ອນຈັບຄູ່ບໍ່ຊັດເຈນ (ໃໝ່/ບໍ່ແນ່ໃຈ) ຫຼື ຜູ້ໃຊ້ແກ້ໄຂຮ້ານເອງ ແລ້ວຢືນຢັນເປັນຮ້ານແທ້ → ຈື່ໄວ້ໃຫ້ຄັ້ງໜ້າ (ໃນເຄື່ອງ + ອອນລາຍ ຖ້າເຊື່ອມຕໍ່ຢູ່)
@@ -5377,7 +5651,7 @@ function aiConfirmImport(){
     saveAiShopItems();
     if(syncOn()){ learnedItemPairs.forEach(p=>{ cloudPost({action:'shopitem', key:p.key, value:p.value}); }); }
   }
-  if(!rows.length){ toast('ບໍ່ມີລາຍການໃຫ້ຕື່ມ'); return; }
+  if(!rows.length){ toast('ບໍ່ມີລາຍການໃຫ້ຕື່ມ (ອາດຍັງມີແຖວອ່ານບໍ່ໄດ້ທີ່ຍັງບໍ່ໄດ້ກົດ “ຢືນຢັນ”)'); return; }
   // ລ້າງຄິວເກົ່າ (ໂຕທີ່ຄ້າງລໍຖ້າອອກບິນຢູ່ກ່ອນໜ້ານີ້) ອອກທັງໝົດກ່ອນ — ໃຫ້ຄິວແມ່ນຂໍ້ມູນລ່າສຸດຈາກຂໍ້ຄວາມທີ່ຫາກໍອ່ານເທົ່ານັ້ນ ບໍ່ໃຫ້ຂອງເກົ່າຄ້າງປົນ (ຕັ້ງໃຈ — ຢືນຢັນກັບຜູ້ໃຊ້ແລ້ວ)
   if(syncOn()){
     PENDING=[]; savePending(); PENDING_OPS=[]; saveOps();
@@ -5402,7 +5676,7 @@ function aiConfirmImport(){
   toast('ລ້າງຄິວເກົ່າ ແລະ ຕື່ມ '+rows.length+' ລາຍການລ່າສຸດແລ້ວ'+(learnedCount?(' (ຈື່ຄຳຫຍໍ້ໃໝ່ '+learnedCount+' ຄຳ)'):'')+(learnedItemCount?(' (ຈື່ລາຍການເລີ່ມຕົ້ນ '+learnedItemCount+' ຮ້ານ)'):'')+' — ໄປ Auto ຫຼື ຕາຕະລາງ ເພື່ອອອກບິນ');
   document.getElementById('ai-input').value='';
   document.getElementById('ai-preview-wrap').style.display='none';
-  AI_PARSED=[]; AI_UNPARSED=[];
+  AI_PARSED=[]; AI_UNPARSED=[]; AI_CONFIRMED=new Set();
   closeAiImport();
   // ຖາມວ່າຈະໄປລໍຖ້າອອກໃບບິນຫຼາຍລາຍການເລີຍບໍ — ຕົກລົງ=ໄປໜ້າ Auto, ບໍ່ແມ່ນ=ຢູ່ໜ້າ AI ຄືເກົ່າ
   if(confirm('ໄປລໍຖ້າຢູ່ໜ້າອອກບິນຫຼາຍລາຍການ ເລີຍບໍ?')){
@@ -5844,7 +6118,7 @@ function buildReceiptCanvas(custArg, listArg, bagLabel){
   t='ຈຳນວນ'; ctx.fillText(t,qtyC-ctx.measureText(t).width/2,y);
   if(showMoney){ t='ເປັນເງິນ'; ctx.fillText(t,right-ctx.measureText(t).width,y); }
   y+=28; ctx.fillRect(pad,y-2,W-2*pad,2); y+=6;
-  // ລາຍການ
+  // ລາຍการ
   let n=0;
   list.forEach(it=>{
     n++;
@@ -5871,7 +6145,7 @@ function buildReceiptCanvas(custArg, listArg, bagLabel){
     ctx.font="bold 19px 'Noto Sans Lao',sans-serif";
     y=thWrap(ctx,'('+laoWords(total)+' ກີບ)',center,y,W-2*pad,26,'center')+16;
   }
-  // QR ຊຳລະເງິນ + ເລກບັນຊີ — ສະແດງສະເພາະเวลาโชว์เงิน
+  // QR ຊຳລະເງິນ + ເລກບັນຊີ — ສະແດງສະເພาะเวลาโชว์เงิน
   if(showMoney && qrDataUrl){
     ctx.fillRect(pad,y,W-2*pad,2); y+=14;
     ctx.fillStyle='#000';
