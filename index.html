@@ -3492,7 +3492,7 @@ const DEFAULT_PRODUCTS=[
   {name:'ແກັດໂຟມ',price:0},
   {name:'ຄ່າຂົນສົ່ງ',price:0},
   {name:'ຂາຍຳ',price:0},
-  {name:'ນົມ',price:0}
+  {name:'ນົມໝູ',price:0}
 ];
 const PROD_KEY='dl_products_v1';
 let PRODUCTS=loadProducts();
@@ -3513,6 +3513,13 @@ function loadProducts(){
       localStorage.setItem('dl_rn_soi','1');
     }
   }catch(e){ list.forEach(p=>{ if(p.name==='ສະໃບນາງຫັ່ນ') p.name='ສະໃບນາງຊອຍ'; }); }
+  // ປ່ຽນຊື່ "ນົມ" → "ນົມໝູ" ເທື່ອດຽວ (ຮັກສາລາຄາ)
+  try{
+    if(!localStorage.getItem('dl_rn_nommu')){
+      list.forEach(p=>{ if(p.name==='ນົມ') p.name='ນົມໝູ'; });
+      localStorage.setItem('dl_rn_nommu','1');
+    }
+  }catch(e){ list.forEach(p=>{ if(p.name==='ນົມ') p.name='ນົມໝູ'; }); }
   // ແທนที่ລາຍการທັງໝົດ ດ້ວຍชุดใหม่ 6 ລາຍการ (ເທື່ອດຽວ) — ຮັກສາລາຄາທີ່ຊື່ตรงกัน
   try{
     if(!localStorage.getItem('dl_prod_v3')){
@@ -3639,7 +3646,7 @@ function codeOf(shop){
   return s?s.code:'';
 }
 function defaultUnitFor(name){
-  const map={'ສະໃບນາງຊອຍ':'Kg','ແກັດໂຟມ':'ແກັດ','ຄ່າຂົນສົ່ງ':'ຕໍ່ຖ້ຽວ','ນົມ':'ແກັດ'};
+  const map={'ສະໃບນາງຊອຍ':'Kg','ແກັດໂຟມ':'ແກັດ','ຄ່າຂົນສົ່ງ':'ຕໍ່ຖ້ຽວ','ນົມໝູ':'ແກັດ'};
   return map[(name||'').trim()] || 'ຫິ້ວ';
 }
 const QUEUE_KEY='dl_queue_v1';
