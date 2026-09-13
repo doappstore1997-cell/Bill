@@ -3002,7 +3002,7 @@ function laoDate(iso){
 }
 /* ---------- ສະຖານະ & ລາຍການ ---------- */
 let items=[{name:'',qty:0,price:0,unit:'ຫິ້ວ'}];
-const DEFAULT_QR="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAZgAAAGYCAIAAADwWWMCAAAKN0lEQVR4nO3dwW4cNxBAwSjw//+yc4hPAWiDStPkk6vOwuxqdvdhDo3mx/fv3/8CKPv79hsA+L+EDMgTMiBPyIA8IQPyhAzIEzIgT8iAPCED8oQMyBMyIE/IgDwhA/KEDMgTMiBPyIA8IQPyhAzIEzIgT8iAPCED8oQMyBMyIO/b1IU+Pj6mLnXU7jmeu//X6vq3rrNr93VPn4s69f+e/tynXndl9/5/1d/jiicyIE/IgDwhA/KEDMgTMiBPyIA8IQPyxubIVk7PGa3sztFMzd28dp2VqfmjyvtcmZrPujUvtqvye9zliQzIEzIgT8iAPCED8oQMyBMyIE/IgLzjc2Qrr+17+qp7o07vR1uZug+vXee1fW1TXvs97vJEBuQJGZAnZECekAF5QgbkCRmQJ2RA3rU5soqp+aBbc0ynTd2f1+bLVqb+/vT350/jiQzIEzIgT8iAPCED8oQMyBMyIE/IgDxzZD/cmts6/bpTe8cq512evs6t+8nPeSID8oQMyBMyIE/IgDwhA/KEDMgTMiDv2hzZa3uUbp3/uHJ6vqzy/05d5/R5lPXzLl97P7s8kQF5QgbkCRmQJ2RAnpABeUIG5AkZkHd8jqyyd+nWXrDT8zu3zs18bT7rT/v7lcrvcZcnMiBPyIA8IQPyhAzIEzIgT8iAPCED8j7qe4humZrHee3+v7aP7Na5k7euz+d4IgPyhAzIEzIgT8iAPCED8oQMyBMyIG9sH9lr+5hem0ua2ue1+7q71999/7f2W906B3Pq8919PyuVOb7T83SeyIA8IQPyhAzIEzIgT8iAPCED8oQMyHvuXMvT5yHuvu4tp+eVTs/frbx23uWu184nXbk1/3iLJzIgT8iAPCED8oQMyBMyIE/IgDwhA/LG5che29O0MjXvU59ru7UP7papuapb82unVfYDrngiA/KEDMgTMiBPyIA8IQPyhAzIEzIg7/g+sqk5I/M4n3vdldfu52tzgiunP9/X5g1XXpun80QG5AkZkCdkQJ6QAXlCBuQJGZAnZEDex+nz/lZuve7K1PxO5X7emvepzNmtVM4brf/9Lk9kQJ6QAXlCBuQJGZAnZECekAF5Qgbkjc2RnWbf1r9u7Xebuv5r5z++9r06fZ9vsY8M4BeEDMgTMiBPyIA8IQPyhAzIEzIg7/g+sq+6v2mXvWm/x2v7tnZV5u9Wbs3leSID8oQMyBMyIE/IgDwhA/KEDMgTMiDv29SFXptnmZr3mZqLMR/0ueu/dn7llFvza6/NIU7xRAbkCRmQJ2RAnpABeUIG5AkZkCdkQN61cy1v7XvaVZljurUHqjLH9NretF2vfV6vnQfqiQzIEzIgT8iAPCED8oQMyBMyIE/IgLyxfWS78z5TcyW35mvq5xi+Ngd0+tzJyh6u1+bdTs/xOdcS4AchA/KEDMgTMiBPyIA8IQPyhAzIG5sj21XZM3V6vmnq/ew6PQe0+vtb83en3frcT5+PaR8ZwG8iZECekAF5QgbkCRmQJ2RAnpABeWPnWp4+L6++B+r0/1ufL3vt71/z2v157ffriQzIEzIgT8iAPCED8oQMyBMyIE/IgLzjc2Tmd36uMkf2VT+v06875db9f21ebMUTGZAnZECekAF5QgbkCRmQJ2RAnpABeWNzZMsXiJyXd2uf18rp/W5T13nt/73l1hzfa/ffPjKATxIyIE/IgDwhA/KEDMgTMiBPyIC8b1MXem0f2dQ8y2tzOlNemx987fq7r7vr9O/i1v25NV/miQzIEzIgT8iAPCED8oQMyBMyIE/IgLyxObJb+7B2r3Na5fzHyjmPU9+H03NMu++zcv+n2EcG8AtCBuQJGZAnZECekAF5QgbkCRmQN3au5Wv7yOp2P5fTc3a3Pq+p/Va39nOtVH4vr30PVzyRAXlCBuQJGZAnZECekAF5QgbkCRmQN7aPbNfpeZnXrn9rr9bU9V/z2v2sfN+mvLYf0BMZkCdkQJ6QAXlCBuQJGZAnZECekAF51+bIVm7tR5u6/i239nPdmsPafZ+n57ym/q/T36vT81+35t08kQF5QgbkCRmQJ2RAnpABeUIG5AkZkHf8XMtdU/M+p+ehdq+z69Z5iyuVvVcrr32vdt2ay6ucH+qJDMgTMiBPyIA8IQPyhAzIEzIgT8iAvOP7yG7tt6rsIzs9lzT1/966b6f3iO16bZ7u9Ou+Ni+24okMyBMyIE/IgDwhA/KEDMgTMiBPyIC8sTmyW+cnTr2fKbf2oE15bV5pytR84q5be9BOe+39eCID8oQMyBMyIE/IgDwhA/KEDMgTMiBv7FzL5QvEz4u8NX+067W5s9ec3qd2el7stT1oK/aRAXySkAF5QgbkCRmQJ2RAnpABeUIG5B2fI1u+8NA8zledR5vy2v97+vpT359b82KnvTb3N3UfPJEBeUIG5AkZkCdkQJ6QAXlCBuQJGZA3Nkd2a15p5dZcz2vzR7fOA63MW52eT/yqc5Gv8UQG5AkZkCdkQJ6QAXlCBuQJGZAnZEDet9tv4L+m5ozq+7NOX2dqbuj0dU5/Lq/NT936HtbP3/REBuQJGZAnZECekAF5QgbkCRmQJ2RA3tgc2WvnM96aZ9mdrzl9zuDUvM+tuaH6vrzXXvfWuZ+neSID8oQMyBMyIE/IgDwhA/KEDMgTMiDv+D6y03NSK1N7qU7PAU1d/7W5sNOfe2V+bepzv/U7eu2c1hVPZECekAF5QgbkCRmQJ2RAnpABeUIG5H2c3vd063zJW/Nflfv52lzYymv7yKZU7v+KOTKAYUIG5AkZkCdkQJ6QAXlCBuQJGZA3Nkda3+/w1LN/1v0/Z/1WvsTNqfDcTpnpJ0PJoWfEQzcVICZmL+t1sBRbAOxWDqUAjNiJnEZANEgTk6VjJAAoOxACLQwWFRi4KKJXFhLBqiVwuT3PcVPqZm7NpAdvS+G1I1U/AKMbf9AVwK1wnRC7O4WvOZmSuC6/1WNhqCOJHrsw5PXHwsJ2hAtL6pxYuVRi0GxR9AhX6MtaFVCFV1cOCqzgpx2ye9O/i1e83pOX2Y2uVqIsc4tBrfmwe2Gtu0d+m3fzKUnhP82ANzKZmpVWaVcTBEkc/Ee69o/apJARz/WQZaVmY5tzE6xAqzkTGtcjSXcXdT2hAWtRxjIRZaLTOxRVUv2wqW5FVzXaOJBLm+xy8vfz9UKzVXztAsMTvvdSZ8amWx8L2VzXG2SkTGrO5EbmNxRVi/AF8T0MTz+3vXX6z/wpx87OYqmqx2b7QeZ3ppK6QIIlF3lyHnrqAmXbHXGGbW1FMDJVWQ8DGB6EYHTGXwJfx1EWtHmBjjFdt+/PbNvCUcSDLTvmSwF/UyRWyAlL8gAAAABJRU5ErkJggg==";
+const DEFAULT_QR="data:image/png;base64,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";
 let qrDataUrl=DEFAULT_QR;
 const qrPrintImg=new Image();
 qrPrintImg.src=qrDataUrl;
@@ -3047,16 +3047,35 @@ const DEFAULT_SHOPS=[
   {name:'ອ້າຍສຸກ ໜອງບຶກ',code:'D36'},
   {name:'ເອື້ອຍ ຟ້າ',code:'D37'},
   {name:'ເອື້ອຍໂມະ ແກ່ນທ້າວ',code:'D38'},
-  {name:'ອ້າຍທ໋ອກ ແກ່ນທ້າວ',code:'D39'}
+  {name:'ອ້າຍທ໋ອກ ແກ່ນທ້າວ',code:'D39'},
+  {name:'ໂດລ່າ ໄຊສົມບູນ',code:'D43'},
+  {name:'ເອື້ອຍແປ່ມ ໄຊຍະ',code:'D44'},
+  {name:'ຝົນ ໜອງວຽງຄຳ',code:'D45'},
+  {name:'ຈັບດາດ',code:'D46'},
+  {name:'ເອື້ອຍລີ ຫລວງພະບາງ',code:'D47'},
+  {name:'ເອື້ອຍຫລ້າ ຫລວງພະບາງ',code:'D48'},
+  {name:'ເອື້ອຍນ້ຳເພັດ ກາສີ',code:'D49'},
+  {name:'ເອື້ອຍປານ້ອຍ ກາສີ',code:'D50'},
+  {name:'ອ້າຍໄລລີ ຫລວງພະບາງ',code:'D51'},
+  {name:'ຮ້ານບອກຕໍ່ ຫລວງນ້ຳທາ',code:'D52'},
+  {name:'ເອື້ອຍອົ້ນ ກາສີ',code:'D53'},
+  {name:'ເສຶອ',code:'D54'},
+  {name:'ເອື້ອຍອອນ ຫລວງພະບາງ',code:'D57'},
+  {name:'ເອື້ອຍຫລ້າ ອຸດົມໄຊ',code:'D58'},
+  {name:'ກາ ນາຍາງ',code:'D59'}
 ];
 const SHOP_KEY='dl_shops_v3';
 let SHOPS=loadShops();
 function loadShops(){
+  let list=DEFAULT_SHOPS.slice();
   try{
     const raw=localStorage.getItem(SHOP_KEY);
-    if(raw){ const a=JSON.parse(raw); if(Array.isArray(a)&&a.length) return a; }
+    if(raw){ const a=JSON.parse(raw); if(Array.isArray(a)&&a.length) list=a; }
   }catch(e){}
-  return DEFAULT_SHOPS.slice();
+  // ເພີ່ມຮ້ານພື້ນຖານ (DEFAULT_SHOPS) ທີ່ຍັງບໍ່ມີໃນລາຍການທີ່ບັນທຶກໄວ້ໃນເຄື່ອງ ໃຫ້ປະກົດສະເໝີ — ຄືກັນກັບ loadProducts()
+  // (ບໍ່ດັ່ງນັ້ນ ຮ້ານໃໝ່ທີ່ຕື່ມເຂົ້າ DEFAULT_SHOPS ພາຍຫຼັງ ຈະບໍ່ຂຶ້ນໃຫ້ຜູ້ໃຊ້ທີ່ເຄີຍໃຊ້ແອັບມາກ່ອນແລ້ວ ເພາະມີລາຍການເກົ່າບັນທຶກຄ້າງໄວ້ໃນເຄື່ອງ)
+  DEFAULT_SHOPS.forEach(d=>{ if(!list.some(s=>s.name===d.name)) list.push({name:d.name, code:d.code}); });
+  return list;
 }
 function saveShops(){ try{ localStorage.setItem(SHOP_KEY, JSON.stringify(SHOPS)); }catch(e){} }
 function sortedShopsList(){
@@ -3875,6 +3894,15 @@ function applyCloudShops(list){
     if(!cs || !cs.name) return;
     if(byName[cs.name]){ byName[cs.name].code = cs.code||''; }
     else { const o={name:cs.name, code:cs.code||''}; base.push(o); byName[cs.name]=o; }
+  });
+  // ຊື່ຮ້ານກຸ່ມລວມສາຂາ (ໂຕໝູ 3 ສາຂາ / ໝູນ້ອຍ 2 ສາຂາ) ແມ່ນສ້າງອັດຕະໂນມັດຢູ່ໃນເຄື່ອງຕອນອອກບິນລວມ (buildBulkFromRows) ເທົ່ານັ້ນ — ບໍ່ເຄີຍຖືກສົ່ງຂຶ້ນ Google Sheet ຈຶ່ງບໍ່ຢູ່ໃນ list ຂ້າງເທິງ.
+  // ຖ້າບໍ່ຮັກສາໄວ້ຢູ່ນີ້ ຊື່ ​2 ນີ້ຈະຖືກ "ຕັດອອກ" ທຸກຄັ້ງທີ່ sync ຈາກຄລາວ (poll ພື້ນຫຼັງ) — ເຮັດໃຫ້ select ຫາ option ບໍ່ພົບ ແລ້ວ "ຕົກ" ໄປໃຊ້ຮ້ານທຳອິດຂອງລະບົບແທນ
+  // (ນີ້ຄືສາເຫດຂອງບັນຫາ: ຊື່ຮ້ານໃນໃບຮັບເງິນຮ້ານລວມ ພັດກາຍເປັນຊື່ຮ້ານທຳອິດຂອງລະບົບ) — ຈຶ່ງຕ້ອງຄົງໄວ້ສະເໝີ ຖ້າມີຢູ່ໃນເຄື່ອງນີ້ແລ້ວ
+  ['ໂຕໝູ 3 ສາຂາ','ໝູນ້ອຍ 2 ສາຂາ'].forEach(function(nm){
+    if(!byName[nm]){
+      const existing=SHOPS.find(function(s){ return s.name===nm; });
+      if(existing){ const o={name:existing.name, code:existing.code||''}; base.push(o); byName[nm]=o; }
+    }
   });
   if(JSON.stringify(base)!==JSON.stringify(SHOPS)){
     SHOPS=base; saveShops();
