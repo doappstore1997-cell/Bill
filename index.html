@@ -5485,6 +5485,7 @@ function aiParseText(){
       itemWasGuessed: itemWasGuessed,
       qty: primaryPair.qty,
       unit: finalUnit,
+      unitGuessed: !!p.unitWasGuessed,   // ຫົວໜ່ວຍບໍ່ຖືກຮັບຮູ້ເລີຍ ຕ້ອງເດົາ/ໃສ່ຄ່າເລີ່ມຕົ້ນໃຫ້ — ຍັງຕ້ອງກົດຢືນຢັນກ່ອນຈຶ່ງຕື່ມເຂົ້າຄິວໄດ້ (ຄືກັນກັບແຖວອ່ານບໍ່ໄດ້)
       note: combinedNote,
       orig: p.orig,
       method: method,
@@ -5545,13 +5546,14 @@ function aiRefreshRowBadge(row){
   const qtyIn=row.querySelector('.ai-qty-in');
   const qtyOk = qtyIn ? (parseFloat((qtyIn.value||'').replace(/[^\d.]/g,''))>0) : true;   // ແຖວທີ່ບໍ່ແມ່ນ "ອ່ານບໍ່ໄດ້" ບໍ່ມີຫ້ອງນີ້ ຖືວ່າຈຳນວນພ້ອມຢູ່ແລ້ວສະເໝີ
   const confirmed = AI_CONFIRMED.has(idx);
-  const b=aiBadgeFor(src.unreadable, isNewShop, itemHas, method, qtyOk, confirmed);
+  const needsConfirm = aiNeedsConfirm(src);
+  const b=aiBadgeFor(src.unreadable, isNewShop, itemHas, method, qtyOk, confirmed, src.unitGuessed);
   const badgeEl=row.querySelector('.ai-row-badge');
   if(badgeEl){ badgeEl.className='ai-badge ai-row-badge '+b.cls; badgeEl.innerHTML=b.label; }
   row.dataset.review=b.review?'1':'0';
   const confirmBtn=row.querySelector('.ai-row-confirm');
   if(confirmBtn){
-    confirmBtn.style.display = src.unreadable ? '' : 'none';
+    confirmBtn.style.display = needsConfirm ? '' : 'none';
     confirmBtn.classList.toggle('confirmed', confirmed);
     confirmBtn.textContent = confirmed ? '✔ ຢືນຢັນແລ້ວ' : '✅ ຢືນຢັນ';
   }
@@ -5610,11 +5612,13 @@ function aiShopSelChange(sel){
   });
 }
 // ຄິດໄລ່ປ້າຍເຕືອນ+ວ່າຕ້ອງກວດຫຼືບໍ່ — ໃຊ້ຮ່ວມກັນທັງຕອນວາດຄັ້ງທຳອິດ ແລະ ຕອນອັບເດດສົດຫຼັງແກ້ໄຂ (ambiguous ຮ້ານ/ລາຍການ/ຈຳນວນ)
-// ແຖວ "ອ່ານບໍ່ໄດ້" ບໍ່ຄ້າງໂຕເຕືອນຕະຫລອດໄປອີກຕໍ່ໄປ — ແຕ່ຈະປ່ຽນເປັນ "ພ້ອມແລ້ວ" ກໍຕໍ່ເມື່ອຄົນກົດ "ຢືນຢັນ" ເອງເທົ່ານັ້ນ (ໃສ່ຄົບ ຮ້ານ+ລາຍການ+ຈຳນວນ ຍັງບໍ່ພໍ ຕ້ອງກົດຢືນຢັນນຳ) ເພື່ອກັນບໍ່ໃຫ້ແຖວຫາຍໄປຈາກລາຍການ "ຕ້ອງກວດ" ກ່ອນຄົນຈະພິມຈົບ
-function aiBadgeFor(unreadable, isNewShop, itemHas, method, qtyOk, confirmed){
-  if(unreadable){
+// ແຖວ "ອ່ານບໍ່ໄດ້" ຫຼື "ຫົວໜ່ວຍບໍ່ແນ່ໃຈ" ບໍ່ຄ້າງໂຕເຕືອນຕະຫລອດໄປອີກຕໍ່ໄປ — ແຕ່ຈະປ່ຽນເປັນ "ພ້ອມແລ້ວ" ກໍຕໍ່ເມື່ອຄົນກົດ "ຢືນຢັນ" ເອງເທົ່ານັ້ນ (ໃສ່ຄົບ ຮ້ານ+ລາຍການ+ຈຳນວນ ຍັງບໍ່ພໍ ຕ້ອງກົດຢືນຢັນນຳ) ເພື່ອກັນບໍ່ໃຫ້ແຖວຫາຍໄປຈາກລາຍການ "ຕ້ອງກວດ" ກ່ອນຄົນຈະພິມຈົບ
+function aiNeedsConfirm(r){ return !!(r && (r.unreadable || r.unitGuessed)); }
+function aiBadgeFor(unreadable, isNewShop, itemHas, method, qtyOk, confirmed, unitGuessed){
+  if(unreadable || unitGuessed){
     if(confirmed) return {cls:'ai-badge-ok', label:'✅ ພ້ອມແລ້ວ (ຢືນຢັນແລ້ວ)', review:false};
-    return {cls:'ai-badge-warn', label:'✏️ ອ່ານບໍ່ໄດ້ — ໃສ່ໃຫ້ຄົບແລ້ວກົດ “ຢືນຢັນ”', review:true};
+    if(unreadable) return {cls:'ai-badge-warn', label:'✏️ ອ່ານບໍ່ໄດ້ — ໃສ່ໃຫ້ຄົບແລ້ວກົດ “ຢືນຢັນ”', review:true};
+    return {cls:'ai-badge-warn', label:'🔶 ຫົວໜ່ວຍບໍ່ແນ່ໃຈ — ກວດ/ແກ້ຫົວໜ່ວຍແລ້ວກົດ “ຢືນຢັນ”', review:true};
   }
   if(isNewShop) return {cls:'ai-badge-new', label:'🆕 ຮ້ານໃໝ່', review:true};
   if(!itemHas) return {cls:'ai-badge-warn', label:'📦 ລາຍການໃໝ່ — ບໍ່ຢູ່ໃນລະບົບ', review:true};
@@ -5622,10 +5626,11 @@ function aiBadgeFor(unreadable, isNewShop, itemHas, method, qtyOk, confirmed){
   if(method==='exact'||method==='substring'||method==='manual') return {cls:'ai-badge-ok', label:'✅ ຈັບຄູ່ໄດ້', review:false};
   return {cls:'ai-badge-warn', label:'🔶 ບໍ່ແນ່ໃຈ', review:false};
 }
-// ກົດປຸ່ມ "✅ ຢືນຢັນ" ຢູ່ແຖວ "ອ່ານບໍ່ໄດ້" — ກວດວ່າໃສ່ຄົບແລ້ວ (ຮ້ານທີ່ມີໃນລະບົບ + ລາຍການ + ຈຳນວນ>0) ກ່ອນຈຶ່ງຈະຢືນຢັນໄດ້
+// ກົດປຸ່ມ "✅ ຢືນຢັນ" ຢູ່ແຖວ "ອ່ານບໍ່ໄດ້" ຫຼື "ຫົວໜ່ວຍບໍ່ແນ່ໃຈ" — ກວດວ່າໃສ່ຄົບແລ້ວ (ຮ້ານທີ່ມີໃນລະບົບ + ລາຍການ + ຈຳນວນ>0) ກ່ອນຈຶ່ງຈະຢືນຢັນໄດ້
 function aiConfirmRow(btn){
   const row=btn.closest('.ai-row'); if(!row) return;
   const idx=+row.dataset.idx;
+  const src=AI_PARSED[idx];
   const shopSel=row.querySelector('.ai-shop-sel');
   const shopVal=shopSel?shopSel.value:'';
   if(!shopVal || shopVal==='__new__'){ toast('ກະລຸນາເລືອກຮ້ານກ່ອນ (ຫຼືພິມຊື່ຮ້ານໃໝ່)'); return; }
@@ -5634,7 +5639,7 @@ function aiConfirmRow(btn){
   const item = (itemSel && itemSel.value==='__custom__') ? (itemCustom?itemCustom.value:'').trim() : (itemSel?itemSel.value:'').trim();
   if(!item){ toast('ກະລຸນາໃສ່ຊື່ລາຍການ'); return; }
   const qtyIn=row.querySelector('.ai-qty-in');
-  const qty=qtyIn?(parseFloat((qtyIn.value||'').replace(/[^\d.]/g,''))||0):0;
+  const qty=qtyIn ? (parseFloat((qtyIn.value||'').replace(/[^\d.]/g,''))||0) : (src?(src.qty||0):0);   // ແຖວ "ຫົວໜ່ວຍບໍ່ແນ່ໃຈ" ບໍ່ມີຊ່ອງຈຳນວນ (ຮູ້ຈຳນວນແລ້ວ) — ໃຊ້ຄ່າທີ່ວິເຄາະໄດ້ແທນ
   if(!(qty>0)){ toast('ກະລຸນາໃສ່ຈຳນວນ'); return; }
   AI_CONFIRMED.add(idx);
   aiRefreshRowBadge(row);
@@ -5649,13 +5654,14 @@ function aiRenderPreview(){
   AI_PARSED.forEach((r,i)=>{
     const itemHas=PRODUCTS.some(p=>p.name===(r.item||'').trim());
     const confirmed=AI_CONFIRMED.has(i);
-    const b=aiBadgeFor(r.unreadable, r.isNewShop, itemHas, r.method, r.unreadable?false:true, confirmed);
+    const needsConfirm=aiNeedsConfirm(r);
+    const b=aiBadgeFor(r.unreadable, r.isNewShop, itemHas, r.method, r.unreadable?false:true, confirmed, r.unitGuessed);
     const needsReview=b.review;
     const badge='<span class="ai-badge ai-row-badge '+b.cls+'">'+b.label+'</span>';
     const qtyField = r.unreadable
       ? '<input type="text" inputmode="decimal" class="ai-qty-in" data-idx="'+i+'" placeholder="ຈຳນວນ" oninput="aiQtyInput(this)">'
       : '<span class="ai-qty-txt">'+fmt(r.qty)+'</span>';
-    const confirmBtn = r.unreadable
+    const confirmBtn = needsConfirm
       ? ('<button type="button" class="ai-row-confirm'+(confirmed?' confirmed':'')+'" data-idx="'+i+'" onclick="aiConfirmRow(this)">'+(confirmed?'✔ ຢືນຢັນແລ້ວ':'✅ ຢືນຢັນ')+'</button>')
       : '';
     h+='<div class="ai-row" data-idx="'+i+'" data-review="'+(needsReview?'1':'0')+'" data-unreadable="'+(r.unreadable?'1':'0')+'">'
@@ -5665,7 +5671,7 @@ function aiRenderPreview(){
         +'<select class="ai-item-sel" data-idx="'+i+'" onchange="aiItemSelChange(this)">'+aiItemOptionsHtml(r.item)+'</select>'
         +'<input class="ai-item-custom" data-idx="'+i+'" style="display:none" value="'+(itemHas?'':escapeAttr(r.item))+'" placeholder="ພິມຊື່ລາຍການ..." oninput="aiItemCustomInput(this)">'
         +qtyField
-        +'<select class="ai-unit-sel" data-idx="'+i+'">'+unitOptionsHtml(r.unit)+'</select>'
+        +'<select class="ai-unit-sel" data-idx="'+i+'" onchange="aiUnitSelChangeUnconfirm(this)">'+unitOptionsHtml(r.unit)+'</select>'
         +'<input class="ai-note-in" data-idx="'+i+'" value="'+escapeAttr(r.note)+'" placeholder="ໝາຍເຫດ">'
         +confirmBtn
       +'</div></div>';
@@ -5675,6 +5681,11 @@ function aiRenderPreview(){
   if(uwrap) uwrap.style.display='none';   // ແຖວອ່ານບໍ່ໄດ້ ຕອນນີ້ຢູ່ໃນລາຍການຫຼັກແລ້ວ (ແກ້ໄຂໄດ້ຢູ່ບ່ອນເກົ່າ) — ບໍ່ຕ້ອງແຍກລາຍການ
   aiApplyFilter();
   aiUpdateSummary();
+}
+// ປ່ຽນຫົວໜ່ວຍຂອງແຖວ "ຫົວໜ່ວຍບໍ່ແນ່ໃຈ" ຫຼັງຈາກຢືນຢັນໄປແລ້ວ — ໃຫ້ຖືວ່າຍັງບໍ່ຢືນຢັນ ຕ້ອງກົດຢືນຢັນຄືນ (ກັນຫົວໜ່ວຍໃໝ່ຫຼຸດຜ່ານໂດຍບໍ່ໄດ້ຮັບຮູ້)
+function aiUnitSelChangeUnconfirm(sel){
+  const row=sel.closest('.ai-row');
+  if(row){ const idx=+row.dataset.idx; if(AI_CONFIRMED.has(idx)){ AI_CONFIRMED.delete(idx); aiRefreshRowBadge(row); } }
 }
 // ນັບຈຳນວນຈິງ ຈາກແຖວທີ່ຍັງເຫຼືອຢູ່ໃນ DOM ຕອນນີ້ (ບໍ່ແມ່ນຄ່າຄົງທີ່ຕອນອ່ານຄັ້ງທຳອິດ) — ຖ້າລົບແຖວອອກ ຕົວເລກຈະປັບຫຼຸດລົງໃຫ້ເຫັນຕົວຈິງທັນທີ
 function aiUpdateSummary(){
@@ -5717,7 +5728,7 @@ function aiConfirmImport(){
     const qtyIn=rowEl.querySelector('.ai-qty-in');
     const qty = qtyIn ? (parseFloat((qtyIn.value||'').replace(/[^\d.]/g,''))||0) : src.qty;
     if(!(qty>0)) return;   // ແຖວອ່ານບໍ່ໄດ້ ຍັງບໍ່ທັນໃສ່ຈຳນວນ → ຂ້າມໄປກ່ອນ (ຍັງບໍ່ຫາຍ ຍັງຢູ່ໃນລາຍການໃຫ້ແກ້ໄດ້ຄັ້ງຕໍ່ໄປ)
-    if(src.unreadable && !AI_CONFIRMED.has(idx)) return;   // ແຖວອ່ານບໍ່ໄດ້ ຕ້ອງຢືນຢັນກ່ອນ ຈຶ່ງຈະຕື່ມເຂົ້າຄິວໄດ້ (ກັນຫາຍໄປແບບບໍ່ໄດ້ຕັ້ງໃຈ)
+    if(aiNeedsConfirm(src) && !AI_CONFIRMED.has(idx)) return;   // ແຖວອ່ານບໍ່ໄດ້ ຫຼື ຫົວໜ່ວຍບໍ່ແນ່ໃຈ ຕ້ອງຢືນຢັນກ່ອນ ຈຶ່ງຈະຕື່ມເຂົ້າຄິວໄດ້ (ກັນຫາຍໄປແບບບໍ່ໄດ້ຕັ້ງໃຈ)
     ensureShopRegistered(shop);
     const key = src.aliasKey ? String(src.aliasKey).trim().replace(/\s+/g,'') : '';
     // ຮຽນຮູ້ຄຳຫຍໍ້ອັດຕະໂນມັດ — ຖ້າແຕ່ກ່ອນຈັບຄູ່ບໍ່ຊັດເຈນ (ໃໝ່/ບໍ່ແນ່ໃຈ) ຫຼື ຜູ້ໃຊ້ແກ້ໄຂຮ້ານເອງ ແລ້ວຢືນຢັນເປັນຮ້ານແທ້ → ຈື່ໄວ້ໃຫ້ຄັ້ງໜ້າ (ໃນເຄື່ອງ + ອອນລາຍ ຖ້າເຊື່ອມຕໍ່ຢູ່)
