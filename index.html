@@ -3646,7 +3646,7 @@ function codeOf(shop){
   return s?s.code:'';
 }
 function defaultUnitFor(name){
-  const map={'ສະໃບນາງຊອຍ':'Kg','ແກັດໂຟມ':'ແກັດ','ຄ່າຂົນສົ່ງ':'ຕໍ່ຖ້ຽວ','ນົມໝູ':'ແກັດ'};
+  const map={'ສະໃບນາງຊອຍ':'Kg','ແກັດໂຟມ':'ແກັດ','ຄ່າຂົນສົ່ງ':'ຕໍ່ຖ້ຽວ','ນົມໝູ':'ແກັດ','ຂາຍຳ':'Kg'};
   return map[(name||'').trim()] || 'ຫິ້ວ';
 }
 const QUEUE_KEY='dl_queue_v1';
@@ -4781,31 +4781,23 @@ async function runBotmuSummary(){
   }
 }
 async function buildBulk(){
-  // ດຶງຄິວລ່າສຸດຈາກ Google Sheet ກ່ອນສ້າງ — ກັນກໍລະນີຄິວຍັງໂຫລດບໍ່ທັນ (ຄົນອື່ນຫາກໍ່ເພີ່ມຮ້ານ/ລາຍການ) ເຮັດໃຫ້ໃບບິນຂາດ ຫຼື ຊື່ຮ້ານບໍ່ຖືກຕ້ອງ
-  if(syncOn()){
-    showAdding(true,'ກຳລັງໂຫລດຂໍ້ມູນລ່າສຸດ...');
-    try{ const j=await cloudGet(); if(j&&j.items){ setCloudItems(j.items); } }
-    catch(e){ toast('ໂຫລດຂໍ້ມູນລ່າສຸດບໍ່ໄດ້ — ຈະໃຊ້ຂໍ້ມູນທີ່ມີຢູ່ໃນເຄື່ອງແທນ'); }
-    finally{ showAdding(false); }
-  }
+  // ຄິວ (QUEUE) ຖືກອັບເດດຢູ່ພື້ນຫຼັງແບບຕໍ່ເນື່ອງຢູ່ແລ້ວ (ທຸກ ~10 ວິນາທີ ບໍ່ວ່າຈະຢູ່ໜ້າໃດ) — ຈຶ່ງບໍ່ຈຳເປັນຕ້ອງລໍໂຫລດຄືນຈາກ Google Sheet ອີກຄັ້ງກ່ອນສ້າງບິນ (ນັ້ນຄືສາເຫດຫຼັກທີ່ເຮັດໃຫ້ "ສ້າງບິນ" ຮູ້ສຶກຊ້າ — ອິນເຕີເນັດ/Apps Script ຕອບຊ້າກວ່າຄິວທ້ອງຖິ່ນຫຼາຍ)
+  // ໃຊ້ຂໍ້ມູນທີ່ມີຢູ່ໃນເຄື່ອງທັນທີ ໃຫ້ຮູ້ສຶກໄວຂຶ້ນ ແລ້ວຄ່ອຍໂຫລດຄືນຢູ່ພື້ນຫຼັງ (ບໍ່ລໍ) ເພື່ອຄວາມແນ່ນອນຄາວໜ້າ
   const rows=QUEUE.slice().concat(parseBulk(document.getElementById('bulk-input').value));
   if(!buildBulkFromRows(rows)) return;
   closeAuto();
   setTimeout(()=>{ const n=document.getElementById('bill-nav'); if(n) n.scrollIntoView({behavior:'smooth',block:'start'}); },60);
   toast('ສ້າງ '+BULK.length+' ໃບບິນແລ້ວ — ກົດ ◀ ▶ ຫຼື ປັດ ເພື່ອເບິ່ງແຕ່ລະຮ້ານ');
+  if(syncOn()) cloudRefresh(true);   // ອັບເດດພື້ນຫຼັງບໍ່ລໍ — ຖ້າມີການປ່ຽນແປງລ່າສຸດ ຈະຂຶ້ນຄາວໜ້າທີ່ເປີດ Auto/ຕາຕະລາງ
 }
 /* ---------- ຕາຕະລາງໃສ່ຈຳນວນ (ຫຼາຍຮ້ານ x ຫຼາຍລາຍການ) ---------- */
 async function openGrid(){
   document.getElementById('grid-page').style.display='block';
   document.body.style.overflow='hidden';
-  // ດຶງຄິວ+ຮ້ານລ່າສຸດຈາກ Google Sheet ກ່ອນສ້າງຕາຕະລາງ — ໃຫ້ຈຳນວນທີ່ລໍຖ້າຢູ່ໃນຄິວ ສະແດງໃນຊ່ອງທັນທີ ບໍ່ໃຫ້ວ່າງ 0 ໝົດ
-  if(syncOn()){
-    showAdding(true,'ກຳລັງໂຫລດຂໍ້ມູນລ່າສຸດ...');
-    try{ await cloudRefresh(true); }catch(e){}
-    showAdding(false);
-  }
   buildGridTable();
   updateShopCodeHints();
+  // ຄິວ (QUEUE) ອັບເດດຢູ່ພື້ນຫຼັງແບບຕໍ່ເນື່ອງຢູ່ແລ້ວ — ສ້າງຕາຕະລາງທັນທີຈາກຂໍ້ມູນທ້ອງຖິ່ນ (ໄວກວ່າ) ແລ້ວຄ່ອຍໂຫລດຄືນຢູ່ພື້ນຫຼັງບໍ່ລໍ (refreshGridLive() ຈະອັບເດດຕົວເລກໃຫ້ເອງຖ້າມີການປ່ຽນແປງ)
+  if(syncOn()) cloudRefresh(true);
 }
 function refreshShopCodesFromCloud(){
   // ດຶງລາຍຊື່ຮ້ານ+ລະຫັດຫລ້າສຸດຈາກ Google Sheet ມາອັບເດດຕົວຢ່າງລະຫັດ (ກັນລະຫັດຊ້ຳ ຖ້າມີຄົນອື່ນເພີ່ມຮ້ານໄວ້ຈາກເຄື່ອງອື່ນ)
@@ -5097,14 +5089,8 @@ function saveGridCellNote(){
   closeGridCellNote();
 }
 async function gridGenerate(){
-  // ດຶงคิวล่าสุดจาก Google Sheet ก่อนออกบิล — ใหดึงรายการที่ลอถ้า (จาก Auto/คิว) มารวมนำ ถือปุ่ม "ออกใบบิลหลายร้าน auto"
-  if(syncOn()){
-    showAdding(true,'ກຳລັງໂຫລດຂໍ້ມູນລ່າສຸດ...');
-    try{ const j=await cloudGet(); if(j&&j.items){ setCloudItems(j.items); } }
-    catch(e){ toast('ໂຫລດຂໍ້ມູນລ່າສຸດບໍ່ໄດ້ — ຈະໃຊ້ຂໍ້ມູນທີ່ມີຢູ່ໃນເຄື່ອງແທນ'); }
-    finally{ showAdding(false); }
-  }
-  // ตารางแม่นหลัก (ค่าช่องได้ถูกดึงจากคิวมาใสให้แล้วตอนเปิดหน้านี้) — จึงเอาสะเพาะรายการในคิวที่ "ไม่มีช่อง" ในตาราง (ร้าน/รายการพิมเอง) มารวมนำ ไม่ให้นับซ้ำ
+  // ຕາຕະລາງໃຊ້ຄິວ (QUEUE) ທີ່ອັບເດດຢູ່ພື້ນຫຼັງແບບຕໍ່ເນື່ອງຢູ່ແລ້ວ — ບໍ່ຈຳເປັນຕ້ອງລໍໂຫລດຄືນຈາກ Google Sheet ອີກຄັ້ງກ່ອນອອກບິນ (ຊ້າ ຍ້ອນ Apps Script ຕອບຊ້າກວ່າຂໍ້ມູນທ້ອງຖິ່ນຫຼາຍ)
+  // ຕາຕະລາງແມ່ນຫຼັກ (ຄ່າຊ່ອງໄດ້ຖືກດຶງຈາກຄິວມາໃສ່ໃຫ້ແລ້ວຕອນເປີດໜ້ານີ້) — ຈຶ່ງເອົາສະເພາະລາຍການໃນຄິວທີ່ "ບໍ່ມີຊ່ອງ" ໃນຕາຕະລາງ (ຮ້ານ/ລາຍການພິມເອງ) ມາລວມນຳ ບໍ່ໃຫ້ນັບຊ້ຳ
   const gridKeys=new Set();
   SHOPS.forEach(s=>PRODUCTS.forEach(p=>gridKeys.add(s.name+'␟'+p.name)));
   const rows=QUEUE.filter(r=>!gridKeys.has((r.shop||'')+'␟'+(r.item||'')));
@@ -5115,7 +5101,7 @@ async function gridGenerate(){
       rows.push({shop:inp.dataset.shop, item:inp.dataset.prod, qty:qty, unit:defaultUnitFor(inp.dataset.prod), note:(GRID_CELL_NOTES[noteKey]||'')});
     }
   });
-  // ลายการพิเศษ/ซ้ำ ต่อร้าน (ร้านเดียว ลายการซ้ำกันได้ พร้อมหมายเหดแยกแต่ละรายการ)
+  // ລາຍການພິເສດ/ຊ້ຳ ຕໍ່ຮ້ານ (ຮ້ານດຽວ ລາຍການຊ້ຳກັນໄດ້ ພ້ອມໝາຍເຫດແຍກແຕ່ລະລາຍການ)
   Object.keys(GRID_EXTRA).forEach(shopName=>{
     (GRID_EXTRA[shopName]||[]).forEach(e=>{
       const item=(e.item||'').trim();
@@ -5128,7 +5114,8 @@ async function gridGenerate(){
   if(!buildBulkFromRows(rows)) return;
   closeGrid();
   setTimeout(()=>{ const n=document.getElementById('bill-nav'); if(n) n.scrollIntoView({behavior:'smooth',block:'start'}); },60);
-  toast('ອອກບິນ '+BULK.length+' ໃบแล้ว — กด ◀ ▶ หรือ ปัด เพื่อดูแต่ละร้าน');
+  toast('ອອກບິນ '+BULK.length+' ໃບແລ້ວ — ກົດ ◀ ▶ ຫຼື ປັດ ເພື່ອເບິ່ງແຕ່ລະຮ້ານ');
+  if(syncOn()) cloudRefresh(true);   // ອັບເດດພື້ນຫຼັງບໍ່ລໍ
 }
 function pendingSyncDone(){ return !PENDING.length && !PENDING_OPS.length && !_flushBusy && !_opsBusy; }
 function waitPendingFlush(timeoutMs){
@@ -5159,16 +5146,14 @@ async function openAuto(){
   syncInitUI();
   billBtnStartPoll();
   if(syncOn()){
-    try{
-      await cloudRefresh();
-      // ຖ້າยังมีรายการ/การแก้ไข ค้างอัปโหลดขึ้นคลาวอยู่ (PENDING/PENDING_OPS) — ใหลอถ้าจนอัปโหลดแท้ๆสำเร็จก่อน ค่อยแจ้งเตือน กันออกบิลซ้ำ/ก่อนข้อมูลครบ
-      if(!pendingSyncDone()){
-        showAdding(true,'ກຳລັງອັບໂຫລດ...');
-        const done=await waitPendingFlush(15000);
-        showAdding(false);
-        if(!done){ toast('ยังอัปโหลดข้อมูลไม่ครบ — ลอถ้า หรือ เชกเน็ต ก่อนออกใบบิล'); syncStartPoll(); return; }
-      }
-    }catch(e){ showAdding(false); }
+    cloudRefresh(true);   // ໂຫລດຄືນຢູ່ພື້ນຫຼັງ ບໍ່ລໍ — ໜ້ານີ້ໂຊວ໌ຂໍ້ມູນທ້ອງຖິ່ນທີ່ອັບເດດຢູ່ແລ້ວ (poll ຕໍ່ເນື່ອງ) ໃຫ້ທັນທີ ໄວກວ່າເກົ່າ
+    // ຖ້າຍັງມີລາຍການ/ການແກ້ໄຂ ຄ້າງອັບໂຫລດຂຶ້ນຄລາວຢູ່ (PENDING/PENDING_OPS) — ໃຫ້ລໍຖ້າຈົນອັບໂຫລດແທ້ໆສຳເລັດກ່ອນ ຄ່ອຍແຈ້ງເຕືອນ ກັນອອກບິນຊ້ຳ/ກ່ອນຂໍ້ມູນຄົບ (ອັນນີ້ແມ່ນອັບໂຫລດຂໍ້ມູນຂອງຕົນເອງ ຈຳເປັນຕ້ອງລໍ ບໍ່ຄືການໂຫລດ*ຄືນ*ຂໍ້ມູນຄົນອື່ນຂ້າງເທິງທີ່ບໍ່ຈຳເປັນຕ້ອງລໍອີກຕໍ່ໄປ)
+    if(!pendingSyncDone()){
+      showAdding(true,'ກຳລັງອັບໂຫລດ...');
+      const done=await waitPendingFlush(15000);
+      showAdding(false);
+      if(!done){ toast('ຍັງອັບໂຫລດຂໍ້ມູນບໍ່ຄົບ — ລໍຖ້າ ຫຼື ເຊັກເນັດ ກ່ອນອອກໃບບິນ'); }
+    }
     syncStartPoll();
   }
 }
