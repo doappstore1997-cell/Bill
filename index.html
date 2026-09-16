@@ -2900,6 +2900,7 @@ var qrcode = function() {
     <div id="bulk-print-bar" style="display:none;gap:6px;width:100%;max-width:680px;margin:6px 0 0">
       <button class="act" onclick="downloadAllBillImages()" style="background:#b45cf0;flex:1;padding:14px 8px;font-size:14.5px;border:none;border-radius:9px;color:#fff;font-weight:700;cursor:pointer">📷 ດາວໂຫລດຮູບໃບຮັບເງິນທັງໝົດ</button>
     </div>
+    <div id="upload-status" style="display:none;width:100%;max-width:680px;text-align:center;font-size:12.5px;font-weight:700;padding:6px 0"></div>
     <datalist id="kgw-opts"><option value="2"><option value="3"><option value="4"><option value="5"><option value="6"><option value="7"><option value="8"><option value="9"><option value="10"></datalist>
     <div class="scaler">
       <div id="receipt">
@@ -5118,6 +5119,22 @@ async function gridGenerate(){
   if(syncOn()) cloudRefresh(true);   // ອັບເດດພື້ນຫຼັງບໍ່ລໍ
 }
 function pendingSyncDone(){ return !PENDING.length && !PENDING_OPS.length && !_flushBusy && !_opsBusy; }
+// ສະແດງສະຖານະອັບໂຫລດຄ້າງ (⬆️ ອັບໂຫລດ N) ຢູ່ໃກ້ປຸ່ມ "ດາວໂຫລດຮູບໃບຮັບເງິນທັງໝົດ" — ໃຊ້ຕອນກົດ "ອອກບິນເລີຍ" ທັ້ງທີ່ຍັງອັບໂຫລດຄ້າງຢູ່ (ຈາກໜ້າ Auto ຕອນເນັດຊ້າ) ໃຫ້ເຫັນຄວາມຄືບໜ້າ ຫຼຸດລົງເລື້ອຍໆ ຈົນຄົບ ໂດຍບໍ່ຕ້ອງກັບໄປໜ້າ Auto ເບິ່ງ
+let _uploadStatusWasPending=false;
+function updateUploadStatus(){
+  const el=document.getElementById('upload-status'); if(!el) return;
+  if(!syncOn()){ el.style.display='none'; return; }
+  const n=PENDING.length+PENDING_OPS.length;
+  if(n>0){
+    _uploadStatusWasPending=true;
+    el.style.display='block'; el.style.color='#92600a';
+    el.textContent='⬆️ ອັບໂຫລດ ('+n+' ລາຍການຍັງຄ້າງ)...';
+  }else if(_uploadStatusWasPending){
+    _uploadStatusWasPending=false;
+    el.style.display='block'; el.style.color='#0a7d4d';
+    el.textContent='✅ ອັບໂຫລດລາຍການເຂົ້າລະບົບສຳເລັດແລ້ວ';
+  }
+}
 function waitPendingFlush(timeoutMs){
   return new Promise(function(resolve){
     if(pendingSyncDone()){ resolve(true); return; }
@@ -5208,6 +5225,7 @@ const AI_ITEM_KEYWORDS=[
   {kw:'ແກັດ', item:'ແກັດໂຟມ'},
   {kw:'ໄສ້', item:'ໄສ້ຕັນ'},
   {kw:'ມຶກ', item:'ປາມຶກກອບ'},
+  {kw:'ນົມ', item:'ນົມໝູ'},
   {kw:'ສະໃບນາງຊອຍ', item:'ສະໃບນາງຊອຍ'},   // ລະບຸເຕັມແລ້ວ → ໃຫ້ຄົງຄືເກົ່າ (ກວດກ່ອນ "ສະໃບ" ຢູ່ລຸ່ມ)
   {kw:'ສະໃບນາງເຕັມ', item:'ສະໃບນາງເຕັມ'},
   {kw:'ສະໃບ', item:'ສະໃບນາງເຕັມ'},          // ມີແຕ່ຄຳວ່າ "ສະໃບ" ບໍ່ລະບຸຊອຍ/ເຕັມ → ຖືວ່າ ສະໃບນາງເຕັມ
@@ -5461,7 +5479,7 @@ function aiParseText(){
         shopName=words[0]; item=words.slice(1).join(' '); method='batch-new'; aliasKey=words[0];
       }
     }
-    const kwItem=aiKeywordItem(rawLine);                              // ຄຳສະເພາະ (ໄສ້/ມຶກ/ແກັດ...) ຊະນະທຸກຢ່າງ
+    const kwItem=aiKeywordItem(p.namePart);                            // ຄຳສະເພາະ (ໄສ້/ມຶກ/ນົມ...) — ຄົ້ນຫາສະເພາະສ່ວນກ່ອນໂຕເລກ (ຊື່ຮ້ານ+ລາຍການ) ເທົ່ານັ້ນ ບໍ່ແມ່ນທັງແຖວ (ບໍ່ດັ່ງນັ້ນ ຄຳວ່າ "ແກັດ" ທີ່ເປັນຫົວໜ່ວຍ (ເຊັ່ນ "ນົມ 1 ແກັດ") ຈະໄປຊົນກັບຄຳສະເພາະ "ແກັດ"=ແກັດໂຟມ ຜິດພາດ)
     const itemWasGuessed = !kwItem && !item;                          // ບໍ່ມີຄຳສະເພາະ ແລະ ບໍ່ມີລາຍການທີ່ຂຽນຈິງ → ໃຊ້ຄ່າເລີ່ມຕົ້ນ (ຮ້ານ/ໝູ)
     const finalItem = kwItem || item || aiShopDefaultItem(shopName, aliasKey) || 'ໝູ';
     // 1 ແຖວ (ນຳ 1 ເລກລຳດັບ) = 1 ອໍເດີ ສະເໝີ — ຖ້າພົບ ຈຳນວນ+ຫົວໜ່ວຍ ຫຼາຍຄູ່ໃນແຖວດຽວ (ເຊັ່ນ "15 ຫິ້ວ 4ໂລ") ໃຫ້ໃຊ້ຄູ່ທຳອິດເປັນຈຳນວນຫຼັກ ແລ້ວເອົາຄູ່ທີ່ເຫຼືອໄປໃສ່ໝາຍເຫດແທນ ບໍ່ແຍກເປັນຫຼາຍແຖວ (ບໍ່ດັ່ງນັ້ນຈຳນວນອໍເດີຈະບໍ່ຕົງກັບເລກລຳດັບທີ່ພິມມາ)
@@ -5701,6 +5719,7 @@ function aiApplyFilter(){
 }
 function aiConfirmImport(){
   if(!AI_PARSED.length){ toast('ບໍ່ມີລາຍການໃຫ້ຕື່ມ'); return; }
+  showAdding(true,'ກຳລັງໂຫລດ... ກະລຸນາລໍຖ້າ');   // ເຊື່ອງໜ້າຈໍໄວ້ຈົນກວ່າຈະສຳເລັດ — ກັນກົດ "ຕື່ມທັງໝົດ" ຊ້ຳຫຼາຍເທື່ອ ເຮັດໃຫ້ລາຍการออกซ้ำ
   const rows=[];
   let learnedCount=0;
   const learnedPairs=[];
@@ -5742,7 +5761,7 @@ function aiConfirmImport(){
     saveAiShopItems();
     if(syncOn()){ learnedItemPairs.forEach(p=>{ cloudPost({action:'shopitem', key:p.key, value:p.value}); }); }
   }
-  if(!rows.length){ toast('ບໍ່ມີລາຍການໃຫ້ຕື່ມ (ອາດຍັງມີແຖວອ່ານບໍ່ໄດ້ທີ່ຍັງບໍ່ໄດ້ກົດ “ຢືນຢັນ”)'); return; }
+  if(!rows.length){ showAdding(false); toast('ບໍ່ມີລາຍການໃຫ້ຕື່ມ (ອາດຍັງມີແຖວອ່ານບໍ່ໄດ້ທີ່ຍັງບໍ່ໄດ້ກົດ “ຢືນຢັນ”)'); return; }
   // ຕື່ມເຂົ້າຄິວແທ້ໆ (ຫຼັງລ້າງຄິວເກົ່າສຳເລັດແລ້ວເທົ່ານັ້ນ) — ແຍກອອກມາເປັນຟັງຊັນ ເພື່ອລໍໃຫ້ "ລ້າງ" ຂຶ້ນ cloud ສຳເລັດກ່ອນ ຄ່ອຍເລີ່ມ "ຕື່ມ" (ບໍ່ດັ່ງນັ້ນ 2 ຄຳສັ່ງແຂ່ງກັນທາງເນັດ ຖ້າ "ລ້າງ" ໄປຮອດ server ຊ້າກວ່າ "ຕື່ມ" ຈະລຶບລາຍການທຳອິດທີ່ຫາກໍຕື່ມຖິ້ມ — ນີ້ຄືສາເຫດຂອງບັນຫາ "ຕື່ມແລ້ວມາບໍ່ຄົບ")
   function doAddRows(){
     if(syncOn()){
@@ -5762,6 +5781,7 @@ function aiConfirmImport(){
     document.getElementById('ai-preview-wrap').style.display='none';
     AI_PARSED=[]; AI_UNPARSED=[]; AI_CONFIRMED=new Set();
     closeAiImport();
+    showAdding(false);   // ເຊື່ອງ "ກຳລັງໂຫລດ..." ພໍດີກ່ອນຂຶ້ນປ໋ອບອັບຖາມ ໃຫ້ເຫັນຊັດເຈນວ່າສຳເລັດແລ້ວ
     // ຖາມວ່າຈະໄປລໍຖ້າອອກໃບບິນຫຼາຍລາຍການເລີຍບໍ — ຕົກລົງ=ໄປໜ້າ Auto, ບໍ່ແມ່ນ=ຢູ່ໜ້າ AI ຄືເກົ່າ
     if(confirm('ໄປລໍຖ້າຢູ່ໜ້າອອກບິນຫຼາຍລາຍການ ເລີຍບໍ?')){
       openAuto();
@@ -6618,6 +6638,7 @@ function init(){
   refreshShopCodesFromCloud();
   // ຖ້າເຄີຍເຊື່ອມຕໍ່ອອນລາຍໄວ້ຈາກຄັ້ງກ່ອນ — ເລີ່ມ poll ພື້ນຫຼັງທັນທີ ໂດຍບໍ່ຕ້ອງເປີດໜ້າ Auto ກ່ອນ (ໃຫ້ຄິວ/ຕາຕະລາງອັບເດດແບບ realtime ໄດ້ ບໍ່ວ່າຈະຢູ່ໜ້າໃດ)
   if(syncOn()){ cloudRefresh(); syncStartPoll(); }
+  setInterval(updateUploadStatus, 1000);   // ກວດສະຖານະອັບໂຫລດຄ້າງທຸກວິນາທີ (ອ່ານໃນເຄື່ອງລ້ວນໆ ບໍ່ໄດ້ຕໍ່ເນັດ ຈຶ່ງໄວ)
 }
 function fitReceipt(){
   const r=document.getElementById('receipt');
