@@ -2490,6 +2490,7 @@ var qrcode = function() {
     <button id="ap-done-btn" class="ap-done" onclick="buildBulk()">ສ້າງ →</button>
   </div>
   <div class="ap-body">
+    <button type="button" onclick="resetBeforeBill()" style="width:100%;font-family:inherit;font-size:14.5px;font-weight:800;border:1.5px dashed #b91c1c;background:#fff5f5;color:#b91c1c;border-radius:11px;padding:12px;margin-bottom:14px;cursor:pointer">🔄 ຣີເຊັດຂໍ້ມູນຄ້າງ (ລ້າງຄິວ+ໃບບິນເກົ່າ) ກ່ອນອອກໃບບິນໃໝ່</button>
     <div class="ap-card">
       <label style="display:flex;align-items:center;gap:8px;margin:0 0 8px;cursor:pointer">
         <input type="checkbox" id="sy-toggle" onchange="onSyncToggle(this)" style="width:18px;height:18px;cursor:pointer;flex:none">
@@ -2555,6 +2556,7 @@ var qrcode = function() {
     <button class="ap-done" onclick="gridGenerate()">ອອກບິນ →</button>
   </div>
   <div class="ap-body" style="max-width:100%">
+    <button type="button" onclick="resetBeforeBill()" style="width:100%;font-family:inherit;font-size:14.5px;font-weight:800;border:1.5px dashed #b91c1c;background:#fff5f5;color:#b91c1c;border-radius:11px;padding:12px;margin-bottom:14px;cursor:pointer">🔄 ຣີເຊັດຂໍ້ມູນຄ້າງ (ລ້າງຄິວ+ໃບບິນເກົ່າ) ກ່ອນອອກໃບບິນໃໝ່</button>
     <div class="ap-card">
       <div class="auto-title">ວິທີໃຊ້</div>
       <div class="auto-hint">ແຖວ = ຊື່ຮ້ານ (ທຸກຮ້ານໃນລະບົບ), ຖັນ = ລາຍການສິນຄ້າ (ຈາກບັນຊີລາຍການ). ພິມ “ຈຳນວນ” ໃສ່ຊ່ອງທີ່ຕັດກັນລະຫວ່າງຮ້ານ ແລະ ລາຍການ ແລ້ວກົດ “ອອກບິນ →” — ລະບົບຈະສ້າງໃບບິນແຕ່ລະຮ້ານໃຫ້ອັດຕະໂນມັດ (ຊ່ອງໃດບໍ່ໃສ່ ຈະຂ້າມ).</div>
@@ -2792,6 +2794,7 @@ var qrcode = function() {
 <div class="wrap">
   <!-- ============ FORM ============ -->
   <div class="panel">
+    <button type="button" onclick="resetBeforeBill()" style="width:100%;font-family:inherit;font-size:14px;font-weight:800;border:1.5px dashed #b91c1c;background:#fff5f5;color:#b91c1c;border-radius:11px;padding:11px;margin-bottom:12px;cursor:pointer">🔄 ຣີເຊັດຂໍ້ມູນຄ້າງ (ລ້າງຄິວ+ໃບບິນເກົ່າ) ກ່ອນອອກໃບບິນໃໝ່</button>
     <button class="auto-launch" onclick="openAuto()">⚡ ອອກໃບບິນຫຼາຍຮ້ານ (Auto)<span class="al-sub">ເລືອກຮ້ານ · ລາຍການ · ຈຳນວນ ແລ້ວສ້າງທີດຽວ</span></button>
     <button class="auto-launch" style="background:var(--army);margin-top:-8px" onclick="openGrid()">📊 ຕາຕະລາງໃສ່ຈຳນວນ (ຫຼາຍຮ້ານ x ຫຼາຍລາຍການ)<span class="al-sub">ຮ້ານເປັນແຖວ · ລາຍການເປັນຖັນ · ໃສ່ຈຳນວນແລ້ວອອກບິນທັງໝົດ</span></button>
     <button class="auto-launch" style="background:#7c3aed;margin-top:-8px" onclick="openBotmuSummary()">🐷 ສະຫຼຸບຮ້ານໂຕໝູ (ລາຍອາທິດ)<span class="al-sub">ເລືອກຊ່ວງວັນທີ ລວມຈຳນວນ+ເງິນ ອອກເປັນໃບບິນດຽວ</span></button>
@@ -3723,7 +3726,10 @@ let PENDING=loadPending();
 let CLOUD_ITEMS=[]; let _lastCloudJson='';
 function loadPending(){ try{ const r=localStorage.getItem(PENDING_KEY); if(r){ const a=JSON.parse(r); if(Array.isArray(a)) return a; } }catch(e){} return []; }
 function savePending(){ try{ localStorage.setItem(PENDING_KEY, JSON.stringify(PENDING)); }catch(e){} }
-function pendingItems(){ return PENDING.map(function(p){ return {shop:p.shop,item:p.item,qty:p.qty,unit:p.unit,price:p.price,note:p.note,addedBy:p.addedBy,_pending:true,_puid:p._puid}; }); }
+// ໝາຍເຫດສຳຄັນ: cloudPost ໃຊ້ mode:'no-cors' (Apps Script ບໍ່ໄດ້ສົ່ງ CORS header) — ໝາຍຄວາມວ່າ .then() ຈະສຳເລັດແມ່ນແຕ່ຕອນ server ຈິງໆ error/timeout/ເນັດຂາດກາງທາງ (browser ອ່ານຄຳຕອບຈິງບໍ່ໄດ້ ຈຶ່ງຖືວ່າ "ສົ່ງແລ້ວ" ໂດຍບໍ່ຮູ້ຜົນແທ້) —
+// ຖ້າລຶບອອກຈາກ PENDING ທັນທີທີ່ .then() ສຳເລັດ (ຄືເກົ່າ) ຈະສ່ຽງເສຍລາຍການແບບງຽບໆຕອນເນັດຊ້າ (ອອກຈາກ PENDING ແລ້ວ ແຕ່ບໍ່ທັນຂຶ້ນຄລາວແທ້) — ຖ້າຫາກໍອອກໃບບິນຕອນນັ້ນພໍດີ ຂໍ້ມູນຈະຂາດ
+// ແກ້ໂດຍ: ໝາຍວ່າ "ສົ່ງແລ້ວ" (_sent) ແຕ່ຍັງຄ້າງໄວ້ໃນ PENDING (ຍັງນັບເປັນສ່ວນໜຶ່ງຂອງ QUEUE ຢູ່) ຈົນກວ່າຈະ "ຢືນຢັນ" ວ່າຂຶ້ນຄລາວແທ້ (ພົບແຖວດຽວກັນໃນຄລາວຕອນໂຫລດຄືນຄັ້ງຕໍ່ໄປ) ຈຶ່ງລຶບອອກ — ຄືກັນກັບ pattern ຢືນຢັນຮູບອັບໂຫລດ (deliveryVerifyUpload)
+function pendingItems(){ return PENDING.map(function(p){ return {shop:p.shop,item:p.item,qty:p.qty,unit:p.unit,price:p.price,note:p.note,addedBy:p.addedBy,origSeq:p.origSeq,_pending:true,_puid:p._puid}; }); }
 function addPending(row){ row._puid='p'+Date.now()+Math.floor(Math.random()*1000); PENDING.push(row); savePending(); }
 let _lastRenderJson='';
 /* ---------- ຈັດລຳดับລາຍการຄິວ (ປຸ່ມ ▲▼ + ລາກນິ້ວ) ---------- */
@@ -3803,16 +3809,53 @@ function refreshGridLive(){
   });
   applyGridFilter();
 }
-function setCloudItems(items){ const js=JSON.stringify(items||[]); const changed=(js!==_lastCloudJson); _lastCloudJson=js; CLOUD_ITEMS = items||[]; if(changed) renderMerged(); if(PENDING.length) flushPending(true); else if(PENDING_OPS.length) flushOps(); }
+function setCloudItems(items){
+  const js=JSON.stringify(items||[]); const changed=(js!==_lastCloudJson); _lastCloudJson=js; CLOUD_ITEMS = items||[];
+  reconcileSentPending();   // ຕິກລາຍການ PENDING ທີ່ "ສົ່ງແລ້ວ" ອອກ ສະເພາະທີ່ຢືນຢັນພົບໃນຄລາວແທ້ (ບໍ່ໄດ້ອີງໃສ່ແຕ່ fetch resolve ຢ່າງດຽວ — ກັນເສຍລາຍການຕອນເນັດຊ້າ)
+  // ຮອບນີ້ອາດຫາກໍຮູ້ຈັກ origSeq ຂອງບາງແຖວ (ພົບຄັ້ງທຳອິດ) — reconcileSentPending() ຫາກໍບັນທຶກໃສ່ ORIGSEQ_MAP, ແຕ່ CLOUD_ITEMS ຊຸດນີ້ຖືກ rowToItem() ແປງກ່ອນໜ້ານັ້ນແລ້ວ (ຍັງບໍ່ຮູ້ຈັກ) — ຕື່ມໃຫ້ທັນທີ ບໍ່ຕ້ອງລໍຮອບ poll ຕໍ່ໄປ
+  CLOUD_ITEMS.forEach(function(it){ if(it && it.origSeq==null && it.id!=null && ORIGSEQ_MAP[it.id]!=null){ it.origSeq=ORIGSEQ_MAP[it.id]; } });
+  if(changed) renderMerged();
+  if(PENDING.length) flushPending(true); else if(PENDING_OPS.length) flushOps();
+}
+// ກວດວ່າລາຍການ PENDING ທີ່ໝາຍ "ສົ່ງແລ້ວ" (_sent) ຕອນນີ້ຂຶ້ນຄລາວແທ້ແລ້ວບໍ (ທຽບກັບ CLOUD_ITEMS ລ່າສຸດ ໂດຍ shop+item+qty+unit+note+addedBy ເພາະ no-cors ອ່ານ id ຄືນຈາກ server ບໍ່ໄດ້) —
+// ພົບ → ລຶບອອກຈາກ PENDING ແທ້ (ຢືນຢັນອັບໂຫລດສຳເລັດ). ບໍ່ພົບ ແລະ ສົ່ງໄປດົນແລ້ວ (>20 ວິນາທີ) → ໝາຍວ່າຍັງບໍ່ໄດ້ສົ່ງ ໃຫ້ flushPending ລອງສົ່ງໃໝ່ (ອາດເສຍລະຫວ່າງທາງຕອນເນັດຊ້າ)
+// ຄ່າ origSeq (ເລກລຳດັບຕົ້ນສະບັບຈາກຂໍ້ຄວາມ AI) ບໍ່ໄດ້ຖືກສົ່ງ/ບັນທຶກໄວ້ໃນ Google Sheet ເລີຍ (server ບໍ່ຮູ້ຈັກ field ນີ້) —
+// ພໍລາຍການຖືກຢືນຢັນວ່າຂຶ້ນຄລາວແທ້ (reconcileSentPending) ແລ້ວຫຼຸດອອກຈາກ PENDING, ຂໍ້ມູນຈະອ່ານຈາກ CLOUD_ITEMS ຕໍ່ໄປ (ບໍ່ມີ origSeq) ຄ່ານີ້ຈຶ່ງຫາຍທັນທີ —
+// ແກ້ໂດຍ ຈື່ "id ຂອງແຖວໃນຄລາວ → origSeq" ໄວ້ໃນເຄື່ອງເອງ (ບໍ່ຕ້ອງແກ້ server) ຕອນຢືນຢັນສຳເລັດ ແລ້ວອ່ານຄືນຕອນແປງ row ຈາກຄລາວ (rowToItem)
+const ORIGSEQ_MAP_KEY='dl_origseq_map_v1';
+let ORIGSEQ_MAP=(function(){ try{ const r=localStorage.getItem(ORIGSEQ_MAP_KEY); if(r){ const o=JSON.parse(r); if(o&&typeof o==='object') return o; } }catch(e){} return {}; })();
+function saveOrigSeqMap(){ try{ localStorage.setItem(ORIGSEQ_MAP_KEY, JSON.stringify(ORIGSEQ_MAP)); }catch(e){} }
+function reconcileSentPending(){
+  if(!PENDING.some(p=>p._sent)) return;
+  const key=r=>[String(r.shop||'').trim(),String(r.item||'').trim(),Number(r.qty)||0,String(r.unit||'').trim(),String(r.note||'').trim(),String(r.addedBy||'').trim()].join('␟');
+  const byKey={};
+  (CLOUD_ITEMS||[]).forEach(function(r){ const k=key(r); if(!byKey[k]) byKey[k]=[]; byKey[k].push(r); });   // ເກັບແຖວຈິງ (ບໍ່ແມ່ນແຄ່ນັບ) ໃຫ້ຮູ້ id ຕອນຈັບຄູ່ໄດ້ — ໃຊ້ບັນທຶກ origSeq ຕໍ່ id
+  const now=Date.now();
+  let mapChanged=false;
+  PENDING=PENDING.filter(function(p){
+    if(!p._sent) return true;
+    const k=key(p);
+    const arr=byKey[k];
+    if(arr && arr.length){
+      const cloudRow=arr.shift();   // ດຶງ 1 ແຖວອອກມາໃຊ້ (ກັນຈັບຄູ່ຊ້ຳ ຖ້າມີສັ່ງລາຍການດຽວກັນຫຼາຍຄັ້ງແທ້ໆ)
+      if(p.origSeq!=null && cloudRow && cloudRow.id){ ORIGSEQ_MAP[cloudRow.id]=p.origSeq; mapChanged=true; }
+      return false;   // ຢືນຢັນແລ້ວ — ລຶບອອກ
+    }
+    if(now-(p._sentAt||0) > 20000){ p._sent=false; p._sentAt=0; }   // ດົນເກີນໄປ ຍັງບໍ່ພົບ — ລອງສົ່ງໃໝ່
+    return true;
+  });
+  if(mapChanged) saveOrigSeqMap();
+  savePending();
+}
 let _flushBusy=false;
 function flushPending(auto){
   if(!syncOn() || !PENDING.length || _flushBusy) return;
   _flushBusy=true;
   (function next(){
-    if(!PENDING.length){ _flushBusy=false; setTimeout(function(){cloudRefresh(true);},500); return; }
-    const p=PENDING[0];
+    const p=PENDING.find(x=>!x._sent);
+    if(!p){ _flushBusy=false; setTimeout(function(){cloudRefresh(true);},500); return; }
     cloudPost({action:'add', row:{shop:p.shop,item:p.item,qty:p.qty,unit:p.unit,price:p.price,note:p.note,addedBy:p.addedBy}})
-      .then(function(){ PENDING.shift(); savePending(); renderMerged(); setTimeout(next,350); })
+      .then(function(){ p._sent=true; p._sentAt=Date.now(); savePending(); setTimeout(function(){cloudRefresh(true);},900); setTimeout(next,350); })
       .catch(function(){ _flushBusy=false; if(!auto) toast('ຍັງບໍ່ມີເນັດ — ອັປໂຫລດບໍ່ໄດ້'); });
   })();
 }
@@ -3863,7 +3906,8 @@ function _jsonp(url){
 function rowToItem(r){
   return { id:r.id, shop:r.shop, item:r.item, qty:Number(r.qty)||0, unit:r.unit||'ຫິ້ວ',
            price:Number(r.price)||0, note:r.note||'', addedBy:r.addedBy||'',
-           checked:(String(r.checked).toLowerCase()==='yes'||r.checked===true), checkedBy:r.checkedBy||'' };
+           checked:(String(r.checked).toLowerCase()==='yes'||r.checked===true), checkedBy:r.checkedBy||'',
+           origSeq:(r.id!=null && ORIGSEQ_MAP[r.id]!=null)?ORIGSEQ_MAP[r.id]:null };
 }
 let _syncTimer=null, _syncBusy=false;
 function syncOn(){ return !!SYNC_URL; }
@@ -4256,12 +4300,54 @@ function clearQueue(){
   if(syncOn()){
     if(!confirm('ລ້າງລາຍການທັງໝົດ (ອອນລາຍ ທຸກເຄື່ອງ)?')) return;
     PENDING=[]; savePending(); PENDING_OPS=[]; saveOps();
+    ORIGSEQ_MAP={}; saveOrigSeqMap();
     CLOUD_ITEMS=[]; QORDER=[]; saveQOrder(); CLOUD_ORDER=[]; renderMerged();   // ໂຊວ່າລ້າງແລ້ວທັນທີ
     toast('ລ້າງໝົດແລ້ວ');
     cloudPost({action:'clear'}).then(function(){ setTimeout(function(){cloudRefresh(true);},900); });  // ພື້ນຫຼัง
     return;
   }
   QUEUE=[]; saveQueue(); renderQueue();
+}
+// ຣີເຊັດຂໍ້ມູນຄ້າງທັງໝົດ ກ່ອນອອກໃບບິນໃໝ່ (ຄິວ/ຕາຕະລາງ/ໃບບິນຫຼາຍຮ້ານທີ່ຄ້າງໄວ້ຈາກຄັ້ງກ່ອນ + ໃບບິນທີ່ກຳລັງແກ້ໄຂຢູ່) — ໃຊ້ຕອນຂໍ້ມູນເກົ່າຄ້າງ ເຮັດໃຫ້ໃບບິນໃໝ່ອອກມາຊ້ຳ/ວ່າງເປົ່າ (ໂດຍສະເພາະອຸປະກອນ iOS ທີ່ມັກ "ຈື່" ຂໍ້ມູນເກົ່າຄ້າງໄວ້ໃນ browser)
+function resetBeforeBill(){
+  const pendCount=PENDING.length+PENDING_OPS.length;
+  const warnPend = pendCount>0 ? ('\n\n⚠️ ຍັງມີ '+pendCount+' ລາຍການຄ້າງອັບໂຫລດຂຶ້ນຄລາວຢູ່ — ຖ້າຍັງບໍ່ຂຶ້ນຄລາວ ລ້າງຕອນນີ້ອາດເສຍລາຍການນັ້ນ') : '';
+  if(!confirm('ລ້າງຂໍ້ມູນຄ້າງທັງໝົດ (ຄິວ, ຕາຕະລາງ, ໃບບິນຫຼາຍຮ້ານທີ່ຄ້າງໄວ້ ແລະ ໃບບິນທີ່ກຳລັງແກ້ໄຂຢູ່ໜ້າຈໍ) ກ່ອນເລີ່ມອອກໃບບິນໃໝ່?'+warnPend)) return;
+  // ລ້າງຄິວ (ທ້ອງຖິ່ນ + ຄລາວ)
+  PENDING=[]; savePending(); PENDING_OPS=[]; saveOps();
+  ORIGSEQ_MAP={}; saveOrigSeqMap();   // ລ້າງ mapping ເລກລຳດັບຕົ້ນສະບັບເກົ່ານຳ (ຂອງແຖວທີ່ຖືກລ້າງອອກໄປແລ້ວ)
+  CLOUD_ITEMS=[]; QORDER=[]; saveQOrder(); CLOUD_ORDER=[]; GRID_ROW_ID={};
+  _lastRenderJson=''; _lastCloudJson='';
+  renderMerged();
+  if(syncOn()) cloudPost({action:'clear'});
+  // ລ້າງລາຍການພິເສດ+ໝາຍເຫດຂອງຕາຕະລາງ
+  GRID_EXTRA={}; GRID_EXTRA_OPEN=new Set(); GRID_CELL_NOTES={};
+  saveGridExtra(); saveGridCellNotes();
+  const gridPage=document.getElementById('grid-page');
+  if(gridPage && gridPage.style.display!=='none'){
+    const box=document.getElementById('grid-table-wrap'); if(box) box.innerHTML='';
+    buildGridTable();
+  }
+  // ລ້າງໃບບິນຫຼາຍຮ້ານທີ່ຄ້າງໄວ້ (ຂອງຮອບເກົ່າ)
+  BULK=[]; BULK_IDX=0;
+  try{ localStorage.removeItem(BULK_KEY); }catch(e){}
+  const bn=document.getElementById('bill-nav'); if(bn) bn.style.display='none';
+  const pb=document.getElementById('bulk-print-bar'); if(pb) pb.style.display='none';
+  const us=document.getElementById('upload-status'); if(us){ us.style.display='none'; _uploadStatusWasPending=false; }
+  // ລ້າງໃບບິນທີ່ກຳລັງແກ້ໄຂຢູ່ໜ້າຈໍ ໃຫ້ວ່າງກັບຄືນ (ບໍ່ໃຫ້ຂໍ້ມູນຮ້ານ/ລາຍການເກົ່າຄ້າງ)
+  items=[{name:'',qty:0,price:0,unit:'ຫິ້ວ'}];
+  // ລ້າງຊື່ຮ້ານ+ລະຫັດ ໃຫ້ວ່າງເປົ່າ ໃຫ້ເຫັນຊັດເຈນວ່າຣີເຊັດແລ້ວ ພ້ອມອອກບິນໃໝ່ (ໃສ່ option ຫວ່າງໆຊົ່ວຄາວ ຈະຫາຍໄປເອງຕອນເລືອກຮ້ານ/populateShops ຄັ້ງຕໍ່ໄປ)
+  ['f-cust','r-cust'].forEach(id=>{
+    const sel=document.getElementById(id); if(!sel) return;
+    let blankOpt=sel.querySelector('option[value=""]');
+    if(!blankOpt){ blankOpt=document.createElement('option'); blankOpt.value=''; sel.insertBefore(blankOpt, sel.firstChild); }
+    blankOpt.textContent='— ຍັງບໍ່ໄດ້ເລືອກຮ້ານ —'; blankOpt.dataset.code='';
+    sel.value='';
+  });
+  { const fc=document.getElementById('f-code'); if(fc) fc.value=''; }
+  renderItemsEditor();
+  render();
+  toast('ຣີເຊັດຂໍ້ມູນຄ້າງທັງໝົດແລ້ວ — ພ້ອມອອກໃບບິນໃໝ່');
 }
 function buildBulkFromRows(rows){
   if(!rows.length){ toast('ຍັງບໍ່ມີຂໍ້ມູນ — ເພີ່ມລາຍການກ່ອນ ຫຼື ໃສ່ຈຳນວນຢ່າງໜ້ອຍ 1 ຊ່ອງ'); return false; }
@@ -4277,11 +4363,11 @@ function buildBulkFromRows(rows){
     if(!map.has(key)) map.set(key,{group:!!g, gcode:g?g.code:'', items:[], branches:new Map()});
     const e=map.get(key);
     let _lp=(r.price>0&&r.price<1e9)?r.price:getPriceHist(r.shop,r.item)[0]; if(!(_lp>0)){ const _rc=recallPrice(r.shop,r.item); if(_rc>0&&_rc<1e9) _lp=_rc; }
-    const it={id:r.id, name:r.item, qty:r.qty, price:(_lp||0), unit:r.unit||'ຫິ້ວ', note:r.note||'', kgWeight:r.kgWeight||0};
+    const it={id:r.id, name:r.item, qty:r.qty, price:(_lp||0), unit:r.unit||'ຫິ້ວ', note:r.note||'', kgWeight:r.kgWeight||0, origSeq:r.origSeq};
     if(g){
       const branch=(r.shop.startsWith(g.pre)?r.shop.slice(g.pre.length):r.shop).trim();
       // ໜ້າຈໍ (ລວມ): ສະແດງ ສາຂາ · ລາຍການ
-      e.items.push({id:it.id, name:branch+' · '+r.item, qty:r.qty, price:it.price, unit:it.unit, note:it.note, kgWeight:it.kgWeight});
+      e.items.push({id:it.id, name:branch+' · '+r.item, qty:r.qty, price:it.price, unit:it.unit, note:it.note, kgWeight:it.kgWeight, origSeq:it.origSeq});
       // ເກັບຕົວຈິງແຕ່ລະສາຂາ ໄວ້ພິມແຍກ
       if(!e.branches.has(r.shop)) e.branches.set(r.shop,[]);
       e.branches.get(r.shop).push(it);
@@ -5410,6 +5496,8 @@ function aiMatchShop(namePart){
 // ວິເຄາະ 1 ແຖວ: ຕັດເລກລຳດັບນຳໜ້າ, ຫາຄູ່ (ຈຳນວນ+ຫົວໜ່ວຍ) ໄດ້ຫຼາຍຄູ່ຕໍ່ 1 ແຖວ, ຊື່ກ່ອນໂຕເລກ=ຮ້ານ/ລາຍການ, ຫຼັງໂຕເລກສຸດທ້າຍ=ໝາຍເຫດ
 function aiParseLine(rawLine){
   let line=rawLine.replace(/[​⁠﻿]/g,'');
+  const seqM=/^\s*(\d+)(?:\.\d+)?\s*[.\):]\s*/.exec(line);
+  const origSeq = seqM ? parseInt(seqM[1],10) : null;   // ເລກລຳດັບຕົວຈິງທີ່ພິມໄວ້ (ຕົວຢ່າງ "16." → 16) — ເກັບໄວ້ໃຫ້ອ້າງອີງກັບຂໍ້ຄວາມຕົ້ນສະບັບໄດ້ພາຍຫຼັງ
   line=line.replace(/^\s*\d+(?:\.\d+)?\s*[.\):]\s*/,'').trim();   // ຕັດເລກລຳດັບ (ຕ້ອງມີ ./)/: ນຳ, ອະນຸຍາດໃຫ້ມີຫວ່າງລະຫວ່າງເລກກັບຈຸດໄດ້ ເຊັ່ນ "12 . ") — ຖ້າບໍ່ມີ ຖືວ່າເປັນສ່ວນໜຶ່ງຂອງຊື່ຮ້ານ (ເຊັ່ນ "2 ຜົວເມຍ")
   if(!line) return null;
   const unitAlt=AI_UNIT_WORDS.map(u=>u.replace(/[.*+?^${}()|[\]\\]/g,'\\$&')).join('|');
@@ -5439,7 +5527,7 @@ function aiParseLine(rawLine){
   let notePart=line.slice(matches[matches.length-1].end).trim();
   notePart=notePart.replace(/^[\/,\-–]+\s*/,'').trim();
   const {shop, item, method, matchedPrefix}=aiMatchShop(namePart);
-  return { orig: rawLine.trim(), namePart, shop, item, method, matchedPrefix, note: notePart, pairs: matches, unitWasGuessed };
+  return { orig: rawLine.trim(), namePart, shop, item, method, matchedPrefix, note: notePart, pairs: matches, unitWasGuessed, origSeq };
 }
 // ແຖວທີ່ບໍ່ແມ່ນລາຍການແທ້ (ວັນທີ/ເວລາ/ໂຕເລກລ້ວນໆ ບໍ່ມີໂຕໜັງສືເລີຍ) — ຂ້າມໄປ ບໍ່ຕ້ອງສະແດງເປັນແຖວແກ້ໄຂ
 function aiIsNoiseLine(line){
@@ -5475,10 +5563,11 @@ function aiParseText(){
       if(aiIsNoiseLine(rawLine)) return;
       // ຍັງໃຫ້ aliasKey ໄວ້ (ຈາກຂໍ້ຄວາມທັງແຖວ ຕັດເລກລຳດັບອອກ) ເຖິງແມ່ນຈະອ່ານບໍ່ໄດ້ — ຖ້າຄົນເລືອກຮ້ານແລ້ວກົດຢືນຢັນ ລະບົບຈະຈື່ໄວ້ (ຮຽນຮູ້) ໃຫ້ ຄາວໜ້າຖ້າຂໍ້ຄວາມດຽວກັນນີ້ມີ ຈຳນວນ+ຫົວໜ່ວຍ ທີ່ອ່ານໄດ້ ຈະຈັບຄູ່ຮ້ານໄດ້ອັດຕະໂນມັດທັນທີ ບໍ່ຕ້ອງແກ້ຄືນ
       const bareKey=String(rawLine||'').replace(/[​⁠﻿]/g,'').replace(/^\s*\d+(?:\.\d+)?\s*[.\):]\s*/,'').trim();
+      const seqM0=/^\s*(\d+)(?:\.\d+)?\s*[.\):]\s*/.exec(String(rawLine||'').replace(/[​⁠﻿]/g,''));
       AI_PARSED.push({
         shopName:'', isNewShop:true, item:'', itemWasGuessed:true,
         qty:null, unit:'ຫິ້ວ', note:'', orig:rawLine, method:'unreadable', aliasKey:bareKey,
-        unreadable:true,
+        unreadable:true, origSeq: seqM0?parseInt(seqM0[1],10):null,
       });
       return;
     }
@@ -5512,6 +5601,7 @@ function aiParseText(){
       orig: p.orig,
       method: method,
       aliasKey: aliasKey,
+      origSeq: p.origSeq,   // ເລກລຳດັບຕົວຈິງຈາກຂໍ້ຄວາມ AI ຕົ້ນສະບັບ — ໃຊ້ອ້າງອີງກັບໃບຮັບເງິນຄືນພາຍຫຼັງ
     });
   });
   aiRenderPreview();
@@ -5718,7 +5808,19 @@ function aiUpdateSummary(){
   const reviewCount=rows.filter(r=>r.dataset.review==='1').length;
   // ນັບ "ອ່ານບໍ່ໄດ້" ສະເພາະແຖວທີ່ຍັງບໍ່ທັນຢືນຢັນ (ບໍ່ໃຊ້ dataset.unreadable ຢ່າງດຽວ ເພາະຄ່ານັ້ນຄົງທີ່ຕັ້ງແຕ່ຕອນວາດຄັ້ງທຳອິດ ບໍ່ປ່ຽນຫຼັງກົດຢືນຢັນ) — ໃຫ້ຕົວເລກຫຼຸດລົງທັນທີແບບ realtime ເມື່ອຢືນຢັນແຕ່ລະແຖວ
   const unreadableCount=rows.filter(r=>r.dataset.unreadable==='1' && !AI_CONFIRMED.has(+r.dataset.idx)).length;
-  summary.textContent='ອ່ານໄດ້ '+total+' ລາຍການ'+(reviewCount?(' (ຕ້ອງກວດ '+reviewCount+' ອັນ)'):'')+(unreadableCount?(', ອ່ານບໍ່ໄດ້ '+unreadableCount+' ແຖວ — ແກ້ໄຂໄດ້ຢູ່ໃນລາຍການລຸ່ມນີ້ເລີຍ'):'');
+  // ນັບຈຳນວນຮ້ານທີ່ແຕກຕ່າງກັນ (ອ່ານຄ່າຮ້ານປັດຈຸບັນຈາກ dropdown ຂອງແຕ່ລະແຖວ ບໍ່ແມ່ນຄ່າຄົງທີ່ຕອນວິເຄາະຄັ້ງທຳອິດ — ຖ້າຄົນແກ້ຮ້ານພາຍຫຼັງ ຕົວເລກຈະຖືກຕ້ອງ)
+  // ໃຊ້ countQueueShops() ຄືກັນກັບຄິວ Auto — ຮ້ານ "ໂຕໝູ ..."/"ໝູນ້ອຍ ..." ຫຼາຍສາຂາ ຈະຖືກນັບເປັນ 1 ຮ້ານ (ເພາະລວມອອກເປັນໃບບິນດຽວ) ບໍ່ດັ່ງນັ້ນຕົວເລກຈະບໍ່ຕົງກັບຈຳນວນໃບບິນທີ່ຈະໄດ້ຕົວຈິງ
+  const shopRows=[];
+  rows.forEach(row=>{
+    const idx=+row.dataset.idx;
+    const src=AI_PARSED[idx]; if(!src) return;
+    const sel=row.querySelector('.ai-shop-sel');
+    let shop = sel ? (sel.value==='__new__' ? src.shopName : sel.value) : src.shopName;
+    shop=(shop||'').trim();
+    if(shop) shopRows.push({shop:shop});
+  });
+  const shopCount=countQueueShops(shopRows);
+  summary.textContent='ພົບ '+shopCount+' ຮ້ານ, '+total+' ລາຍການ'+(reviewCount?(' (ຕ້ອງກວດ '+reviewCount+' ອັນ)'):'')+(unreadableCount?(', ອ່ານບໍ່ໄດ້ '+unreadableCount+' ແຖວ — ແກ້ໄຂໄດ້ຢູ່ໃນລາຍການລຸ່ມນີ້ເລີຍ'):'');
 }
 // ຕິກ "ສະແດງສະເພາະທີ່ຕ້ອງກວດ" -> ເຊື່ອງແຖວທີ່ຈັບຄູ່ໝັ້ນໃຈແລ້ວ (ຈື່ໄວ້/ກົງເປະ/substring), ເຫຼືອແຕ່ ຮ້ານໃໝ່ + ບໍ່ແນ່ໃຈ (ອ່ານບໍ່ໄດ້ສະແດງຢູ່ສະເໝີ ຈົນກວ່າຈະຢືນຢັນ)
 function aiApplyFilter(){
@@ -5763,7 +5865,7 @@ function aiConfirmImport(){
     if(key && src.itemWasGuessed && item && item!=='ໝູ' && AI_SHOP_ITEM[key]!==item){
       AI_SHOP_ITEM[key]=item; learnedItemCount++; learnedItemPairs.push({key:key, value:item});
     }
-    rows.push({shop:shop, item:item, qty:qty, unit:unit, note:note});
+    rows.push({shop:shop, item:item, qty:qty, unit:unit, note:note, origSeq:src.origSeq});
   });
   if(learnedCount){
     saveAiAliases();
@@ -5778,13 +5880,13 @@ function aiConfirmImport(){
   function doAddRows(){
     if(syncOn()){
       rows.forEach(r=>{
-        addPending({shop:r.shop, item:r.item, qty:r.qty, unit:r.unit, price:(getPriceHist(r.shop,r.item)[0]||0), note:r.note, addedBy:SYNC_USER});
+        addPending({shop:r.shop, item:r.item, qty:r.qty, unit:r.unit, price:(getPriceHist(r.shop,r.item)[0]||0), note:r.note, addedBy:SYNC_USER, origSeq:r.origSeq});
       });
       renderMerged();
       flushPending(true);
     }else{
       rows.forEach(r=>{
-        QUEUE.push({shop:r.shop, item:r.item, qty:r.qty, unit:r.unit, price:0, note:r.note});
+        QUEUE.push({shop:r.shop, item:r.item, qty:r.qty, unit:r.unit, price:0, note:r.note, origSeq:r.origSeq});
       });
       saveQueue(); renderQueue();
     }
@@ -5828,7 +5930,7 @@ function bulkJump(v){
 function loadBulkBill(idx){
   const b=BULK[idx]; if(!b) return;
   populateShops(b.shop);          // ເລືອກຮ້ານ + ລະຫັດຂຶ້ນເອງ
-  items=b.items.map(x=>({id:x.id, name:x.name, qty:x.qty, price:((x.price>0&&x.price<1e9)?x.price:(getPriceHist(b.shop,x.name)[0]||0)), unit:x.unit||'ຫິ້ວ', note:x.note||'', kgWeight:x.kgWeight||0}));   // ຮັກສາລາຄາຂອງແຕ່ລະແຖວ (ນ້ຳໜັກຕ່າง) + ໝາຍເຫດ + ນ້ຳໜັກ/ຫິ້ວ ທີ່ໃສ່ໄວ້ + id (ໃຫ້ sync kgWeight ຄືນຂຶ້ນ Sheet ໄດ້)
+  items=b.items.map(x=>({id:x.id, name:x.name, qty:x.qty, price:((x.price>0&&x.price<1e9)?x.price:(getPriceHist(b.shop,x.name)[0]||0)), unit:x.unit||'ຫິ້ວ', note:x.note||'', kgWeight:x.kgWeight||0, origSeq:x.origSeq}));   // ຮັກສາລາຄາຂອງແຕ່ລະແຖວ (ນ້ຳໜັກຕ່າง) + ໝາຍເຫດ + ນ້ຳໜັກ/ຫິ້ວ ທີ່ໃສ່ໄວ້ + id (ໃຫ້ sync kgWeight ຄືນຂຶ້ນ Sheet ໄດ້) + origSeq (ອ້າງອີງເລກລຳດັບ AI ຕົ້ນສະບັບ)
   renderItemsEditor(); render();
   const sel=document.getElementById('bill-select');
   if(sel){ fillBillSelect(); sel.value=idx; }
@@ -5888,7 +5990,7 @@ function render(){
       if(rows.length){
         const shopNow=(document.getElementById('r-cust')||{}).value || g('f-cust') || '';
         aiBox.style.display='block';
-        aiBox.textContent='📋 ລາຍການ (ກວດຄືນ) — ຮ້ານ: '+shopNow+'\n'+rows.map((it,i)=>(i+1)+'. '+it.name.trim()+' '+(it.qty?fmt(it.qty):'0')+' '+(it.unit||'ຫິ້ວ')).join('\n');
+        aiBox.textContent='📋 ລາຍການ (ກວດຄືນ) — ຮ້ານ: '+shopNow+'\n'+rows.map((it,i)=>(i+1)+'. '+it.name.trim()+' '+(it.qty?fmt(it.qty):'0')+' '+(it.unit||'ຫິ້ວ')+(it.origSeq?(' ('+it.origSeq+')'):'')).join('\n');
       }
       else { aiBox.style.display='none'; aiBox.textContent=''; }
     }
