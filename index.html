@@ -2909,6 +2909,7 @@ var qrcode = function() {
           <p class="r-sub" id="p-doc">ໃບຮັບເງິນ</p>
           <div class="r-line"><span class="lbl">ເບີໂທ:</span> <span id="p-phone"></span> <span class="note" id="p-phonenote"></span></div>
           <div class="r-line"><span class="lbl">ວັນເດືອນປີ:</span> <span class="r-date-wrap"><span id="p-date" class="r-pick"></span><input type="date" id="r-date" class="r-date-input" onchange="onDateChangeReceipt()" aria-label="ເລືອກວັນທີ"></span></div>
+          <div id="p-ai-items" class="no-capture" style="display:none;background:#eef6ff;border:1px dashed #93c5fd;border-radius:8px;padding:8px 10px;margin:4px 0 8px;font-size:12.5px;color:#1e40af;line-height:1.6;white-space:pre-line"></div>
           <div class="r-cust">
             <span><b>ຊື່ຮ້ານ:</b> <select id="r-cust" class="r-cust-sel" onchange="onShopChangeReceipt()"></select></span>
             <span id="p-code-wrap"><b>ລະຫັດ</b> <span id="p-code"></span></span>
@@ -2993,6 +2994,13 @@ function laoWords(num){
   return r.trim();
 }
 const fmt = n => (Number(n)||0).toLocaleString('en-US');
+// ແປງເລກລຳດັບ (1,2,3...) ເປັນເລກໂລເມັງ (I,II,III...) — ໃຊ້ໃນກ່ອງ "ລາຍການ (ກວດຄືນ)"
+function toRoman(num){
+  const map=[[1000,'M'],[900,'CM'],[500,'D'],[400,'CD'],[100,'C'],[90,'XC'],[50,'L'],[40,'XL'],[10,'X'],[9,'IX'],[5,'V'],[4,'IV'],[1,'I']];
+  let n=Math.max(1, Math.round(num||1)), out='';
+  for(const [v,s] of map){ while(n>=v){ out+=s; n-=v; } }
+  return out;
+}
 /* ---------- ວັນທີພາສາລາວ ---------- */
 const WD=['ວັນອາທິດ','ວັນຈັນ','ວັນອັງຄານ','ວັນພຸດ','ວັນພະຫັດ','ວັນສຸກ','ວັນເສົາ'];
 function laoDate(iso){
@@ -5199,6 +5207,10 @@ const AI_ALIAS_DEFAULTS=[
   {k:'ລາລີຕ່າ', v:'ລາລິຕ້າ ລາວສຳພັນ'},
   {k:'ລາລີຕາ', v:'ລາລິຕ້າ ລາວສຳພັນ'},
   {k:'ລາລິຕາ', v:'ລາລິຕ້າ ລາວສຳພັນ'},
+  {k:'ສາຍໃຈ', v:'ຮ້ານ ສາຍໃຈ'},
+  {k:'ອ້າຍໃຈ', v:'ອ້າຍໃຈ & ເອື້ອຍຫຼ້າ'},
+  {k:'ອ້າຍເຂົາ', v:'ອ້າຍ ພູ ວັງວຽງ'},
+  {k:'ອ້າຍພູ', v:'ອ້າຍ ພູ ວັງວຽງ'},
 ];
 try{
   let _seededAny=false;
@@ -5869,6 +5881,18 @@ function render(){
   const rc=document.getElementById('r-cust'); if(rc) rc.value=g('f-cust');
   document.getElementById('p-code').textContent=g('f-code');
   { const cw=document.getElementById('p-code-wrap'); if(cw) cw.style.display = (g('f-code').trim()? '' : 'none'); }
+  // ລາຍການທີ່ພິມ/ອ່ານໄດ້ ໃນໃບບິນນີ້ — ສະແດງແຕ່ໜ້າຈໍ (ສະດວກກວດທຽບກັບຂໍ້ຄວາມ AI ທີ່ພິມ) ບໍ່ຂຶ້ນຕອນ copy/ພິມ/ດາວໂຫລດຮູບ (ໃຊ້ .no-capture ຄືເກົ່າ)
+  { const aiBox=document.getElementById('p-ai-items');
+    if(aiBox){
+      const rows=(items||[]).filter(it=>it && (it.name||'').trim());
+      if(rows.length){
+        const shopNow=(document.getElementById('r-cust')||{}).value || g('f-cust') || '';
+        aiBox.style.display='block';
+        aiBox.textContent='📋 ລາຍການ (ກວດຄືນ) — ຮ້ານ: '+shopNow+'\n'+rows.map((it,i)=>(i+1)+'. '+it.name.trim()+' '+(it.qty?fmt(it.qty):'0')+' '+(it.unit||'ຫິ້ວ')).join('\n');
+      }
+      else { aiBox.style.display='none'; aiBox.textContent=''; }
+    }
+  }
   document.getElementById('p-acct').textContent=g('f-acct');
   // ແຖວສິນຄ້າ (ພິມໃນຕາຕະລາງໄດ້ໂດຍກົງ)
   let total=0, html='';
